@@ -1,0 +1,7 @@
+---
+/** Renders a "\n"-authored title as lines joined by <br>, keeping it one text node for SEO. */
+import { lines } from '../../lib/text';
+const { text } = Astro.props as { text: string };
+const parts = lines(text);
+---
+{parts.map((line, i) => <>{line}{i < parts.length - 1 && <br />}</>)}

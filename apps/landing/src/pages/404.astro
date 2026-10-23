@@ -1,0 +1,22 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Button from '../components/ui/Button.astro';
+---
+<Layout title="Page not found" description="The page you’re looking for doesn’t exist." noindex>
+  <Header />
+  <main id="main" tabindex="-1">
+  <section class="container nf">
+    <p class="eyebrow">Error 404</p>
+    <h1 class="h1">This page took<br />a wrong turn.</h1>
+    <p class="lead">The link may be broken or the page may have moved.</p>
+    <div class="btns"><Button href="/" variant="solid">Back to home</Button><Button href="/#verify">Verify a claim</Button></div>
+  </section>
+  </main>
+  <Footer />
+</Layout>
+<style>
+  .nf { padding-block: clamp(80px, 12vw, 176px) 40px; padding-block: round(clamp(80px, 12vw, 176px), 8px) 40px; display: grid; gap: 24px; justify-items: start; }
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+</style>

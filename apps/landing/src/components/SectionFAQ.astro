@@ -1,0 +1,16 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import Accordion from './ui/Accordion.astro';
+export interface Props { items: { q: string; a: string }[]; title?: string; eyebrow?: string; lead?: string; layout?: 'center' | 'split' }
+const { items, title = 'Frequently asked\nquestions', eyebrow, lead, layout = 'center' } = Astro.props;
+---
+<section id="faq" class:list={['section', 'container', 'faq', `faq--${layout}`]} aria-labelledby="faq-title">
+  <SectionHeader id="faq-title" align={layout === 'center' ? 'center' : 'left'} eyebrow={eyebrow} title={title} lead={lead} />
+  <div class="faq__list" data-reveal><Accordion items={items} /></div>
+</section>
+<style>
+  .faq--center .faq__list { max-width: 744px; margin: 64px auto 0; }
+  .faq--split { display: grid; gap: 48px; }
+  .faq--split :global(.sh__title) { font-size: clamp(2rem, 3.6vw, 2.875rem); line-height: 1.26; }
+  @media (min-width: 1000px) { .faq--split { grid-template-columns: 1fr minmax(0, 760px); gap: 40px; align-items: start; } }
+</style>

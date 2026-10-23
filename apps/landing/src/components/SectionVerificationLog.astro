@@ -1,0 +1,67 @@
+---
+import { createHash } from 'node:crypto';
+import Lines from './ui/Lines.astro';
+import Button from './ui/Button.astro';
+import TagList from './ui/TagList.astro';
+import { log } from '../data/home';
+// Short, stable "commit hashes" for the git-log styling (derived from each line, so builds are reproducible).
+const sha = (s: string) => createHash('sha1').update(s).digest('hex').slice(0, 7);
+---
+<section id="log" class="section container vlog" aria-labelledby="log-title">
+  <div class="vlog__copy">
+    <h2 id="log-title" class="h2" data-split><Lines text={log.title} /></h2>
+    <p class="lead" data-reveal data-delay=".15">{log.lead}</p>
+    <div class="vlog__certs" data-reveal data-delay=".2"><TagList tags={log.badges} label="Evidence standards" /></div>
+    <div class="vlog__ctas" data-reveal data-delay=".25">
+      <Button href="/#verify" variant="solid">Verify a claim</Button>
+    </div>
+  </div>
+  <figure class="log" data-reveal data-delay=".2" data-nav-tone="light">
+    <div class="log__bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="tab">{log.tab}</span><span class="branch">sealed</span></div>
+    <div class="log__body">
+      <p class="log__cmd" aria-hidden="true"><span class="prompt">$</span> {log.command}</p>
+      <ol class="log__list" role="list" data-stagger data-each=".08">
+        {log.entries.map((l, i) => (
+          <li class="log__line">
+            <span class="hash" aria-hidden="true">{sha(l.time + l.text)}</span>
+            <span class="msg">{i === 0 && <span class="head" aria-hidden="true">(HEAD → sealed) </span>}<span class="type">{l.type}:</span> {l.text}</span>
+            <span class="year">{l.time}</span>
+          </li>
+        ))}
+      </ol>
+      <p class="log__end" aria-hidden="true"><span class="prompt">$</span> <span class="caret"></span></p>
+    </div>
+    <figcaption class="visually-hidden">Verification log for the anonymized case, most recent step first.</figcaption>
+  </figure>
+</section>
+<style>
+  .vlog { display: grid; gap: 48px; align-items: center; }
+  .vlog__copy { display: grid; gap: 24px; justify-items: start; }
+  .vlog .lead { max-width: 36rem; }
+  .vlog__ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; }
+
+  /* verification log window: a terminal in the ink palette */
+  .log { font-family: var(--font-mono); margin: 0; background: var(--ink-dark); color: #E7ECF4; min-width: 0; }
+  .log__bar { display: flex; align-items: center; height: 44px; background: #0F1B2D; font-size: var(--fs-xs); }
+  .dots { display: flex; gap: 8px; padding: 0 16px; }
+  .dots i { width: 8px; height: 8px; background: #2A3A55; } .dots i:nth-child(2) { background: #3D5276; } .dots i:nth-child(3) { background: #8FA3C0; }
+  .tab { padding: 0 16px; height: 100%; display: flex; align-items: center; background: var(--ink-dark); box-shadow: inset 0 2px 0 #8FA3C0; font-weight: 500; }
+  .branch { margin-left: auto; padding-right: 16px; color: #7F8DA3; }
+  .branch::before { content: '⎇ '; }
+  .log__body { padding: 24px clamp(16px, 2.4vw, 32px) 32px; padding: 24px round(clamp(16px, 2.4vw, 32px), 8px) 32px; font-size: 0.84375rem; line-height: 1.6; }
+  .log__cmd, .log__end { color: #7F8DA3; }
+  .prompt { color: #8FA3C0; }
+  .log__list { margin: 16px 0; display: grid; gap: 2px; }
+  .log__line { display: grid; grid-template-columns: 7ch 1fr auto; gap: 16px; padding: 8px 8px; margin-inline: -8px; transition: background-color .25s; }
+  .log__line:hover { background: rgb(255 255 255 / .04); }
+  .log__line:first-child { background: rgb(143 163 192 / .1); box-shadow: inset 2px 0 0 #8FA3C0; }
+  .hash { color: #CDD8EA; }
+  .head { color: #D9566A; font-weight: 500; }
+  .type { color: #B9C8E0; }
+  .year { color: #7A8AA3; }
+  .caret { display: inline-block; width: 8px; height: 15px; background: #8FA3C0; vertical-align: -2px; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
+  @media (max-width: 560px) { .log__line { grid-template-columns: 1fr auto; } .hash { display: none; } .branch { display: none; } }
+  @media (min-width: 1000px) { .vlog { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 64px; } }
+</style>

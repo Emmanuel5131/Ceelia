@@ -1,0 +1,19 @@
+---
+/**
+ * A small name tag for an actor in the hero story: monospace text on a white chip, so the dot grid and the lines never run
+ * through it. `y` is the text baseline. `anchor` says which point of the chip `x` refers to.
+ */
+const props = Astro.props as { text: string; x: number; y: number; delay: number; anchor?: 'mid' | 'end' };
+const CHAR = 8.4, PAD = 10, HEIGHT = 28;
+const width = props.text.length * CHAR + PAD * 2;
+const left = props.anchor === 'mid' ? props.x - width / 2 : props.anchor === 'end' ? props.x - width : props.x;
+---
+<g class="bd__tag" style={`--d:${props.delay.toFixed(2)}s`}>
+  <rect x={left} y={props.y - 20} width={width} height={HEIGHT} />
+  <text x={left + PAD} y={props.y}>{props.text}</text>
+</g>
+<style>
+  .bd__tag { --kf: bd-fade; --dur: .4s; --ease: ease; }
+  .bd__tag rect { fill: var(--white); stroke: var(--brand); stroke-opacity: .3; stroke-width: 1; }
+  .bd__tag text { font-family: var(--font-mono); font-size: 14px; font-weight: 500; fill: var(--brand); }
+</style>

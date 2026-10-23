@@ -1,0 +1,39 @@
+---
+/** FAQ accordion built on native <details>/<summary> — works without JavaScript. */
+export interface Props { items: { q: string; a: string }[]; name?: string; openFirst?: boolean }
+const { items, name = 'faq', openFirst = true } = Astro.props;
+---
+<div class="acc">
+  {items.map((it, i) => (
+    <details class="acc__item" name={name} open={openFirst && i === 0}>
+      <summary class="acc__q"><h3>{it.q}</h3><span class="acc__icon" aria-hidden="true"></span></summary>
+      <div class="acc__a"><p>{it.a}</p></div>
+    </details>
+  ))}
+</div>
+<style>
+  .acc { border: 1.5px solid rgb(15 27 45 / .28); }
+  .acc__item + .acc__item { border-top: 1.5px solid rgb(15 27 45 / .28); }
+  .acc__q { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 24px; }
+  .acc__q::-webkit-details-marker { display: none; }
+  .acc__q h3 { font-family: var(--font-display); font-size: clamp(1.05rem, 1.6vw, 1.375rem); line-height: 1.35; }
+  .acc__icon { position: relative; width: 16px; height: 16px; flex: none; }
+  .acc__icon::before, .acc__icon::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; background: currentColor; transition: transform .25s; }
+  .acc__icon::after { transform: rotate(90deg); }
+  .acc__a { padding: 0 24px 24px; font-size: var(--fs-small); line-height: 1.6; max-width: 46rem; }
+  .acc__item { transition: background-color .5s cubic-bezier(.16,1,.3,1), color .4s; }
+  .acc__item::details-content { block-size: 0; overflow: clip; transition: block-size .55s cubic-bezier(.16,1,.3,1), content-visibility .55s allow-discrete; }
+  .acc__item[open]::details-content { block-size: auto; }
+  .acc__a p { transform: translateY(8px); opacity: 0; transition: transform .6s cubic-bezier(.16,1,.3,1) .05s, opacity .5s .05s; }
+  .acc__item[open] .acc__a p { transform: none; opacity: 1; }
+  .acc__q h3 { transition: transform .45s cubic-bezier(.16,1,.3,1); }
+  .acc__item:not([open]) .acc__q:hover h3 { transform: translateX(6px); }
+  .acc__item[open] { background: var(--brand); color: var(--white); }
+  .acc__item[open] .acc__q { padding-bottom: 12px; }
+  .acc__item[open] .acc__a { color: var(--on-brand-muted); }
+  .acc__item[open] .acc__icon::before { transform: rotate(45deg); }
+  .acc__item[open] .acc__icon::after { transform: rotate(135deg); }
+  .acc__item:not([open]) .acc__q:hover { background: var(--cream); }
+  @media (prefers-reduced-motion: reduce) { .acc__a p { opacity: 1; transform: none; } }
+  @media (max-width: 600px) { .acc__q, .acc__a { padding-left: var(--card-x-m); padding-right: var(--card-x-m); } }   /* unified mobile card inset */
+</style>

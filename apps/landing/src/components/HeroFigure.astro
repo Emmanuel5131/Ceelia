@@ -1,0 +1,31 @@
+---
+/**
+ * A stick figure for the hero story, drawn in local coordinates around its head and then moved and scaled. The kind says who it
+ * is: the operator has a solid head, Celia a halo and a magnifying glass, the lawyer a tie and a briefcase, the judge no legs
+ * (the bench hides them). The figure draws itself in once the story is on, starting at `delay`.
+ */
+const props = Astro.props as { kind: 'victim' | 'operator' | 'celia' | 'lawyer' | 'judge'; x: number; y: number; delay: number; dur?: number; arms?: 'down' | 'up'; scale?: number };
+const scale = props.scale ?? 1.05;
+const body = props.kind === 'judge' ? 'M0 11V50' : 'M0 11V44M-14 68L0 44L14 68';
+const arms = props.kind === 'celia' ? 'M-17 38L0 25L17 12' : props.arms === 'up' ? 'M-17 8L0 25L17 8' : 'M-17 38L0 25L17 38';
+---
+<g class="bd__f" style={`--d:${props.delay.toFixed(2)}s;--dur:${props.dur ?? 0.6}s`} transform={`translate(${props.x} ${props.y}) scale(${scale})`}>
+  <circle class:list={['bd__fp', props.kind === 'operator' ? 'bd__fp--solid' : 'bd__fp--head']} r="11" pathLength="1" />
+  {props.kind === 'celia' && <circle class="bd__fp bd__fp--halo" r="17" pathLength="1" />}
+  <path class="bd__fp" d={body} pathLength="1" />
+  <path class="bd__fp" d={arms} pathLength="1" />
+  {props.kind === 'celia' && <circle class="bd__fp" cx="25" cy="6" r="9" pathLength="1" />}
+  {props.kind === 'celia' && <path class="bd__fp" d="M31 12L38 19" pathLength="1" />}
+  {props.kind === 'lawyer' && <path class="bd__fp bd__fp--fill" d="M0 14L-3.5 22L0 36L3.5 22Z" />}
+  {props.kind === 'lawyer' && <rect class="bd__fp" x="-34" y="38" width="22" height="15" rx="2" pathLength="1" />}
+</g>
+<style is:global>
+  .bd .bd__f { --ease: cubic-bezier(.65, 0, .35, 1); }
+  .bd .bd__fp { fill: none; stroke: var(--brand); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
+  .bd .bd__fp--head { fill: var(--white); }
+  .bd .bd__fp--solid { fill: var(--brand); }
+  .bd .bd__fp--halo { stroke-width: 1.4; stroke-opacity: .45; }
+  .bd .bd__fp--fill { fill: var(--brand); stroke: none; stroke-dasharray: none; }
+  .bd.on .bd__fp { animation: bd-draw calc(var(--dur) * var(--slow)) var(--ease) calc(var(--d) * var(--slow)) both; }
+  .bd.on .bd__fp--fill { animation: bd-fade calc(var(--dur) * var(--slow)) ease calc(var(--d) * var(--slow)) both; }
+</style>

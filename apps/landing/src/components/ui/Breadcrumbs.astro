@@ -1,0 +1,20 @@
+---
+export interface Props { items: { name: string; href?: string }[]; back?: { label: string; href: string } }
+const { items, back } = Astro.props;
+---
+<nav class="crumbs" aria-label="Breadcrumb">
+  {back && <a class="crumbs__back" href={back.href}><span aria-hidden="true">←</span>&nbsp; {back.label}</a>}
+  <ol role="list">
+    {items.map((it, i) => (
+      <li>{it.href && i < items.length - 1 ? <a href={it.href}>{it.name}</a> : <span aria-current="page">{it.name}</span>}</li>
+    ))}
+  </ol>
+</nav>
+<style>
+  .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 32px; font-size: var(--fs-body); }
+  .crumbs__back { font-weight: 500; }
+  .crumbs__back:hover, .crumbs a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  ol { display: flex; flex-wrap: wrap; gap: 8px; color: var(--brand-ink); }
+  li + li::before { content: '/'; margin-right: 8px; }
+  [aria-current] { color: var(--brand); font-weight: 500; }
+</style>

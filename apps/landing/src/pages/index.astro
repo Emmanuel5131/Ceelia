@@ -1,0 +1,42 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import SectionHero from '../components/SectionHero.astro';
+import SectionProcess from '../components/SectionProcess.astro';
+import SectionAudience from '../components/SectionAudience.astro';
+import SectionCollective from '../components/SectionCollective.astro';
+import SectionCaseBank from '../components/SectionCaseBank.astro';
+import SectionServices from '../components/SectionServices.astro';
+// import SectionVerificationLog from '../components/SectionVerificationLog.astro'; // hidden for now
+import SectionFAQ from '../components/SectionFAQ.astro';
+import SectionCta from '../components/SectionCta.astro';
+import Footer from '../components/Footer.astro';
+import { site } from '../data/site';
+import { services, faqs } from '../data/home';
+import { graph, organization, website, webPage, serviceCatalog, faqPage } from '../lib/schema';
+
+const title = `${site.name} · ${site.tagline}`;
+const description = site.description;
+const jsonLd = graph(
+  organization(),
+  website(),
+  webPage({ path: '/', title, description }),
+  serviceCatalog(services),
+  faqPage('/', faqs),
+);
+---
+<Layout title={title} description={description} jsonLd={jsonLd}>
+  <Header />
+  <main id="main" tabindex="-1">
+    <SectionHero />
+    <SectionProcess />
+    <SectionAudience />
+    <SectionCollective />
+    <SectionCaseBank />
+    <SectionServices />
+    {/* <SectionVerificationLog /> is hidden for now; jurisdictions live on /jurisdictions/ */}
+    <SectionFAQ items={faqs} />
+    <SectionCta />
+  </main>
+  <Footer />
+</Layout>
