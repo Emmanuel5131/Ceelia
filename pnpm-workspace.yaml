@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+
+# pnpm 10 skips dependency install scripts unless they are listed here
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@sentry/cli'
+  - '@swc/core'
+  - esbuild
+  - lefthook
+  - sharp
