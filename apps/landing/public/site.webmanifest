@@ -1,0 +1,16 @@
+{
+  "name": "Celia",
+  "short_name": "Celia",
+  "description": "Onchain claim verification and evidence service.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F1B2D",
+  "theme_color": "#0F1B2D",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,342 @@
+---
+import HeroCaption from './HeroCaption.astro';
+import HeroFigure from './HeroFigure.astro';
+import HeroTag from './HeroTag.astro';
+/**
+ * Hero backdrop, stick-figure version: the whole story in five frames, then rested, faded and replayed. Each frame is its own
+ * picture: it fades in, and is gone before the next one fades in. A single caption names the step that is playing; name tags say
+ * who each actor is, and the speech bubbles and "!" marks carry the rest.
+ *   frame 1  1  a hooded operator promises 10% a week      2  victims pay in, then are asked for a fee to withdraw
+ *   frame 2  3  the money moves out through a mixer and is cashed out at an exchange
+ *   frame 3  4  Celia's case bank holds the wallets of those defrauded      5  and the evidence next to them
+ *   frame 4  6  Celia connects the case bank to lawyers and law firms          7  they start with wallets and evidence listed
+ *   frame 5  8  a lawyer or firm runs the case in court      9  together, victims hold the platform accountable
+ * Words name actions, never people or intent. Seal red is for the seal and the verdict only. The story is an illustration, and
+ * says so. A small script restarts the animation (class `on` on the svg) after a pause and fades it out between runs; CSS does
+ * the rest: every element animates in with its own delay (--d) and duration (--dur), measured from the start of the run.
+ * Elements rest in their finished state (only the last frame shows), so the reduced-motion and no-script views are never half
+ * drawn. The viewBox is 1600 × 960.
+ */
+type P = [number, number];
+const d = (pts: P[]) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('');
+const sty = (dl: number, dur?: number) => `--d:${dl.toFixed(2)}s${dur ? `;--dur:${dur}s` : ''}`;
+const ride = (dl: number, dur: number, path: P[]) => `${sty(dl, dur)};offset-path:path('${d(path)}')`;
+
+const dots: P[] = [];
+for (let y = 0; y < 12; y++) for (let x = 0; x < 20; x++) dots.push([x * 80 + 40, y * 80 + 40]);
+
+const LINE = 500;
+const SHRINK = 1, PIVOT: P = [1560, 520]; // the whole story is drawn at full size, then scaled down about the right edge to leave room for the copy
+const FADE = 0.3;
+const SLOW = 2.2; // everything below is written in seconds of the base story; the svg stretches it by this factor
+const LENGTHS = [3.8, 2.0, 3.4, 3.4, 3.8];
+const TOTAL = LENGTHS.reduce((sum, n) => sum + n, 0);
+const STARTS = LENGTHS.map((_, i) => LENGTHS.slice(0, i).reduce((sum, n) => sum + n, 0));
+/** Seconds from the start of the run to `offset` seconds into `frame`. */
+const t = (frame: number, offset = 0) => STARTS[frame] + offset;
+const frameStyle = (frame: number) => `--fdl:${STARTS[frame].toFixed(2)}s;--fout:${(STARTS[frame] + LENGTHS[frame] - FADE).toFixed(2)}s`;
+
+const captions: [string, number, number][] = [
+  ['1 · A new app promises 10% a week', t(0), 1.8],
+  ['2 · Victims pay in, then are asked for a fee to withdraw', t(0, 1.8), 2],
+  ['3 · The money moves out and is cashed out', t(1), 2],
+  ['4 · Celia’s case bank holds the wallets of those defrauded', t(2), 1.7],
+  ['5 · And the evidence next to them: the sealed chain proofs', t(2, 1.7), 1.7],
+  ['6 · Celia connects the case bank to lawyers and law firms', t(3), 1.7],
+  ['7 · They start with the wallets and evidence already listed', t(3, 1.7), 1.7],
+  ['8 · A lawyer or firm runs the case in court', t(4), 1.9],
+  ['9 · Case won: victims hold the platform accountable', t(4, 1.9), 1.9],
+];
+
+const victimsAt = (x: number): P[] => [[x, 360], [x, 460], [x, 560]];
+const hand = (v: P): P => [v[0] + 20, v[1] + 42];
+const building = (x: number, cy = LINE) => ({ roof: `M${x - 64} ${cy - 22}L${x} ${cy - 68}L${x + 64} ${cy - 22}Z`, bodyX: x - 55, bodyY: cy - 22 });
+
+// frame 1: the promise, the deposits, the gate
+const victims = victimsAt(860);
+const operator: P = [1120, 300];
+const gateX = 985;
+const app: P = [1120, LINE];
+
+// frame 2: the same app and operator, now on the left, with the mixer and the exchange across the stage
+const app2: P = [940, LINE];
+const operator2: P = [940, 300];
+const mixer: P = [1220, LINE];
+const exchange: P = [1500, LINE];
+const strands: P[][] = [[mixer, [1360, 430], exchange], [mixer, exchange], [mixer, [1360, 570], exchange]];
+
+// frame 3: Celia's case bank, with the victims who joined, the possible ones, and the proofs
+const claimants = victimsAt(880);
+const bank = { x: 1080, y: 300, w: 460, h: 310 };
+const rows: [string, boolean][] = [['0x7a3f…e91c', true], ['0x19cd…04b2', true], ['0xb6e0…7f35', true], ['0x52a8…c1d9', false], ['0x93de…5a07', false]];
+const rowY = (i: number) => 372 + i * 46;
+const proofs = ['funding trail', 'cohort vs baseline', 'sealed hash', 'certificate'];
+const celia: P = [1310, 664];
+
+// frame 4: the case bank connected to lawyers and law firms
+const hub = { x: 840, y: 400, w: 190, h: 200 };
+const targets: [number, string, 'lawyer' | 'firm'][] = [[320, 'lawyer', 'lawyer'], [520, 'law firm', 'firm'], [700, 'lawyer', 'lawyer']];
+const TX = 1360;
+
+// frame 5: a lawyer runs the case, and more victims join
+const lawyer5: P = [1080, 420];
+const bench = { x: 1380, y: 470, w: 170, h: 76 };
+const judge: P = [bench.x + bench.w / 2, 410];
+const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
+---
+<svg class="bd" viewBox="0 0 1600 960" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false" style={`--slow:${SLOW}`} data-cycle={Math.round((TOTAL * SLOW + 3) * 1000)}>
+  <!-- the dot grid, always on, under the story so it never runs through a tag -->
+  <g class="bd__dots">
+    {dots.map(([x, y]) => <circle class="bd__dot" cx={x} cy={y} r="2.8" />)}
+  </g>
+  <g class="bd__scenes">
+    <g transform={`translate(${PIVOT[0]} ${PIVOT[1]}) scale(${SHRINK}) translate(${-PIVOT[0]} ${-PIVOT[1]})`}>
+    {captions.map(([text, delay, dur], i) => <HeroCaption text={text} x={820} y={196} delay={delay} dur={dur || undefined} last={i === captions.length - 1} />)}
+    <HeroTag text="illustrative example" x={1560} y={846} delay={0.3} anchor="end" />
+
+    <!-- frame 1: the promise, the deposits, the gate -->
+    <g class="bd__frame" style={frameStyle(0)}>
+      <HeroFigure kind="operator" x={operator[0]} y={operator[1]} delay={t(0)} dur={0.7} />
+      <HeroTag text="operator" x={operator[0]} y={410} delay={t(0, 0.8)} anchor="mid" />
+      <g class="bd__fade" style={sty(t(0, 0.1), 0.5)}>
+        <rect class="bd__box" x={app[0] - 50} y={LINE - 38} width="100" height="76" rx="6" />
+        <text class="bd__glyph" x={app[0]} y={LINE + 7}>+10%</text>
+      </g>
+      <g class="bd__tmp" style={sty(t(0, 0.3), 1.7)}>
+        <rect class="bd__box" x="1170" y="236" width="190" height="52" rx="10" />
+        <path class="bd__box bd__tail" d="M1186 288L1146 318L1214 288Z" />
+        <text class="bd__say" x="1186" y="270">10% a week!</text>
+      </g>
+
+      {victims.map((v, i) => (
+        <g class="bd__fig" style={sty(t(0, 1.6 + i * 0.1), 0.6)} transform={`translate(${v[0]} ${v[1]}) scale(1.05)`}>
+          <circle class="bd__draw bd__head" r="11" pathLength="1" />
+          <path class="bd__draw" d="M0 11V44M-14 68L0 44L14 68" pathLength="1" />
+          <path class="bd__draw bd__arms-down" style={`--dur:${(t(0, 3.0) - t(0, 1.6 + i * 0.1)).toFixed(2)}s`} d="M-17 38L0 25L17 38" pathLength="1" />
+          <path class="bd__arms-up" style={`--d:${t(0, 3.0 + i * 0.05).toFixed(2)}s`} d="M-17 8L0 25L17 8" />
+          <text class="bd__bang" style={sty(t(0, 3.1 + i * 0.05), 0.3)} x="32" y="2">!</text>
+        </g>
+      ))}
+      <HeroTag text="victims" x={victims[1][0]} y={672} delay={t(0, 1.9)} anchor="mid" />
+      {victims.map((v, i) => <path class="bd__edge bd__edge--thin" style={sty(t(0, 1.8 + i * 0.1), 0.4)} d={d([hand(v), [app[0] - 50, LINE]])} pathLength="1" />)}
+      {victims.map((v, i) => <path class="bd__comet" style={sty(t(0, 1.9 + i * 0.12), 0.8)} d={d([hand(v), [app[0] - 50, LINE]])} pathLength="1" />)}
+      <circle class="bd__pulse" style={sty(t(0, 2.6), 0.9)} cx={app[0]} cy={app[1]} r="70" />
+      <circle class="bd__pulse" style={sty(t(0, 2.8), 0.9)} cx={app[0]} cy={app[1]} r="70" />
+
+      <path class="bd__edge bd__edge--thick" style={sty(t(0, 2.9), 0.35)} d={d([[gateX, 340], [gateX, 660]])} pathLength="1" />
+      <path class="bd__comet bd__comet--stop" style={sty(t(0, 3.0), 0.4)} d={d([[app[0] - 50, LINE], [gateX + 6, LINE]])} pathLength="1" />
+      <g class="bd__tmp" style={sty(t(0, 3.0), 0.7)}>
+        <rect class="bd__box" x="1170" y="236" width="290" height="52" rx="10" />
+        <path class="bd__box bd__tail" d="M1186 288L1146 318L1214 288Z" />
+        <text class="bd__say" x="1186" y="270">pay a fee to withdraw</text>
+      </g>
+    </g>
+
+    <!-- frame 2: the money moves out and is cashed out -->
+    <g class="bd__frame" style={frameStyle(1)}>
+      <g class="bd__vanish" style={sty(t(1, 0.3))}>
+        <HeroFigure kind="operator" x={operator2[0]} y={operator2[1]} delay={t(1)} dur={0.3} />
+      </g>
+      <g class="bd__fade" style={sty(t(1), 0.3)}>
+        <rect class="bd__box" x={app2[0] - 50} y={LINE - 38} width="100" height="76" rx="6" />
+        <text class="bd__glyph" x={app2[0]} y={LINE + 7}>+10%</text>
+      </g>
+      <path class="bd__edge bd__edge--thick" style={sty(t(1, 0.1), 0.5)} d={d([[app2[0] + 50, LINE], mixer])} pathLength="1" />
+      <g class="bd__fade" style={sty(t(1, 0.3), 0.3)}>
+        <circle class="bd__box" cx={mixer[0]} cy={mixer[1]} r="54" />
+        <circle class="bd__spin" cx={mixer[0]} cy={mixer[1]} r="32" />
+      </g>
+      <HeroTag text="mixer" x={mixer[0]} y={mixer[1] + 96} delay={t(1, 0.5)} anchor="mid" />
+      <circle class="bd__packet" style={ride(t(1, 0.2), 0.7, [[app2[0] + 50, LINE], mixer])} r="10" />
+
+      {strands.map((s, i) => <path class="bd__edge" style={sty(t(1, 0.8 + i * 0.05), 0.5)} d={d(s)} pathLength="1" />)}
+      <g class="bd__fade" style={sty(t(1, 0.9), 0.3)}>
+        <path class="bd__box" d={building(exchange[0]).roof} />
+        <rect class="bd__box" x={building(exchange[0]).bodyX} y="478" width="110" height="64" />
+      </g>
+      <HeroTag text="exchange" x={exchange[0]} y={exchange[1] + 96} delay={t(1, 1.1)} anchor="mid" />
+      <circle class="bd__packet" style={ride(t(1, 1.0), 0.7, [mixer, exchange])} r="10" />
+      <circle class="bd__pulse" style={sty(t(1, 1.5), 0.6)} cx={exchange[0]} cy={exchange[1] + 12} r="80" />
+    </g>
+
+    <!-- frame 3: Celia's case bank -->
+    <g class="bd__frame" style={frameStyle(2)}>
+      {claimants.map((v, i) => <HeroFigure kind="victim" x={v[0]} y={v[1]} delay={t(2, i * 0.1)} dur={0.5} />)}
+      <HeroTag text="victims" x={claimants[1][0]} y={672} delay={t(2, 0.4)} anchor="mid" />
+      <rect class="bd__box" style={sty(t(2, 0.2), 0.4)} x={bank.x} y={bank.y} width={bank.w} height={bank.h} />
+      <HeroTag text="Celia · case bank" x={bank.x + bank.w / 2} y={bank.y - 10} delay={t(2, 0.5)} anchor="mid" />
+      <path class="bd__edge bd__edge--thin" style={sty(t(2, 0.5), 0.4)} d={d([[bank.x + 230, bank.y + 30], [bank.x + 230, bank.y + bank.h - 20]])} pathLength="1" />
+      <text class="bd__hdr" style={sty(t(2, 0.6), 0.4)} x={bank.x + 20} y={bank.y + 34}>wallets of the defrauded</text>
+      <text class="bd__hdr" style={sty(t(2, 1.9), 0.4)} x={bank.x + 250} y={bank.y + 34}>evidence</text>
+      {claimants.map((v, i) => <path class="bd__edge bd__edge--thin" style={sty(t(2, 0.6 + i * 0.1), 0.4)} d={d([hand(v), [bank.x, rowY(i)]])} pathLength="1" />)}
+      {claimants.map((v, i) => <path class="bd__comet" style={sty(t(2, 0.8 + i * 0.15), 0.7)} d={d([hand(v), [bank.x, rowY(i)]])} pathLength="1" />)}
+      {rows.map(([label, joined], i) => (
+        <g class="bd__fade" style={sty(joined ? t(2, 1.3 + i * 0.15) : t(2, 1.7 + (i - 3) * 0.15), 0.4)}>
+          <rect class={joined ? 'bd__tick' : 'bd__tick bd__tick--none'} x={bank.x + 20} y={rowY(i) - 9} width="18" height="18" />
+          {joined && <path class="bd__tickmark" d={`M${bank.x + 24} ${rowY(i)}l3.2 3.6 6-7`} />}
+          <text class="bd__rowtxt" x={bank.x + 48} y={rowY(i) + 5}>{label}</text>
+        </g>
+      ))}
+      {proofs.map((label, i) => (
+        <g class="bd__fade" style={sty(t(2, 2.1 + i * 0.28), 0.4)}>
+          <rect class="bd__tick" x={bank.x + 250} y={rowY(i) - 9} width="18" height="18" />
+          <path class="bd__tickmark" d={`M${bank.x + 254} ${rowY(i)}l3.2 3.6 6-7`} />
+          <text class="bd__rowtxt" x={bank.x + 278} y={rowY(i) + 5}>{label}</text>
+        </g>
+      ))}
+      <HeroFigure kind="celia" x={celia[0]} y={celia[1]} delay={t(2, 0.4)} dur={0.6} />
+      <HeroTag text="Celia" x={celia[0]} y={celia[1] + 118} delay={t(2, 0.9)} anchor="mid" />
+    </g>
+
+    <!-- frame 4: the case bank is connected to lawyers and law firms -->
+    <g class="bd__frame" style={frameStyle(3)}>
+      <rect class="bd__box" style={sty(t(3, 0.1), 0.4)} x={hub.x} y={hub.y} width={hub.w} height={hub.h} />
+      <HeroTag text="Celia · case bank" x={hub.x + hub.w / 2} y={hub.y - 10} delay={t(3, 0.3)} anchor="mid" />
+      {['wallets', 'evidence'].map((label, i) => (
+        <g class="bd__fade" style={sty(t(3, 0.4 + i * 0.2), 0.4)}>
+          <rect class="bd__tick" x={hub.x + 22} y={hub.y + 56 + i * 56 - 9} width="18" height="18" />
+          <path class="bd__tickmark" d={`M${hub.x + 26} ${hub.y + 56 + i * 56}l3.2 3.6 6-7`} />
+          <text class="bd__rowtxt" x={hub.x + 52} y={hub.y + 56 + i * 56 + 5}>{label}</text>
+        </g>
+      ))}
+      {targets.map(([y, , kind], i) => (
+        kind === 'lawyer'
+          ? <HeroFigure kind="lawyer" x={TX} y={y - 20} delay={t(3, 0.5 + i * 0.2)} dur={0.5} scale={0.85} />
+          : (
+            <g class="bd__fade" style={sty(t(3, 0.5 + i * 0.2), 0.4)}>
+              <path class="bd__box" d={building(TX, y).roof} />
+              <rect class="bd__box" x={building(TX, y).bodyX} y={building(TX, y).bodyY} width="110" height="64" />
+            </g>
+          )
+      ))}
+      {targets.map(([y, label], i) => <HeroTag text={label} x={TX} y={y + (label === 'law firm' ? 66 : 72)} delay={t(3, 0.7 + i * 0.2)} anchor="mid" />)}
+      {targets.map(([y], i) => <path class="bd__edge bd__edge--thin" style={sty(t(3, 0.9 + i * 0.15), 0.5)} d={d([[hub.x + hub.w, hub.y + hub.h / 2], [TX - 80, y]])} pathLength="1" />)}
+      {targets.map(([y], i) => <path class="bd__comet" style={sty(t(3, 1.1 + i * 0.2), 0.8)} d={d([[hub.x + hub.w, hub.y + hub.h / 2], [TX - 80, y]])} pathLength="1" />)}
+      {targets.map(([y], i) => (
+        <g class="bd__mark" style={sty(t(3, 2.0 + i * 0.25), 0.4)}>
+          <rect class="bd__tick" x={TX + 90} y={y - 10} width="20" height="20" /><path class="bd__tickmark" d={`M${TX + 95} ${y}l3.5 4 6.5-8`} />
+        </g>
+      ))}
+    </g>
+
+    <!-- frame 5: a lawyer runs the case, more victims join -->
+    <g class="bd__frame bd__frame--last" style={frameStyle(4)}>
+      <HeroFigure kind="lawyer" x={lawyer5[0]} y={lawyer5[1]} delay={t(4)} dur={0.5} />
+      <HeroTag text="lawyer or firm" x={lawyer5[0]} y={lawyer5[1] + 118} delay={t(4, 0.4)} anchor="mid" />
+      <HeroFigure kind="judge" x={judge[0]} y={judge[1]} delay={t(4, 0.3)} dur={0.5} />
+      <g class="bd__fade" style={sty(t(4, 0.4), 0.4)}>
+        <rect class="bd__box" x={bench.x} y={bench.y} width={bench.w} height={bench.h} />
+        <path class="bd__gavel" d={`M${bench.x + 14} ${bench.y + 8}L${bench.x + 40} ${bench.y - 18}`} />
+        <rect class="bd__gavel-head" x={bench.x + 34} y={bench.y - 34} width="30" height="14" transform={`rotate(-45 ${bench.x + 49} ${bench.y - 27})`} />
+      </g>
+      <HeroTag text="court" x={judge[0]} y={bench.y + bench.h + 40} delay={t(4, 0.6)} anchor="mid" />
+      <g class="bd__target" style={sty(t(4, 1.0), 0.4)}>
+        <rect class="bd__stamp" x={bench.x + 20} y={bench.y + 18} width="130" height="40" />
+        <text class="bd__stamp-text" x={bench.x + 85} y={bench.y + 45}>case won</text>
+      </g>
+      {crowd.map((v, i) => <HeroFigure kind="victim" x={v[0]} y={v[1]} delay={t(4, 2.1 + i * 0.12)} dur={0.4} arms="up" scale={0.7} />)}
+      <HeroTag text="victims, together" x={900} y={800} delay={t(4, 3.0)} />
+    </g>
+    </g>
+  </g>
+</svg>
+<script>
+  // Replay the story after a pause; stop while the hero is off screen or when the visitor prefers reduced motion.
+  const svg = document.querySelector<SVGSVGElement>('.bd');
+  if (svg && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const CYCLE = Number(svg.dataset.cycle), FADE = 800;
+    let timer = 0, reset = 0;
+    const replay = () => {
+      svg.classList.remove('on', 'out');
+      void svg.getBoundingClientRect(); // restart the animations
+      svg.classList.add('on');
+    };
+    const loop = () => { svg.classList.add('out'); reset = window.setTimeout(replay, FADE); };
+    const start = () => { if (!timer) { replay(); timer = window.setInterval(loop, CYCLE); } };
+    const stop = () => { window.clearInterval(timer); window.clearTimeout(reset); timer = 0; };
+    new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop())).observe(svg);
+  }
+</script>
+<style>
+  .bd { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .bd__dot { fill: var(--brand); fill-opacity: .5; }
+  /* the grid fades out behind the copy so the dots never sit on the letters */
+  .bd__dots { -webkit-mask-image: linear-gradient(90deg, rgb(0 0 0 / .18) 0%, rgb(0 0 0 / .18) 28%, #000 58%); mask-image: linear-gradient(90deg, rgb(0 0 0 / .18) 0%, rgb(0 0 0 / .18) 28%, #000 58%); }
+  .bd__scenes { transition: opacity .8s ease; }
+  .out .bd__scenes { opacity: 0; }
+
+  /* every element animates in with its own delay and duration once the story is on */
+  .on :is(.bd__edge, .bd__box, .bd__packet, .bd__block, .bd__open, .bd__comet, .bd__pulse, .bd__draw, .bd__fade, .bd__tmp, .bd__bang, .bd__arms-up, .bd__mark),
+  .on :global(.bd__cap),
+  .on :global(.bd__tag) { animation: var(--kf) calc(var(--dur) * var(--slow)) var(--ease) calc(var(--d) * var(--slow)) both; }
+  .on .bd__spin { animation: bd-spin calc(4s * var(--slow)) linear calc(var(--d) * var(--slow)) infinite; }
+  .on .bd__arms-down { animation: bd-arms calc(var(--dur) * var(--slow)) linear calc(var(--d) * var(--slow)) both; }
+  .on .bd__vanish { animation: bd-vanish calc(.3s * var(--slow)) ease calc(var(--d) * var(--slow)) both; }
+  .on .bd__scan { animation: bd-scan calc(var(--dur) * var(--slow)) ease-in-out calc(var(--d) * var(--slow)) both; }
+  .on .bd__frame { animation: bd-fade calc(.3s * var(--slow)) ease calc(var(--fdl) * var(--slow)) both, bd-vanish calc(.3s * var(--slow)) ease calc(var(--fout) * var(--slow)) forwards; }
+  .on .bd__frame--last { animation: bd-fade calc(.3s * var(--slow)) ease calc(var(--fdl) * var(--slow)) both; }
+
+  /* element kinds: which keyframes, how long, which easing. Resting state = finished state. */
+  /* each frame is hidden until its turn; only the last one shows in the finished state */
+  .bd__frame { opacity: 0; }
+  .bd__frame--last { opacity: 1; }
+  .bd__glyph--soft { fill-opacity: .6; }
+  .bd__fig { --d: 0s; --dur: .7s; --ease: cubic-bezier(.65, 0, .35, 1); }
+  .bd__draw, .bd__arms-down, .bd__arms-up { fill: none; stroke: var(--brand); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
+  .bd__draw { --kf: bd-draw; --dur: inherit; --ease: cubic-bezier(.65, 0, .35, 1); }
+  .bd__head { fill: var(--white); }
+  .bd__head--solid { fill: var(--brand); }
+  .bd__arms-down { opacity: 0; }
+  .bd__arms-up { --kf: bd-fade; --dur: .3s; --ease: ease; stroke-dasharray: none; }
+  .bd__bang { --kf: bd-pop; --dur: .4s; --ease: cubic-bezier(.34, 1.56, .64, 1); font-family: var(--font-mono); font-size: 26px; font-weight: 700; fill: var(--brand); text-anchor: middle; transform-box: fill-box; transform-origin: center; }
+  .bd__edge { --kf: bd-draw; --dur: 1.4s; --ease: cubic-bezier(.65, 0, .35, 1); fill: none; stroke: var(--brand); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-opacity: .85; }
+  .bd__edge--thin { stroke-opacity: .3; stroke-width: 1.4; }
+  .bd__edge--thick { stroke-width: 4; }
+  .bd__box { --kf: bd-fade; --dur: .8s; --ease: ease; fill: var(--white); stroke: var(--brand); stroke-width: 2; stroke-linejoin: round; }
+  .bd__fade { --kf: bd-fade; --dur: .6s; --ease: ease; }
+  .bd__fade .bd__box { animation: none !important; }
+  .bd__tmp .bd__box { animation: none !important; }
+  .bd__tmp { --kf: bd-tmp; --dur: 3s; --ease: ease; opacity: 0; }
+  .bd__mark { --kf: bd-pop; --dur: .4s; --ease: cubic-bezier(.34, 1.56, .64, 1); transform-box: fill-box; transform-origin: center; }
+  .bd__hdr { font-family: var(--font-mono); font-size: 13px; fill: var(--brand); fill-opacity: .6; }
+  .bd__rowtxt { font-family: var(--font-mono); font-size: 15px; font-weight: 500; fill: var(--brand); }
+  .bd__tick { fill: var(--brand); }
+  .bd__tick--none { fill: var(--white); stroke: var(--brand); stroke-width: 1.8; stroke-dasharray: 4 3; }
+  .bd__tickmark { fill: none; stroke: var(--white); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .bd__glyph { font-family: var(--font-mono); font-size: 20px; font-weight: 600; fill: var(--brand); text-anchor: middle; }
+  .bd__say { font-family: var(--font-mono); font-size: 20px; font-weight: 500; fill: var(--brand); }
+  .bd__packet { --kf: bd-packet; --dur: 2.2s; --ease: cubic-bezier(.45, 0, .55, 1); fill: var(--brand); offset-rotate: 0deg; opacity: 0; }
+  .bd__comet { --kf: bd-comet; --dur: 1s; --ease: cubic-bezier(.45, 0, .55, 1); fill: none; stroke: var(--brand); stroke-width: 6; stroke-linecap: round; stroke-dasharray: .09 2; opacity: 0; }
+  .bd__pulse { --kf: bd-pulse; --dur: 1.4s; --ease: cubic-bezier(.22, .61, .36, 1); fill: none; stroke: var(--brand); stroke-width: 1.6; transform-box: fill-box; transform-origin: center; opacity: 0; }
+  .bd__spin { fill: none; stroke: var(--brand); stroke-width: 2; stroke-dasharray: 9 8; transform-box: fill-box; transform-origin: center; }
+  .bd__block { --kf: bd-grow; --dur: 1.1s; --ease: cubic-bezier(.65, 0, .35, 1); fill: var(--brand); transform-box: fill-box; transform-origin: 50% 100%; }
+  .bd__block--seal { fill: var(--seal); }
+  .bd__packet--wallet { fill: var(--white); stroke: var(--brand); stroke-width: 2; }
+  .bd__packet--video { fill: var(--brand); }
+  .bd__packet--doc { fill: var(--white); stroke: var(--brand); stroke-width: 2; }
+  .bd__lens { fill: none; stroke: var(--brand); stroke-width: 3.2; stroke-linecap: round; }
+  .bd__gavel { fill: none; stroke: var(--brand); stroke-width: 4; stroke-linecap: round; }
+  .bd__gavel-head { fill: var(--brand); }
+  .bd__stamp { fill: var(--seal); }
+  .bd__stamp-text { font-family: var(--font-mono); font-size: 20px; font-weight: 600; fill: var(--white); text-anchor: middle; }
+  .bd__open { --kf: bd-fade; --dur: 1s; --ease: ease; fill: none; stroke: var(--brand); stroke-width: 2; stroke-dasharray: 7 6; stroke-opacity: .7; }
+
+  @keyframes bd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes bd-pop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes bd-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes bd-cap { 0% { opacity: 0; } 8% { opacity: 1; } 94% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes bd-tmp { 0% { opacity: 0; transform: translateY(8px); } 9% { opacity: 1; transform: none; } 90% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes bd-frame { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes bd-scan { from { transform: translateX(0); } to { transform: translateX(160px); } }
+  @keyframes bd-vanish { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes bd-arms { 0% { opacity: 1; stroke-dashoffset: 1; } 30% { stroke-dashoffset: 0; } 92% { opacity: 1; } 100% { opacity: 0; stroke-dashoffset: 0; } }
+  @keyframes bd-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes bd-packet { 0% { offset-distance: 0%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+  @keyframes bd-comet { 0% { stroke-dashoffset: .09; opacity: 1; } 90% { opacity: 1; } 100% { stroke-dashoffset: -1; opacity: 0; } }
+  @keyframes bd-pulse { 0% { transform: scale(.3); opacity: 0; } 15% { opacity: .5; } 100% { transform: scale(1.5); opacity: 0; } }
+  @keyframes bd-spin { to { transform: rotate(360deg); } }
+
+  /* phones: only the dot grid, the story would run behind the copy */
+  @media (max-width: 899.98px) { .bd__scenes { display: none; } .bd__dots { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .bd__scenes { display: none; } }
+</style>

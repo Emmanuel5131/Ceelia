@@ -1,0 +1,6 @@
+---
+export interface Props { paths: string; size?: number; viewBox?: number; stroke?: number; class?: string; label?: string }
+const { paths, size = 24, viewBox = 24, stroke = 1.6, class: cls, label } = Astro.props;
+---
+<svg class={cls} width={size} height={size} viewBox={`0 0 ${viewBox} ${viewBox}`} fill="none" stroke="currentColor" stroke-width={stroke}
+  aria-hidden={label ? undefined : 'true'} role={label ? 'img' : undefined} aria-label={label} focusable="false" set:html={paths} />

@@ -1,0 +1,134 @@
+---
+import HeroCaption from './HeroCaption.astro';
+/**
+ * Hero backdrop: an ink dot grid with one scam told in about ten seconds, then rested and replayed. It builds on a single line,
+ * one step at a time, and a single caption names the step that is playing:
+ *   1  a new app promises 10% a week        2  victims pay in             3  a gate drops: withdrawals blocked
+ *   4  the money moves out through a mixer  5  it is cashed out at an exchange
+ *   6  the victims' claims are pooled into one evidence file, sealed in red; intent stays an empty outline for the court
+ * Only the caption carries words, so the picture stays quiet. The captions name actions, never people or intent: the court
+ * decides intent. Seal red appears only on the sealed evidence file.
+ * A small script restarts the animation (class `on` on the svg) after a pause; CSS does the rest: every element animates in
+ * with its own delay (--d) and duration (--dur). Elements rest in their finished state, so the reduced-motion and no-script
+ * views are never half drawn. Grid units are 80px in a 1600 × 960 viewBox.
+ */
+const U = 80, OFF = 40, COLS = 20, ROWS = 12;
+const g = (n: number) => n * U + OFF;
+type P = [number, number];
+const d = (pts: P[]) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${g(x)} ${g(y)}`).join('');
+const sty = (dl: number, dur?: number) => `--d:${dl.toFixed(2)}s${dur ? `;--dur:${dur}s` : ''}`;
+const ride = (dl: number, dur: number, path: P[]) => `${sty(dl, dur)};offset-path:path('${d(path)}')`;
+
+const dots: P[] = [];
+for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) dots.push([x, y]);
+
+// the line everything happens on
+const ROW = 5.6, BOX = 72;
+const victims: P[] = [[11.6, ROW - 0.8], [11.6, ROW], [11.6, ROW + 0.8]];
+const GATE_X = 12.7;
+const gate: P[] = [[GATE_X, ROW - 0.9], [GATE_X, ROW + 0.9]];
+const app: P = [14, ROW];
+const mixer: P = [16.2, ROW];
+const exchange: P = [18.4, ROW];
+const appEdge: P = [app[0] - 0.45, ROW];
+const strands: P[][] = [[mixer, [17.3, ROW - 0.8], exchange], [mixer, exchange], [mixer, [17.3, ROW + 0.8], exchange]];
+const CAP: P = [g(11.4) - 14, g(3)];
+const SLOT = 1.7;
+const SCALE = 1.12, PIVOT: P = [1560, 560]; // the story is drawn on the grid, then scaled up about the right edge so it fills the half beside the copy
+const captions = ['1 · A new app promises 10% a week', '2 · Victims pay in', '3 · Withdrawals blocked', '4 · The money moves out through a mixer', '5 · It is cashed out at an exchange', '6 · Evidence filed · the court decides intent'];
+---
+<svg class="bd" viewBox={`0 0 ${COLS * U} ${ROWS * U}`} preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+  <g class="bd__scenes">
+    <g transform={`translate(${PIVOT[0]} ${PIVOT[1]}) scale(${SCALE}) translate(${-PIVOT[0]} ${-PIVOT[1]})`}>
+    {captions.map((text, i) => <HeroCaption text={text} x={CAP[0]} y={CAP[1]} delay={i * SLOT + 0.2} last={i === captions.length - 1} />)}
+
+    <!-- 1 · the app -->
+    <rect class="bd__box" style={sty(0.2, 0.6)} x={g(app[0]) - BOX / 2} y={g(ROW) - BOX / 2} width={BOX} height={BOX} />
+
+    <!-- 2 · victims pay in -->
+    {victims.map(([x, y], i) => <path class="bd__edge bd__edge--thin" style={sty(1.9 + i * 0.1, 0.7)} d={d([[x, y], appEdge])} pathLength="1" />)}
+    {victims.map(([x, y], i) => (
+      <g class="bd__target" style={sty(1.7 + i * 0.1, 0.5)}><circle cx={g(x)} cy={g(y)} r="15" class="bd__target-ring" /><circle cx={g(x)} cy={g(y)} r="3.6" class="bd__target-dot" /></g>
+    ))}
+    {victims.map(([x, y], i) => <circle class="bd__packet" style={ride(2.5 + i * 0.25, 0.9, [[x, y], appEdge])} r="6" />)}
+
+    <!-- 3 · the gate -->
+    <path class="bd__edge bd__edge--thick" style={sty(3.6, 0.5)} d={d(gate)} pathLength="1" />
+    <circle class="bd__packet" style={ride(4.1, 0.8, [appEdge, [GATE_X + 0.06, ROW]])} r="6" />
+
+    <!-- 4 · the money moves out -->
+    <path class="bd__edge bd__edge--thick" style={sty(5.2, 1.0)} d={d([[app[0] + 0.45, ROW], mixer])} pathLength="1" />
+    <circle class="bd__box" style={sty(5.6, 0.5)} cx={g(mixer[0])} cy={g(mixer[1])} r="40" />
+    <circle class="bd__packet" style={ride(5.6, 1.1, [[app[0] + 0.45, ROW], mixer])} r="8" />
+
+    <!-- 5 · cashed out -->
+    {strands.map((s, i) => <path class="bd__edge" style={sty(6.9 + i * 0.08, 0.8)} d={d(s)} pathLength="1" />)}
+    <rect class="bd__box" style={sty(7.4, 0.5)} x={g(exchange[0]) - BOX / 2} y={g(ROW) - BOX / 2} width={BOX} height={BOX} />
+    <circle class="bd__packet" style={ride(7.2, 1.2, [mixer, exchange])} r="8" />
+
+    <!-- 6 · the case -->
+    <rect class="bd__box" style={sty(8.6, 0.5)} x={g(11.6)} y={g(7.9)} width={3.6 * U} height={1.5 * U} />
+    <rect class="bd__block bd__block--seal" style={sty(9.0, 0.5)} x={g(14.2)} y={g(7.9)} width={U} height={U} />
+    <path class="bd__edge" style={sty(9.2, 0.4)} d={d([[15.2, 8.65], [16.4, 8.65]])} pathLength="1" />
+    <rect class="bd__open" style={sty(9.4, 0.5)} x={g(16.4)} y={g(7.9)} width={2 * U} height={1.5 * U} />
+    </g>
+  </g>
+
+  <!-- the dot grid, always on -->
+  <g class="bd__dots">
+    {dots.map(([x, y]) => <circle class="bd__dot" cx={g(x)} cy={g(y)} r="2.8" />)}
+  </g>
+</svg>
+<script>
+  // Replay the story after a pause; stop while the hero is off screen or when the visitor prefers reduced motion.
+  const svg = document.querySelector<SVGSVGElement>('.bd');
+  if (svg && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const CYCLE = 12500, FADE = 700;
+    let timer = 0, reset = 0;
+    const replay = () => {
+      svg.classList.remove('on', 'out');
+      void svg.getBoundingClientRect(); // restart the animations
+      svg.classList.add('on');
+    };
+    const loop = () => { svg.classList.add('out'); reset = window.setTimeout(replay, FADE); };
+    const start = () => { if (!timer) { replay(); timer = window.setInterval(loop, CYCLE); } };
+    const stop = () => { window.clearInterval(timer); window.clearTimeout(reset); timer = 0; };
+    new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop())).observe(svg);
+  }
+</script>
+<style>
+  .bd { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .bd__dot { fill: var(--brand); fill-opacity: .5; }
+  /* the grid fades out behind the copy so the dots never sit on the letters */
+  .bd__dots { -webkit-mask-image: linear-gradient(90deg, rgb(0 0 0 / .18) 0%, rgb(0 0 0 / .18) 28%, #000 58%); mask-image: linear-gradient(90deg, rgb(0 0 0 / .18) 0%, rgb(0 0 0 / .18) 28%, #000 58%); }
+  .bd__scenes { transition: opacity .7s ease; }
+  .out .bd__scenes { opacity: 0; }
+
+  /* every element animates in with its own delay and duration once the story is on */
+  .on :is(.bd__edge, .bd__box, .bd__packet, .bd__target, .bd__block, .bd__open),
+  .on :global(.bd__cap) { animation: var(--kf) var(--dur) var(--ease) var(--d) both; }
+
+  /* element kinds: which keyframes, how long, which easing. Resting state = finished state. */
+  .bd__edge { --kf: bd-draw; --dur: 1.4s; --ease: cubic-bezier(.65, 0, .35, 1); fill: none; stroke: var(--brand); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-opacity: .85; }
+  .bd__edge--thin { stroke-opacity: .4; stroke-width: 1.3; }
+  .bd__edge--thick { stroke-width: 3.4; }
+  .bd__box { --kf: bd-fade; --dur: .8s; --ease: ease; fill: var(--white); stroke: var(--brand); stroke-width: 1.8; }
+  .bd__packet { --kf: bd-packet; --dur: 2.2s; --ease: cubic-bezier(.45, 0, .55, 1); fill: var(--brand); offset-rotate: 0deg; opacity: 0; }
+  .bd__target { --kf: bd-pop; --dur: .7s; --ease: cubic-bezier(.34, 1.56, .64, 1); transform-box: fill-box; transform-origin: center; }
+  .bd__target-ring { fill: var(--white); stroke: var(--brand); stroke-width: 1.5; }
+  .bd__target-dot { fill: var(--brand); }
+  .bd__block { --kf: bd-grow; --dur: 1.1s; --ease: cubic-bezier(.65, 0, .35, 1); fill: var(--brand); transform-box: fill-box; transform-origin: 50% 100%; }
+  .bd__block--seal { fill: var(--seal); }
+  .bd__open { --kf: bd-fade; --dur: 1s; --ease: ease; fill: none; stroke: var(--brand); stroke-width: 1.8; stroke-dasharray: 6 5; stroke-opacity: .7; }
+
+  @keyframes bd-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes bd-pop { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes bd-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes bd-cap { 0% { opacity: 0; } 8% { opacity: 1; } 94% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes bd-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes bd-packet { 0% { offset-distance: 0%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+
+  /* phones: only the dot grid, the story would run behind the copy */
+  @media (max-width: 899.98px) { .bd__scenes { display: none; } .bd__dots { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .bd__scenes { display: none; } }
+</style>

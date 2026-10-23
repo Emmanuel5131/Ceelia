@@ -1,0 +1,14 @@
+---
+/** Celia wordmark, inlined from the traced vector (src/lib/logoPaths.mjs). Letters follow currentColor so the header can invert them. */
+import { site } from '../data/site';
+import { logoViewBox, logoLetters, logoAccentPath, logoAccent } from '../lib/logoPaths.mjs';
+const { height = 30, class: cls, ...rest } = Astro.props as { height?: number; class?: string; [attr: string]: unknown };
+const [, , w, h] = logoViewBox.split(' ').map(Number);
+---
+<svg class:list={['logo', cls]} viewBox={logoViewBox} width={Math.round((height * w) / h)} height={height} role="img" aria-label={site.name} focusable="false" {...rest}>
+  <path fill="currentColor" fill-rule="evenodd" d={logoLetters} />
+  <path fill={logoAccent} d={logoAccentPath} />
+</svg>
+<style>
+  .logo { display: block; height: auto; width: auto; max-height: var(--logo-h, 30px); }
+</style>

@@ -1,0 +1,113 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import { jurisdictions, jurisdictionsIntro, ruleModes } from '../data/home';
+export interface Props { page?: boolean }
+const { page = false } = Astro.props;
+const all = jurisdictions.flatMap((r) => r.items);
+const count = (id: string) => all.filter((l) => l.mode === id).length;
+const modeTitle = Object.fromEntries(ruleModes.map((m) => [m.id, m.title]));
+const stats = [[String(all.length), 'jurisdictions'], [String(jurisdictions.length), 'regions'], [String(ruleModes.length), 'kinds of rule']];
+---
+<section id="jurisdictions" class:list={['section container', page && 'is-page']} aria-labelledby="jurisdictions-title">
+  <SectionHeader id="jurisdictions-title" level={page ? 'h1' : 'h2'} eyebrow={page ? 'Jurisdictions' : undefined} intro={page} align="split" leadBelow title={jurisdictionsIntro.title} lead={jurisdictionsIntro.lead} />
+
+  <dl class="stats">
+    {stats.map(([n, label]) => <div class="stat"><dt>{label}</dt><dd>{n}</dd></div>)}
+  </dl>
+
+  <ol class="modes" role="list" aria-label="The four kinds of rule">
+    {ruleModes.map((m, i) => (
+      <li class="mode">
+        <p class="mode__n">0{i + 1}<span>{count(m.id)} jurisdictions</span></p>
+        <h3 class="mode__title">{m.title}</h3>
+        <p class="mode__text">{m.text}</p>
+        <p class="mode__answer"><span>Celia</span>{m.answer}</p>
+      </li>
+    ))}
+  </ol>
+
+  <p class="howto"><strong>{jurisdictionsIntro.promise}</strong> Each row is a country, the law that governs electronic records there, and which of the four kinds of rule it is. Only Nigeria is built to its rule so far. Every other row is mapped and waiting for counsel to review it.</p>
+
+  <div class="browse" data-tabs>
+    <div class="tabs" role="tablist" aria-label="Region" hidden>
+      {jurisdictions.map((r, i) => <button class="tab" role="tab" type="button" id={`tab-${i}`} aria-controls={`panel-${i}`} aria-selected={i === 0 ? 'true' : 'false'}>{r.region}<span>{r.items.length}</span></button>)}
+    </div>
+    {jurisdictions.map((r, i) => (
+      <div class="panel" role="tabpanel" id={`panel-${i}`} aria-labelledby={`tab-${i}`}>
+        <h3 class="panel__name">{r.region}</h3>
+        <ul class="laws" role="list">
+          {r.items.map((l) => (
+            <li class="law">
+              <p class="law__country"><span class="law__code" aria-hidden="true">{l.code}</span>{l.country}</p>
+              <p class="law__rule">{l.law}</p>
+              <p class:list={['law__mode', l.built && 'is-built']}>{modeTitle[l.mode]}{l.built ? ' · built to this rule' : ''}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+  <p class="foot">{jurisdictionsIntro.note}</p>
+</section>
+<script>
+  // Show one region at a time. Without the script every region is listed.
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('.tab'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('.panel'));
+    const show = (n: number) => {
+      tabs.forEach((t, i) => t.setAttribute('aria-selected', String(i === n)));
+      panels.forEach((p, i) => { p.hidden = i !== n; });
+    };
+    root.querySelector<HTMLElement>('.tabs')!.hidden = false;
+    root.classList.add('is-tabbed');
+    tabs.forEach((t, i) => t.addEventListener('click', () => show(i)));
+    show(0);
+  });
+</script>
+<style>
+  .section { border-top: 1px solid var(--line); }
+  .is-page { display: grid; gap: 40px; border-top: 0; padding-top: clamp(40px, 6vw, 96px); }
+  .is-page .stats { margin-top: 0; }
+  .stats { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-top: 32px; border-top: 1px solid var(--line); }
+  .stat dt { order: 2; font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--brand-ink); }
+  .stat { display: flex; flex-direction: column; gap: 8px; }
+  .stat dd { margin: 0; font-family: var(--font-display); font-size: clamp(3rem, 8vw, 6.5rem); line-height: .95; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+
+  .modes { margin-top: 56px; display: grid; gap: 0; border-top: 1px solid var(--line); }
+  .mode { padding: 28px 0; border-bottom: 1px solid var(--line); display: grid; gap: 8px; align-content: start; }
+  .mode__n { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--brand-ink); }
+  .mode__title { font-size: var(--fs-h3); line-height: var(--lh-tight); letter-spacing: var(--track-l); }
+  .mode__text { font-size: .95rem; line-height: 1.55; color: var(--brand-ink); max-width: 30ch; }
+  .mode__answer { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); font-size: .95rem; line-height: 1.55; max-width: 30ch; }
+  .mode__answer span { display: block; margin-bottom: 4px; font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--brand-ink); }
+  .howto strong { color: var(--brand); font-weight: 500; }
+  .howto { margin-top: 56px; max-width: 46rem; font-size: var(--fs-small); line-height: 1.55; color: var(--brand-ink); }
+  @media (min-width: 900px) {
+    .modes { grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
+    .mode { padding: 28px 24px 32px; border-bottom: 0; border-left: 1px solid var(--line); }
+    .mode:first-child { padding-left: 0; border-left: 0; }
+  }
+
+  .browse { margin-top: 24px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+  .tab { appearance: none; background: transparent; border: 1px solid var(--line); color: var(--brand); padding: 10px 16px; font: inherit; font-size: var(--fs-small); font-weight: 500; cursor: pointer; display: inline-flex; gap: 10px; align-items: baseline; transition: background-color .25s, color .25s, border-color .25s; }
+  .tab span { font-family: var(--font-mono); font-size: var(--fs-xs); opacity: .6; }
+  .tab:hover { border-color: var(--brand); }
+  .tab[aria-selected='true'] { background: var(--brand); border-color: var(--brand); color: var(--white); }
+  .panel[hidden] { display: none; }
+  .panel + .panel { margin-top: 56px; }
+  .is-tabbed .panel__name { display: none; }
+  .panel__name { font-family: var(--font-mono); font-size: var(--fs-small); font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--brand-ink); padding-bottom: 12px; }
+  .laws { display: grid; border-top: 1px solid var(--line); }
+  .law { display: grid; gap: 4px; padding: 18px 0; border-bottom: 1px solid var(--line-soft); }
+  .law__country { display: flex; align-items: center; gap: 12px; font-weight: 500; }
+  .law__code { width: 32px; font-family: var(--font-mono); font-size: .75rem; color: var(--brand-ink); font-weight: 400; }
+  .law__rule { font-size: .95rem; color: var(--brand-ink); }
+  .law__mode { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--brand-ink); }
+  .law__mode.is-built { color: var(--brand); font-weight: 500; }
+  @media (min-width: 900px) {
+    .law { grid-template-columns: 1.1fr 1.6fr .8fr; gap: 24px; align-items: baseline; }
+    .law__mode { text-align: right; }
+  }
+  .foot { margin-top: 32px; font-size: var(--fs-small); color: var(--brand-ink); max-width: 46rem; }
+</style>

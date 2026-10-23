@@ -1,0 +1,195 @@
+---
+import { heroReport as r, heroFile as file, type TrailKind, type TrailLinkKind } from '../data/home';
+/**
+ * Hero visual: one sample evidence file, pooled from five victims' submissions and played as one flow (a beat per caption:
+ * nodes appear, links draw, packets run), then split into what the chain confirms and what it does not; intent is left to the
+ * court. It starts after the loader and plays once.
+ * State is shown by shape (filled = confirmed, dashed = not confirmed, hollow = left to the court). Seal red marks only the
+ * thing a finding points at, and the seal. Without JS or with reduced motion the finished file is shown. Desktop only:
+ * on phones the copy takes the whole hero. The viewBox is 500 × 200, so 11px text stays 11px.
+ */
+type P = [number, number];
+const Y = 112;
+const BEAT = 1.9, FIRST = 0.2;
+const start = (beat: number) => FIRST + beat * BEAT;
+const victims: P[] = [-40, -20, 0, 20, 40].map((dy) => [36, Y + dy]);
+const HALF: Record<TrailKind, number> = { box: 9, seal: 9, open: 9, ring: 16, wallets: 24 };
+const sty = (d: number, extra = '') => `--d:${d.toFixed(2)}s${extra}`;
+const ride = (d: number, dur: number, path: string) => `${sty(d)};--dur:${dur}s;offset-path:path('${path}')`;
+const pts = (a: P, b: P) => `M${a[0]} ${a[1]}L${b[0]} ${b[1]}`;
+const curve = (a: P, b: P, bend: number) => `M${a[0]} ${a[1]}Q${(a[0] + b[0]) / 2} ${Y + bend} ${b[0]} ${b[1]}`;
+const wallets: P[] = [[0, 0], ...[0, 1, 2, 3, 4, 5].map((k): P => [14 * Math.cos((k * Math.PI) / 3), 14 * Math.sin((k * Math.PI) / 3)])];
+
+/** The drawn paths of one link: from the edge of one node to the edge of the other. */
+const paths = (link: { from: string; to: string; strands?: number }): string[] => {
+  const node = (id: string) => file.nodes.find((n) => n.id === id)!;
+  const to = node(link.to);
+  if (link.from === 'victims') return victims.map((v) => pts([v[0] + 7, v[1]], [to.x - HALF[to.kind] - 2, Y]));
+  const from = node(link.from);
+  const dir = from.x < to.x ? 1 : -1;
+  const a: P = [from.x + dir * (HALF[from.kind] + 2), Y], b: P = [to.x - dir * (HALF[to.kind] + 2), Y];
+  return link.strands === 3 ? [curve(a, b, -46), pts(a, b), curve(a, b, 46)] : [pts(a, b)];
+};
+const kindClass: Record<TrailLinkKind, string> = { in: 'e--in', out: 'e--out', thin: 'e--out e--thin', rely: 'e--rely' };
+---
+<figure class="rep" aria-label={`${r.sample}: ${file.title}`}>
+  <div class="rep__sheet">
+    {(() => {
+      const last = file.beats.length; // overall beat index of the last story beat (beat 0 is the submissions)
+      const seal = start(last) + 2.2;
+      return (
+        <section class="scn" aria-label={file.title}>
+          <header class="rep__head">
+            <span class="rep__label">{r.sample} · {file.title}</span>
+            <span class="rep__status a" style={sty(seal)}><i aria-hidden="true"></i>{r.pooled} · {r.status}</span>
+          </header>
+
+          <svg class="map" viewBox="0 0 500 200" role="img" aria-hidden="true" focusable="false">
+            <defs><pattern id="rep-dots" width="25" height="25" patternUnits="userSpaceOnUse"><circle class="dot" cx="12.5" cy="12.5" r="1.2" /></pattern></defs>
+            <rect class="dots a" x="0" y="28" width="500" height="172" fill="url(#rep-dots)" style={sty(0)} />
+            <text class="cap a" x="0" y="14" style={`${sty(start(0))};--dur:${BEAT}s`}>1 · {r.submit}</text>
+            {file.beats.map((b, k) => <text class:list={['cap', 'a', k === last - 1 && 'cap--last']} x="0" y="14" style={`${sty(start(k + 1))};--dur:${BEAT}s`}>{k + 2} · {b.caption}</text>)}
+
+            <!-- beat 0 · five victims submit -->
+            {victims.map(([x, y], k) => <circle class="w a" cx={x} cy={y} r="5" style={sty(start(0) + 0.2 + k * 0.12)} />)}
+            <text class="lbl a" x="36" y={Y + 66} text-anchor="middle" style={sty(start(0) + 0.6)}>{r.victims}</text>
+
+            {file.beats.map((b, k) => {
+              const t0 = start(k + 1);
+              return (
+                <g>
+                  {(b.nodes ?? []).map((id) => {
+                    const n = file.nodes.find((m) => m.id === id)!;
+                    return (
+                      <g>
+                        {n.kind === 'wallets'
+                          ? <g class="a pop" style={sty(t0 + 0.1)}>{wallets.map(([dx, dy]) => <circle class="wf" cx={n.x + dx} cy={Y + dy} r="4.4" />)}</g>
+                          : n.kind === 'ring'
+                            ? <g class="a pop" style={sty(t0 + 0.1)}><circle class="node node--seal-ring" cx={n.x} cy={Y} r="16" /><circle class="mixdot" cx={n.x} cy={Y} r="4" /></g>
+                            : <rect class:list={['a', 'pop', 'node', n.kind === 'box' ? 'node--box' : n.kind === 'seal' ? 'node--seal' : 'node--open']} x={n.x - 9} y={Y - 9} width="18" height="18" style={sty(t0 + 0.1)} />}
+                        <text class="lbl a" x={n.x} y={Y + HALF[n.kind] + 20} text-anchor="middle" style={sty(t0 + 0.3)}>{n.label}</text>
+                      </g>
+                    );
+                  })}
+                  {b.bubble && (() => {
+                    const n = file.nodes.find((m) => m.id === b.bubble!.node)!;
+                    const w = b.bubble.text.length * 6.4 + 18;
+                    return <g class="a promise" style={sty(t0 + 0.3)}><rect x={n.x - w / 2} y={Y - HALF[n.kind] - 40} width={w} height="22" /><text x={n.x} y={Y - HALF[n.kind] - 25} text-anchor="middle">{b.bubble.text}</text></g>;
+                  })()}
+                  {b.gate && <line class="gate a" x1="106" y1={Y - 56} x2="106" y2={Y + 56} style={sty(t0 + 0.2)} />}
+                  {(b.links ?? []).map((l) => {
+                    const ps = paths(l);
+                    return (
+                      <g>
+                        {ps.map((d, k2) => <path class:list={['e', 'a', 'draw', kindClass[l.kind]]} d={d} pathLength="1" style={sty(t0 + 0.4 + k2 * 0.1)} />)}
+                        {l.kind !== 'rely' && ps.map((d, k2) => <circle class:list={['packet', 'a', 'ride', l.kind === 'in' ? 'packet--in' : 'packet--out']} r="2.4" style={ride(t0 + 0.9 + k2 * 0.25, 1.3, d)} />)}
+                      </g>
+                    );
+                  })}
+                </g>
+              );
+            })}
+          </svg>
+
+          <div class="rep__lists">
+            <div class="rep__group">
+              <p class="rep__k a" style={sty(start(file.confirmed[0].beat))}>{r.confirmedLabel}</p>
+              <ul class="rep__list" role="list">
+                {file.confirmed.map((c) => <li class="a" style={sty(start(c.beat) + 0.6)}><span class="sq sq--yes" aria-hidden="true"></span>{c.text}</li>)}
+              </ul>
+            </div>
+            <div class="rep__group">
+              <p class="rep__k a" style={sty(start(last) + 1.6)}>{r.notConfirmedLabel}</p>
+              <ul class="rep__list" role="list">
+                {file.notConfirmed.map((t, k) => <li class="a" style={sty(start(last) + 1.9 + k * 0.25)}><span class="sq sq--no" aria-hidden="true"></span>{t}</li>)}
+              </ul>
+            </div>
+          </div>
+
+          <p class="rep__intent a" style={sty(seal - 0.3)}><span class="rep__k">{r.intentLabel}</span><span class="rep__open"><span class="sq sq--open" aria-hidden="true"></span>{r.intent}</span></p>
+          <span class="rep__stamp a stamp" style={sty(seal + 0.1)}>{r.status}</span>
+        </section>
+      );
+    })()}
+  </div>
+</figure>
+<script>
+  const scn = document.querySelector<HTMLElement>('.scn');
+  if (scn && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const go = () => scn.classList.add('play');
+    ((window as unknown as { __zxReveal?: Promise<void> }).__zxReveal ?? Promise.resolve()).then(go);
+    setTimeout(go, 7000);
+  }
+</script>
+<style>
+  .rep { display: none; margin: 0; pointer-events: auto; }
+  @media (min-width: 1180px) {
+    .rep { display: block; position: absolute; top: 50%; right: clamp(24px, 5vw, 112px); width: clamp(440px, 35vw, 520px); translate: 0 -50%; }
+  }
+  /* a second sheet behind, offset, so it reads as a file and not a card */
+  .rep__sheet { position: relative; display: grid; gap: 14px; padding: 24px 24px 22px; background: var(--cream); border: 1px solid var(--line); }
+  .rep__sheet::before { content: ''; position: absolute; inset: 10px -10px -10px 10px; z-index: -1; border: 1px solid var(--line-soft); background: var(--white); }
+  .scn { display: grid; gap: 14px; }
+
+  .rep__head { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .rep__label, .rep__k, .rep__status { font-family: var(--font-mono); font-size: var(--fs-xs); letter-spacing: .06em; text-transform: uppercase; }
+  .rep__label, .rep__k { color: var(--brand-ink); }
+  .rep__status { display: inline-flex; align-items: center; gap: 8px; color: var(--seal); font-weight: 500; }
+  .rep__status i { width: 8px; height: 8px; background: var(--seal); }
+
+  /* the flow */
+  .map { display: block; width: 100%; height: auto; overflow: visible; }
+  .dot { fill: var(--brand); fill-opacity: .3; }
+  .cap { fill: var(--brand); font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+  .lbl { fill: var(--brand-ink); font-family: var(--font-mono); font-size: 11px; }
+  .w { fill: var(--white); stroke: var(--brand); stroke-width: 1.4; }
+  .wf { fill: var(--brand); }
+  .node--box { fill: var(--brand); }
+  .node--seal { fill: var(--seal); }
+  .node--open, .node--seal-ring { fill: var(--white); stroke: var(--seal); stroke-width: 2; }
+  .mixdot { fill: var(--seal); }
+  .pop { transform-box: fill-box; transform-origin: center; }
+  .promise rect { fill: var(--white); stroke: var(--brand); stroke-width: 1.2; }
+  .promise text { fill: var(--brand); font-family: var(--font-mono); font-size: 11px; }
+  .e { fill: none; stroke-linecap: round; stroke-dasharray: 1; }
+  .e--in { stroke: var(--brand); stroke-width: 1.2; stroke-opacity: .5; }
+  .e--out { stroke: var(--seal); stroke-width: 3; stroke-opacity: .85; }
+  .e--thin { stroke-width: 1.4; stroke-opacity: .6; }
+  .e--rely { stroke: var(--brand); stroke-width: 1.2; stroke-opacity: .5; stroke-dasharray: .03 .03; }
+  .gate { stroke: var(--brand); stroke-width: 4; stroke-linecap: round; }
+  .packet { fill: var(--brand); offset-rotate: 0deg; }
+  .packet--out { fill: var(--seal); }
+
+  .rep__lists { display: grid; gap: 12px; align-content: start; min-height: 190px; }
+  .rep__group { display: grid; gap: 6px; }
+  .rep__list { display: grid; gap: 6px; }
+  .rep__list li { display: flex; gap: 12px; align-items: baseline; font-size: .9375rem; line-height: 1.4; color: var(--brand); }
+  .sq { flex: none; width: 9px; height: 9px; translate: 0 -1px; }
+  .sq--yes { background: var(--brand); }
+  .sq--no { border: 1.5px dashed var(--brand); }
+  .sq--open { display: inline-block; border: 1.5px solid var(--brand-ink); margin-right: 10px; }
+  .rep__intent { display: flex; align-items: baseline; gap: 16px; margin: 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: .9375rem; color: var(--brand-ink); }
+  .rep__intent .rep__k { width: 4.5rem; flex: none; }
+  .rep__stamp { position: absolute; right: 0; bottom: 0; font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--seal); border: 1.5px solid var(--seal); padding: 4px 10px; rotate: -4deg; }
+  .scn { position: relative; }
+
+  /* entrance: plays once per file, after the loader. Every element has its own delay (--d) from the start of the run. */
+  :global(.motion) .scn:not(.play) .a { opacity: 0; }
+  .scn.play .a { animation: rep-in .8s cubic-bezier(.16, 1, .3, 1) var(--d) both; }
+  .scn.play :is(.w, .gate) { animation: rep-fade .5s ease var(--d) both; }
+  .scn.play .gate { animation: rep-gate .7s cubic-bezier(.5, 0, .2, 1.4) var(--d) both; }
+  .scn.play .pop { animation: rep-pop .6s cubic-bezier(.34, 1.4, .64, 1) var(--d) both; }
+  .scn.play .draw { animation: rep-draw .9s cubic-bezier(.65, 0, .35, 1) var(--d) both; }
+  .scn.play .ride { animation: rep-ride var(--dur) cubic-bezier(.45, 0, .55, 1) var(--d) both; }
+  .scn.play .cap { animation: rep-cap var(--dur) ease var(--d) both; }
+  .scn.play .cap--last { animation: rep-fade .6s ease var(--d) both; }
+  .scn.play .stamp { animation: rep-stamp .45s cubic-bezier(.2, .9, .3, 1) var(--d) both; }
+  @keyframes rep-in { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+  @keyframes rep-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes rep-pop { from { opacity: 0; scale: 0; } to { opacity: 1; scale: 1; } }
+  @keyframes rep-draw { from { opacity: 1; stroke-dashoffset: 1; } to { opacity: 1; stroke-dashoffset: 0; } }
+  @keyframes rep-gate { from { opacity: 0; translate: 0 -26px; } to { opacity: 1; translate: 0 0; } }
+  @keyframes rep-cap { 0% { opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes rep-ride { 0% { offset-distance: 0%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+  @keyframes rep-stamp { from { opacity: 0; scale: 1.5; } to { opacity: 1; scale: 1; } }
+</style>

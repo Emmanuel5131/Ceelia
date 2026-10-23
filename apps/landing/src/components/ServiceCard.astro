@@ -1,0 +1,46 @@
+---
+/** One service card for the scrolling track: the blueprint art on top, then the service name, what it delivers, and its tags. */
+import TagList from './ui/TagList.astro';
+import { graphicSrc, serviceArtSize } from '../lib/graphics/registry';
+import { pad2 } from '../lib/text';
+import type { ServiceArt } from '../data/home';
+export interface Props { title: string; text: string; art: ServiceArt; kicker: string; tags: string[]; id: string; index: number }
+const { title, text, art, id, kicker, index, tags } = Astro.props;
+const { W, H } = serviceArtSize();
+---
+<article class="svc" id={id}>
+  <div class="svc__frame" data-spot style={`--ar:${W + 16} / ${H + 12}`}>
+    <span class="svc__grid" aria-hidden="true"></span>
+    <!-- a cached SVG file, swapped for live inline SVG just before it scrolls into view (src/scripts/artMotion.ts) -->
+    <img class="svc__art" data-inline-art={art} src={graphicSrc(`service-${art}`)} width={W + 16} height={H + 12} alt="" loading="lazy" decoding="async" />
+  </div>
+  <div class="svc__meta">
+    <h3 class="svc__name"><span class="svc__label">{title}</span></h3>
+    <p class="svc__cat">{pad2(index)} · {kicker}</p>
+  </div>
+  <p class="svc__text">{text}</p>
+  <TagList tags={tags} tone="light" label={`${title} deliverables`} />
+</article>
+<style>
+  .svc { position: relative; display: grid; gap: 16px; align-content: start; }
+  .svc__frame { position: relative; aspect-ratio: var(--ar); overflow: hidden; background: var(--cream); isolation: isolate; }
+  /* the same masked blueprint grid as the rest of the site; the art's own grid is hidden */
+  .svc__grid {
+    --g: rgb(15 27 45 / .07); --step: 16px; --lw: 1px;
+    position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(90deg, var(--g) var(--lw), transparent var(--lw)), linear-gradient(180deg, var(--g) var(--lw), transparent var(--lw));
+    background-size: var(--step) var(--step); background-position: center 6px;
+    -webkit-mask-image: radial-gradient(80% 90% at 50% 45%, #000 40%, transparent 90%); mask-image: radial-gradient(80% 90% at 50% 45%, #000 40%, transparent 90%);
+  }
+  @media (min-resolution: 2dppx) { .svc__grid { --lw: .5px; } }
+  .svc__art :global(.bp-grid) { display: none; }
+  .svc__art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: transform 1.1s cubic-bezier(.16,1,.3,1); }
+  .svc:hover .svc__art { transform: scale(1.04); }
+  .svc__label { display: inline-block; transition: transform .6s cubic-bezier(.16,1,.3,1); }
+  .svc:hover .svc__label { transform: translateX(8px); }
+  .svc__meta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; padding: 0 12px; }
+  .svc__name { font-size: clamp(1.6rem, 2.4vw, 2.1875rem); letter-spacing: var(--track-l); word-spacing: var(--words-l); line-height: 1.2; }
+  .svc__cat { text-align: right; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--brand-ink); white-space: nowrap; }
+  .svc__text { padding: 0 12px; font-size: .95rem; line-height: 1.55; color: var(--brand-ink); max-width: 56ch; }
+  .svc :global(.tags) { padding: 0 12px; }
+</style>

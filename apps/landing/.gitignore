@@ -1,0 +1,23 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# env
+.env
+.env.*
+!.env.example
+
+# motion reel workspace (large media, separate pipeline)
+videos/
+
+# local tooling / OS
+.claude/
+.DS_Store
+*.log
+
+# wrangler local state
+.wrangler/
+.dev.vars*

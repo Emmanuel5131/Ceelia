@@ -1,0 +1,50 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import { caseBank } from '../data/home';
+---
+<section id="cases" class="section container" aria-labelledby="cases-title">
+  <SectionHeader id="cases-title" align="split" leadBelow title={caseBank.title} lead={caseBank.lead} />
+  <p class="note" data-reveal><span class="note__tag">Sample cases</span> Figures are illustrative.</p>
+  <ul class="grid" role="list" data-stagger data-each=".12">
+    {caseBank.cases.map((c) => (
+      <li class="case">
+        <header class="case__head">
+          <h3 class="case__name">{c.name}</h3>
+          <p class="case__scheme">Alleged scheme · {c.scheme}</p>
+        </header>
+        <dl class="case__stats">
+          <div><dt>Claimants</dt><dd>{c.claimants}</dd></div>
+          <div><dt>Reported losses</dt><dd>{c.loss}</dd></div>
+        </dl>
+        <ul class="case__juris" role="list" aria-label="Jurisdictions">{c.jurisdictions.map((j) => <li>{j}</li>)}</ul>
+        <div class="case__stage" aria-label={`Stage: ${caseBank.stages[c.stage - 1]}`}>
+          <ol class="steps" role="list">
+            {caseBank.stages.map((_, i) => <li class:list={['step', i < c.stage && 'is-done']}></li>)}
+          </ol>
+          <p class="stage__label">{caseBank.stages[c.stage - 1]}</p>
+        </div>
+      </li>
+    ))}
+  </ul>
+</section>
+<style>
+  .note { margin-top: 32px; font-size: var(--fs-small); color: var(--brand-ink); display: flex; gap: 12px; align-items: center; }
+  .note__tag { border: 1px dashed var(--brand); color: var(--brand); padding: 2px 8px; font-weight: 500; font-size: var(--fs-xs); }
+  .grid { margin-top: 32px; display: grid; gap: 16px; }
+  .case { background: var(--cream); padding: 32px; display: grid; gap: 24px; align-content: start; transition: transform .7s cubic-bezier(.16,1,.3,1); }
+  .case:hover { transform: translateY(-6px); }
+  .case__name { font-size: var(--fs-h4); line-height: var(--lh-tight); letter-spacing: var(--track-m); }
+  .case__scheme { margin-top: 8px; font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--brand-ink); }
+  .case__stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-block: 20px; border-block: 1px solid var(--line); }
+  .case__stats dt { font-size: var(--fs-xs); color: var(--brand-ink); }
+  .case__stats dd { margin: 4px 0 0; font-family: var(--font-display); font-size: var(--fs-h4); line-height: 1; font-variant-numeric: tabular-nums; }
+  .case__juris { display: flex; flex-wrap: wrap; gap: 8px; }
+  .case__juris li { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 500; padding: 2px 8px; min-height: 24px; display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--white); }
+  .case__stage { display: grid; gap: 12px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .step { height: 6px; background: var(--white); border: 1px solid var(--line); }
+  .step.is-done { background: var(--brand); border-color: var(--brand); }
+  .stage__label { font-size: var(--fs-small); font-weight: 500; }
+  @media (min-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 600px) { .case { padding-left: var(--card-x-m); padding-right: var(--card-x-m); } }
+</style>

@@ -1,0 +1,219 @@
+---
+/**
+ * First-visit loader (once per browser session, never with reduced motion, never without JS).
+ *
+ * 1. Enter (pure CSS, runs from first paint): the x mark draws itself as a hairline, fills, and the accent arm snaps in.
+ * 2. Progress: a rolling 000→100 counter driven by real readiness (DOM, fonts, above-the-fold images, motion JS, load).
+ * 3. Exit: chrome fades, the mark is copied onto a canvas and the whole brand field dissolves into an
+ *    ordered (Bayer) dither that ripples outward from the mark, with a lit pixel front, while the page intro plays beneath.
+ *
+ * Performance: the page renders underneath from the first paint (LCP is not delayed by the overlay), the loader is
+ * ~4 KB inline, and Layout's head script hard-stops it after 6 s if anything goes wrong.
+ */
+import { markPaths, MARK_ACCENT } from '../lib/brandMark.mjs';
+import { site } from '../data/site';
+
+const now = new Date();
+const build = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`;
+const log = ['Committing method', 'Running tests', 'Checking thresholds', 'Sealing report'];
+const digits = (n: number) => Array.from({ length: n }, (_, i) => i);
+---
+<div class="zl" id="zl" aria-hidden="true" data-accent={MARK_ACCENT}>
+  <canvas class="zl__px"></canvas>
+  <div class="zl__ui">
+    <div class="zl__grid"></div>
+    <p class="zl__c zl__c--tl"><span>{site.name}</span><span>Build {build}</span></p>
+    <p class="zl__c zl__c--tr"><span>Sealed onchain</span><span data-zl-clock>UTC</span></p>
+
+    <div class="zl__mark">
+      <svg viewBox="0 0 100 100" width="100" height="100">
+        <path class="zl__s" d={markPaths.diag} pathLength="1" />
+        <path class="zl__s zl__s--2" d={markPaths.leg} pathLength="1" />
+        <path class="zl__arm" d={markPaths.arm} />
+      </svg>
+      <span class="zl__bar"><i></i></span>
+    </div>
+
+    <ol class="zl__log">
+      {log.map((t, i) => (
+        <li style={`--i:${i}`} data-at={[0.12, 0.38, 0.64, 0.9][i]}><span class="n">{String(i + 1).padStart(2, '0')}</span><span class="t">{t}</span><span class="dots"></span><span class="k">OK</span></li>
+      ))}
+    </ol>
+
+    <p class="zl__count">
+      <span class="zl__d" data-d="2"><span>{digits(2).map((d) => <span>{d}</span>)}</span></span><span class="zl__d" data-d="1"><span>{digits(10).map((d) => <span>{d}</span>)}</span></span><span class="zl__d" data-d="0"><span>{digits(10).map((d) => <span>{d}</span>)}</span></span><span class="zl__pct">%</span>
+    </p>
+  </div>
+</div>
+
+<script is:inline>
+(function () {
+  var d = document, w = window, root = d.documentElement, el = d.getElementById('zl');
+  if (!el) return;
+  if (!root.classList.contains('zx-loading')) { el.remove(); return; }
+
+  var t0 = performance.now(), MIN = 1350, MAX = 4200;
+  var bar = el.querySelector('.zl__bar i'), cols = el.querySelectorAll('.zl__d'), lines = el.querySelectorAll('.zl__log li');
+  var clock = el.querySelector('[data-zl-clock]');
+  try { clock.textContent = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date()) + ' UTC'; } catch (e) {}
+
+  /* ---------- real readiness ---------- */
+  var fonts = 0, dom = 0, loaded = 0, imgs = [], imgDone = 0;
+  if (d.fonts && d.fonts.ready) d.fonts.ready.then(function () { fonts = 1; }); else fonts = 1;
+  function onDom() {
+    dom = 1;
+    imgs = Array.prototype.filter.call(d.images, function (im) { return im.loading !== 'lazy' && im.getBoundingClientRect().top < innerHeight * 1.2; });
+    imgs.forEach(function (im) { if (im.complete) imgDone++; else { var f = function () { imgDone++; }; im.addEventListener('load', f, { once: true }); im.addEventListener('error', f, { once: true }); } });
+  }
+  if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', onDom, { once: true }); else onDom();
+  if (d.readyState === 'complete') loaded = 1; else w.addEventListener('load', function () { loaded = 1; }, { once: true });
+  function real() {
+    var im = imgs.length ? Math.min(1, imgDone / imgs.length) : dom;
+    return 0.2 * dom + 0.15 * fonts + 0.3 * im + 0.15 * (w.__zxMotion ? 1 : 0) + 0.2 * loaded;
+  }
+
+  /* ---------- counter + log ---------- */
+  var cur = 0, shown = -1, exiting = false, GLYPHS = '/\\<>_-+=#01';
+  function setCount(v) {
+    var n = Math.round(v * 100); if (n === shown) return; shown = n;
+    cols[0].firstChild.style.transform = 'translateY(' + -Math.floor(n / 100) + 'em)';
+    cols[1].firstChild.style.transform = 'translateY(' + -(Math.floor(n / 10) % 10) + 'em)';
+    cols[2].firstChild.style.transform = 'translateY(' + -(n % 10) + 'em)';
+    bar.style.transform = 'scaleX(' + v + ')';
+    for (var i = 0; i < lines.length; i++) {
+      var li = lines[i];
+      if (!li.classList.contains('is-on') && v >= +li.dataset.at) { li.classList.add('is-on'); scramble(li.querySelector('.t')); if (i) lines[i - 1].classList.add('is-ok'); }
+    }
+    if (n === 100 && lines.length) lines[lines.length - 1].classList.add('is-ok');
+  }
+  function scramble(node) {
+    var txt = node.textContent, s = performance.now(), dur = 420;
+    (function f() {
+      var k = Math.min(1, (performance.now() - s) / dur), r = Math.floor(k * txt.length), out = txt.slice(0, r);
+      for (var i = r; i < txt.length; i++) out += txt[i] === ' ' ? ' ' : GLYPHS[(Math.random() * GLYPHS.length) | 0];
+      node.textContent = out; if (k < 1) requestAnimationFrame(f);
+    })();
+  }
+  function tick() {
+    if (exiting) return;
+    var t = performance.now() - t0, cap = 1 - Math.pow(1 - Math.min(1, t / MIN), 2.2);
+    var target = t > MAX ? 1 : Math.min(real(), cap);
+    cur += (target - cur) * 0.14; if (target === 1 && cur > 0.996) cur = 1;
+    setCount(cur);
+    if (cur === 1) { exiting = true; setTimeout(exit, 220); return; }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  /* ---------- exit: ordered-dither dissolve ---------- */
+  var BAYER = [0,32,8,40,2,34,10,42,48,16,56,24,50,18,58,26,12,44,4,36,14,46,6,38,60,28,52,20,62,30,54,22,3,35,11,43,1,33,9,41,51,19,59,27,49,17,57,25,15,47,7,39,13,45,5,37,63,31,55,23,61,29,53,21];
+  function exit() {
+    el.classList.add('is-out');
+    setTimeout(function () { if (w.__zxRevealNow) w.__zxRevealNow(); }, 260);
+    setTimeout(dissolve, 340);
+  }
+  function dissolve() {
+    var cv = el.querySelector('canvas'), ctx = cv.getContext('2d');
+    var dpr = Math.min(2, w.devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+    cv.width = Math.ceil(W * dpr); cv.height = Math.ceil(H * dpr);
+    var c = Math.max(4, Math.round((W < 700 ? 9 : 12) * dpr)), nx = Math.ceil(cv.width / c), ny = Math.ceil(cv.height / c);
+    var brand = getComputedStyle(el).backgroundColor, accent = el.dataset.accent;
+
+    // Paint the current frame (brand field + the mark exactly where the DOM mark sits), then swap DOM for canvas.
+    ctx.fillStyle = brand; ctx.fillRect(0, 0, cv.width, cv.height);
+    var svg = el.querySelector('.zl__mark svg'), r = svg.getBoundingClientRect(), paths = svg.querySelectorAll('path');
+    ctx.save(); ctx.setTransform(dpr * r.width / 100, 0, 0, dpr * r.height / 100, dpr * r.left, dpr * r.top);
+    ctx.fillStyle = '#fff'; ctx.fill(new Path2D(paths[0].getAttribute('d'))); ctx.fill(new Path2D(paths[1].getAttribute('d')));
+    ctx.fillStyle = accent; ctx.fill(new Path2D(paths[2].getAttribute('d'))); ctx.restore();
+    el.classList.add('is-px'); root.classList.remove('zx-loading');
+
+    // Threshold per cell: distance from the mark (the ripple) blended with an 8x8 Bayer matrix (the dither).
+    var ox = (r.left + r.width / 2) * dpr, oy = (r.top + r.height / 2) * dpr;
+    var far = Math.max(Math.hypot(ox, oy), Math.hypot(cv.width - ox, oy), Math.hypot(ox, cv.height - oy), Math.hypot(cv.width - ox, cv.height - oy));
+    var n = nx * ny, th = new Float32Array(n), st = new Uint8Array(n), i, x, y;
+    for (y = 0; y < ny; y++) for (x = 0; x < nx; x++) {
+      i = y * nx + x;
+      th[i] = 0.68 * (Math.hypot((x + 0.5) * c - ox, (y + 0.5) * c - oy) / far) + 0.32 * (BAYER[(y & 7) * 8 + (x & 7)] / 63);
+    }
+    var EMBER = 0.07, SPARK = 0.022, DUR = 1150, s = performance.now();
+    function ease(k) { return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }
+    (function frame() {
+      var k = Math.min(1, (performance.now() - s) / DUR), p = -EMBER + ease(k) * (1 + EMBER + 0.01);
+      for (i = 0; i < n; i++) {
+        var v = th[i], next = v < p ? 3 : v < p + SPARK ? 2 : v < p + EMBER ? 1 : 0;
+        if (next === st[i]) continue;
+        st[i] = next; x = (i % nx) * c; y = ((i / nx) | 0) * c;
+        if (next === 3) ctx.clearRect(x, y, c, c);
+        else { ctx.fillStyle = next === 2 ? accent : '#7F8DA3'; ctx.fillRect(x, y, c, c); }
+      }
+      if (k < 1) requestAnimationFrame(frame);
+      else { el.remove(); try { sessionStorage.setItem('zx-loaded', '1'); } catch (e) {} dispatchEvent(new Event('zx:loaded')); }
+    })();
+  }
+})();
+</script>
+
+<style>
+  .zl { position: fixed; inset: 0; z-index: 2000; display: none; overflow: hidden; background: var(--brand); color: var(--white); font-family: var(--font-body); contain: strict; cursor: progress; }
+  /* scrollbar-gutter keeps the width identical when the scrollbar returns, so unlocking scroll causes no layout shift */
+  :global(html.zx-loading) { overflow: hidden; scrollbar-gutter: stable; }
+  :global(html.zx-loading) .zl, .zl.is-px { display: block; }
+  .zl.is-px { background: transparent; pointer-events: none; cursor: auto; }
+  .zl.is-px .zl__ui { visibility: hidden; }
+  .zl__px { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .zl__ui { position: absolute; inset: 0; }
+
+  .zl__grid {
+    position: absolute; inset: 0; opacity: 0; animation: zl-fade 1.4s ease-out .05s forwards;
+    background-image: linear-gradient(rgb(255 255 255 / .075) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / .075) 1px, transparent 1px);
+    background-size: 64px 64px; background-position: calc(50% + 32px) calc(50% + 32px);
+    mask-image: radial-gradient(closest-side, #000, transparent); -webkit-mask-image: radial-gradient(closest-side, #000, transparent);
+  }
+
+  /* corners */
+  .zl__c { position: absolute; top: calc(var(--gutter) * 2); display: grid; gap: 8px; font-size: var(--fs-xs); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--on-brand-muted); opacity: 0; animation: zl-rise .9s cubic-bezier(.16,1,.3,1) .2s forwards; }
+  .zl__c span:last-child { opacity: .7; font-variant-numeric: tabular-nums; }
+  .zl__c--tl { left: calc(var(--gutter) * 2); }
+  .zl__c--tr { right: calc(var(--gutter) * 2); text-align: right; animation-delay: .3s; }
+
+  /* mark */
+  .zl__mark { position: absolute; left: 50%; top: 50%; width: clamp(76px, 8vw, 112px); translate: -50% -50%; }
+  .zl__mark svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .zl__s { fill: #fff; fill-opacity: 0; stroke: #fff; stroke-width: .7; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linejoin: round;
+    animation: zl-draw 1s cubic-bezier(.65,0,.35,1) .08s forwards, zl-fill .55s ease .82s forwards; }
+  .zl__s--2 { animation-delay: .26s, .96s; }
+  .zl__arm { fill: var(--zl-accent, #991F38); transform-box: fill-box; transform-origin: 0 0; opacity: 0; animation: zl-arm .75s cubic-bezier(.34,1.56,.64,1) 1.02s forwards; }
+  .zl__bar { position: absolute; left: 50%; top: calc(100% + clamp(28px, 3.4vw, 44px)); width: clamp(120px, 13vw, 176px); height: 1px; translate: -50% 0; background: rgb(255 255 255 / .22); overflow: hidden; opacity: 0; animation: zl-fade .6s ease .35s forwards; }
+  .zl__bar i { display: block; height: 100%; background: #fff; transform: scaleX(0); transform-origin: 0 50%; transition: transform .5s cubic-bezier(.16,1,.3,1); }
+
+  /* build log */
+  .zl__log { position: absolute; left: calc(var(--gutter) * 2); bottom: calc(var(--gutter) * 2); width: clamp(240px, 24vw, 320px); margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: var(--fs-xs); font-weight: 500; letter-spacing: .02em; }
+  .zl__log li { display: flex; align-items: baseline; gap: 8px; opacity: 0; translate: 0 8px; transition: opacity .4s, translate .6s cubic-bezier(.16,1,.3,1); }
+  .zl__log li.is-on { opacity: 1; translate: 0 0; }
+  .zl__log .n { color: var(--on-brand-muted); opacity: .6; }
+  .zl__log .dots { flex: 1; border-bottom: 1px dotted rgb(255 255 255 / .35); translate: 0 -3px; }
+  .zl__log .k { color: #CDD8EA; opacity: 0; transition: opacity .3s; }
+  .zl__log li.is-ok .k { opacity: 1; }
+
+  /* rolling counter */
+  .zl__count { position: absolute; right: calc(var(--gutter) * 2); bottom: calc(var(--gutter) * 1.4); margin: 0; display: flex; align-items: flex-start; font-family: var(--font-display); font-size: clamp(64px, 10.5vw, 164px); line-height: 1; letter-spacing: -.05em; font-variant-numeric: tabular-nums; opacity: 0; animation: zl-rise 1s cubic-bezier(.16,1,.3,1) .25s forwards; }
+  .zl__d { display: inline-block; height: 1em; overflow: hidden; }
+  .zl__d > span { display: flex; flex-direction: column; transition: transform .7s cubic-bezier(.16,1,.3,1); }
+  .zl__d > span > span { height: 1em; }
+  .zl__pct { font-size: .26em; letter-spacing: 0; margin: .18em 0 0 .12em; color: var(--on-brand-muted); }
+
+  /* exit: chrome steps away, the mark stays for the canvas dissolve */
+  .zl.is-out :is(.zl__c, .zl__log li, .zl__count, .zl__bar, .zl__grid) { opacity: 0 !important; translate: 0 -10px; transition: opacity .3s, translate .5s cubic-bezier(.16,1,.3,1); animation: none; }
+  .zl.is-out .zl__log li { transition-delay: calc(var(--i) * 30ms); }
+
+  @keyframes zl-fade { to { opacity: 1; } }
+  @keyframes zl-rise { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
+  @keyframes zl-draw { to { stroke-dashoffset: 0; } }
+  @keyframes zl-fill { to { fill-opacity: 1; stroke-opacity: 0; } }
+  @keyframes zl-arm { from { opacity: 0; transform: translate(-22%, 30%) scale(.35); } to { opacity: 1; transform: none; } }
+
+  @media (max-width: 560px) {
+    .zl__log { display: none; }
+    .zl__count { left: calc(var(--gutter) * 2); right: auto; }
+  }
+</style>

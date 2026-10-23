@@ -1,0 +1,19 @@
+---
+/**
+ * The caption of one step of the hero story: monospace text on a white chip. Captions share one spot, each is shown in its own
+ * time slot (`delay` is when it starts, `dur` how long it stays), and the last one stays.
+ */
+const props = Astro.props as { text: string; x: number; y: number; delay: number; dur?: number; last?: boolean };
+const CHAR = 10.8, PAD = 16, HEIGHT = 42;
+const width = props.text.length * CHAR + PAD * 2;
+---
+<g class:list={['bd__cap', props.last && 'bd__cap--last']} style={`--d:${props.delay.toFixed(2)}s${props.dur ? `;--dur:${props.dur}s` : ''}`}>
+  <rect x={props.x} y={props.y - 28} width={width} height={HEIGHT} />
+  <text x={props.x + PAD} y={props.y}>{props.text}</text>
+</g>
+<style>
+  .bd__cap { --kf: bd-cap; --dur: 1.7s; --ease: ease; opacity: 0; }
+  .bd__cap--last { --kf: bd-fade; --dur: .4s; opacity: 1; }
+  .bd__cap rect { fill: var(--white); stroke: var(--brand); stroke-opacity: .35; stroke-width: 1; }
+  .bd__cap text { font-family: var(--font-mono); font-size: 18px; font-weight: 500; fill: var(--brand); }
+</style>

@@ -1,0 +1,44 @@
+---
+import Lines from './ui/Lines.astro';
+import { process } from '../data/home';
+import { pad2 } from '../lib/text';
+---
+<section id="process" class="section container" aria-labelledby="process-title">
+  <div class="panel on-brand">
+    <header class="head">
+      <h2 id="process-title" class="h2" data-split><Lines text={process.title} /></h2>
+      <p class="lead" data-reveal data-delay=".2">{process.lead}</p>
+    </header>
+    <ol class="steps" role="list" data-timeline>
+      <span class="steps__fill" data-timeline-fill aria-hidden="true"></span>
+      {process.steps.map((s, i) => (
+        <li class="step" data-timeline-step>
+          <span class="step__n" aria-hidden="true">{pad2(i + 1)}.</span>
+          <div class="step__body"><h3>{s.title}</h3><p>{s.text}</p></div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+<style>
+  .panel { background: var(--brand); padding: clamp(40px, 6.6vw, 96px) clamp(16px, 6.4vw, 96px) clamp(56px, 8.9vw, 128px); padding: round(clamp(40px, 6.6vw, 96px), 8px) round(clamp(16px, 6.4vw, 96px), 8px) round(clamp(56px, 8.9vw, 128px), 8px); }
+  .head { display: grid; gap: 24px; max-width: 37rem; }
+  .head .lead { font-size: var(--fs-lead); }
+  .steps { position: relative; margin: clamp(48px, 6vw, 80px) 0 0 auto; margin: round(clamp(48px, 6vw, 80px), 8px) 0 0 auto; width: min(605px, 100%); padding: 32px 0 32px 48px; display: grid; gap: clamp(32px, 4.2vw, 64px); gap: round(clamp(32px, 4.2vw, 64px), 8px); }
+  .steps::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1.5px; background: rgb(255 255 255 / .28); }
+  .steps__fill { position: absolute; left: 0; top: 0; bottom: 0; width: 1.5px; background: var(--white); transform-origin: 50% 0; transform: scaleY(var(--p, 1)); }
+  .step { transition: background-color .6s cubic-bezier(.16,1,.3,1), transform .8s cubic-bezier(.16,1,.3,1), opacity .8s; }
+  :global(.motion) .step { transform: translateX(36px); background: rgb(255 255 255 / .04); }
+  :global(.motion) .step.is-active { transform: none; background: rgb(255 255 255 / .08); }
+  .step:hover { background: rgb(255 255 255 / .14); }
+  .step::before { transition: transform .6s cubic-bezier(.16,1,.3,1), box-shadow .6s; }
+  :global(.motion) .step:not(.is-active)::before { transform: scale(.55) rotate(45deg); }
+  .step.is-active::before { box-shadow: 0 0 0 6px rgb(255 255 255 / .18); }
+  .step { position: relative; background: rgb(255 255 255 / .08); padding: 32px 32px 32px; display: grid; grid-template-columns: auto 1fr; column-gap: clamp(12px, 1.6vw, 24px); column-gap: round(clamp(12px, 1.6vw, 24px), 8px); }
+  .step__n, .step h3 { font-family: var(--font-display); font-size: clamp(1.4rem, 2.4vw, 2.125rem); line-height: 1.24; }
+  .step__body { display: grid; gap: 12px; }
+  .step::before { content: ''; position: absolute; left: -56px; top: 50%; width: 16px; height: 16px; margin-top: -8px; background: var(--white); }
+  .step p { color: var(--white); font-size: 1rem; line-height: 1.6; max-width: 27rem; }
+  @media (max-width: 640px) { .steps { padding-left: 32px; } .step { padding: 24px 16px; } .step::before { left: -40px; } }
+  @media (max-width: 600px) { .panel { padding-left: var(--card-x-m); padding-right: var(--card-x-m); } }   /* unified mobile card inset */
+</style>

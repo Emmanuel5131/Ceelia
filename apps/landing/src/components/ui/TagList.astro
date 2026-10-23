@@ -1,0 +1,6 @@
+---
+import Tag from './Tag.astro';
+const { tags, tone = 'light', label } = Astro.props as { tags: string[]; tone?: 'light' | 'on-brand'; label?: string };
+---
+<ul class="tags" role="list" aria-label={label}>{tags.map((t) => <Tag label={t} tone={tone} />)}</ul>
+<style>.tags { display: flex; flex-wrap: wrap; gap: 8px; }</style>

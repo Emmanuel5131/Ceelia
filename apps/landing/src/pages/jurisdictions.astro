@@ -1,0 +1,22 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import SectionJurisdictions from '../components/SectionJurisdictions.astro';
+import SectionCta from '../components/SectionCta.astro';
+import Footer from '../components/Footer.astro';
+import { jurisdictionsIntro } from '../data/home';
+import { site } from '../data/site';
+import { graph, organization, website, webPage } from '../lib/schema';
+
+const title = `Jurisdictions · ${site.name}`;
+const description = jurisdictionsIntro.lead;
+const jsonLd = graph(organization(), website(), webPage({ path: '/jurisdictions/', title, description }));
+---
+<Layout title={title} description={description} jsonLd={jsonLd}>
+  <Header />
+  <main id="main" tabindex="-1">
+    <SectionJurisdictions page />
+    <SectionCta />
+  </main>
+  <Footer />
+</Layout>

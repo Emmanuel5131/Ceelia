@@ -1,0 +1,54 @@
+---
+import '@fontsource/mulish/latin-400.css';
+import '@fontsource/mulish/latin-500.css';
+import '@fontsource/mulish/latin-700.css';
+import '@fontsource/ibm-plex-mono/latin-400.css';
+import '@fontsource/ibm-plex-mono/latin-500.css';
+import '../styles/global.css';
+import mulish400 from '@fontsource/mulish/files/mulish-latin-400-normal.woff2?url';
+import mulish500 from '@fontsource/mulish/files/mulish-latin-500-normal.woff2?url';
+import SEO, { type Props as SEOProps } from '../components/SEO.astro';
+import Loader from '../components/Loader.astro';
+
+export type Props = SEOProps;
+const props = Astro.props;
+---
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />{/* must sit in the first 1024 bytes, ahead of the inline script */}
+    <script is:inline>
+      // Enable motion pre-states before first paint; always reveal content within 2.5s even if JS fails.
+      // First visit of the session also gets the loader (zx-loading). The page intro waits on __zxReveal, and the
+      // loader is force-dismissed after 6s whatever happens, so content can never stay covered.
+      (function (d, w) {
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        d.classList.add('motion'); setTimeout(function () { d.classList.add('motion-ready'); }, 2500);
+        var seen; try { seen = sessionStorage.getItem('zx-loaded'); } catch (e) { seen = 1; }
+        if (seen) return;
+        var done; d.classList.add('zx-loading');
+        w.__zxReveal = new Promise(function (r) { done = r; });
+        w.__zxRevealNow = function () { if (done) { done(); done = null; } };
+        setTimeout(function () { if (d.classList.contains('zx-loading')) { d.classList.remove('zx-loading'); w.__zxRevealNow(); } }, 6000);
+      })(document.documentElement, window);
+    </script>
+    {/* the faces used above the fold (headings, body, nav and labels at 500) are preloaded; mono loads on demand */}
+    {[mulish400, mulish500].map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}
+    <link rel="preload" href="/font/AeonikTRIAL-Regular.otf" as="font" type="font/otf" crossorigin />
+    <SEO {...props} />
+    <slot name="head" />
+  </head>
+  <body>
+    <Loader />
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <div class="page">
+      <slot />
+    </div>
+    <script>
+      import '../scripts/motion';
+      // Art intros wait for the loader to start dissolving, so they play in view rather than under the overlay.
+      if (document.querySelector('svg[data-art], img[data-inline-art]')) ((window as any).__zxReveal ?? Promise.resolve()).then(() => import('../scripts/artMotion'));
+    </script>
+  </body>
+</html>
