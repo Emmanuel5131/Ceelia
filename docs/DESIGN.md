@@ -345,10 +345,37 @@ Clerk components (the boilerplate uses Clerk) take their theme through `appearan
 
 ---
 
-## 12. Open decisions
+## 12. App UI standards (implemented in apps/web)
+
+The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a token or a component changes every screen. The setup lives in `apps/web/src/styles/global.css` (tokens), `apps/web/components.json` (shadcn config) and `apps/web/src/components/ui/` (the components, which we own and edit).
+
+**Rules that keep every screen consistent**
+
+1. **Use the components.** No raw `button`, `input`, `select`, `table` or hand-built card in a page. If a component is missing, add it with `pnpm dlx shadcn@latest add <name>` and restyle it to this file.
+2. **Pages use `PageContainer` and `PageHeader`** (`src/components/layout/`). They set the 24px (mobile) and 32px (from 900px) outer padding, the 1600px maximum width and the title row. A page never sets its own outer padding.
+3. **One spacing scale.** Use Tailwind steps that land on the 8pt grid: `p-2 / p-4 / p-6 / p-8 / p-12` (8, 16, 24, 32, 48px) and the same for `gap-*`. Half-steps (`p-1`, `p-3`, 4 and 12px) only inside a component, never between components.
+4. **Spacing between things:** 8px between a label and its field, 16px between fields and between buttons, 24px between a card's header and body and between cards, 32px between page sections, 48px between major regions.
+5. **Control heights are tokens.** `--control-sm` 36px (dense tables, toolbars), `--control-md` 44px (default, minimum touch target), `--control-lg` 52px (one page-level primary action). Button, input, select and tab trigger all use them, so a row of controls always lines up. Never set `h-*` on a control.
+6. **Buttons:** one primary per view; variants are `default` (primary), `outline` (secondary), `ghost`, `destructive` and `link`. Sizes are `sm`, `default`, `lg` and the matching `icon` sizes. Two buttons side by side share a size.
+7. **Fields:** one look (`field-styles.ts`): 44px, square, 1.5px border, ink border on focus, seal-red border plus a message when invalid. Label above, helper text below. Error copy is short with no "try again".
+8. **Surfaces:** white page, `paper` cards with no border and no shadow, hairline `line` borders, square corners. Only menus, popovers and dialogs have a shadow. Do not nest cards.
+9. **Tags and status:** `Badge` is rectangular, 24px. State is a shape plus a text label: `solid` = confirmed, `dashed` = not confirmed, `seal` = a finding or verdict only.
+10. **Focus** is the `focus-ring` utility (2px ink outline, 3px away). Do not add `ring-*` or remove outlines.
+11. **Type:** only the sizes in §3 (`text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-3xl`). Headings use Aeonik through the `font-heading` and `font-display` classes; mono is only for evidence data.
+12. **Text is translated.** No user-visible string is hard-coded in a component (`next-intl`).
+
+**Icons: Phosphor, regular weight** (`@phosphor-icons/react`). One weight and one family across the app, set once in `IconProvider`, so icons never take a `weight` prop. Size follows the control: 16px inside `sm` controls, 20px by default, 24px in `lg` and empty states. Name icons with the `Icon` suffix (`WalletIcon`). Add `aria-label` to an icon-only button. Use `fill` or `bold` only for a selected state, never to decorate. Do not mix in another icon set.
+
+**Why Phosphor:** one consistent drawing grid in six weights (so a selected or emphasised state is the same icon in a heavier weight), a large set that already covers wallet, file, seal and gavel concepts, and a regular weight that sits well beside hairline borders. Font Awesome's free tier has fewer outline icons and a very recognisable default look. Lucide and Tabler are good alternatives with a thinner stroke.
+
+**The showcase** is the Storybook story `Foundations/Overview` (`pnpm storybook`). Look there before building a screen, and update it when a component changes.
+
+---
+
+## 13. Open decisions
 
 1. **Aeonik licence.** Buy the licensed files, or pick an OFL lookalike (Outfit, Figtree, Plus Jakarta Sans) and change one token.
-2. **Input shape.** Square (default here) or pill.
+2. ~~**Input shape.**~~ **Decided: square**, with pill buttons (§12).
 3. **App header height and sidebar.** 64px with an optional 240px sidebar is the starting point.
 4. **Chart library.** Not chosen. Must follow §7.
 5. **Dark mode.** Not planned.
@@ -356,10 +383,11 @@ Clerk components (the boilerplate uses Clerk) take their theme through `appearan
 
 ---
 
-## 13. Checklist for any new screen
+## 14. Checklist for any new screen
 
 - [ ] White page, paper cards, ink text. Seal red only for a verdict or finding.
-- [ ] Surfaces square, buttons pill, one primary button.
+- [ ] Surfaces square, buttons pill, one primary button, built from `components/ui` (§12).
+- [ ] Page uses `PageContainer` and `PageHeader`; spacing from the 8pt scale; icons are Phosphor regular.
 - [ ] Headings Aeonik in sentence case, body Mulish, mono only for data.
 - [ ] Everything on the 8pt grid; hairline borders; no shadow except menus.
 - [ ] State shown with shape and text, not colour alone.

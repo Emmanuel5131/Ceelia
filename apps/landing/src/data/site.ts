@@ -1,3 +1,4 @@
+import { appLogin } from './app';
 /**
  * Single source of truth for brand facts.
  * Used by the UI, JSON-LD structured data, llms.txt and robots.txt so every
@@ -33,18 +34,18 @@ export const nav: { links: NavItem[]; cta: NavItem } = {
     { label: 'How it works', href: '/#process' },
     { label: 'For lawyers', href: '/#lawyers' },
     { label: 'For victims', href: '/#victims' },
-    { label: 'Case bank', href: '/#cases' },
+    { label: 'Who can join', href: '/#join' },
     { label: 'Jurisdictions', href: '/jurisdictions/' },
     { label: 'FAQ', href: '/#faq' },
   ],
-  cta: { label: 'Report fraud', href: '/#report' },
+  cta: { label: 'Report fraud', href: appLogin },
 };
 
 export const footerNav = {
   menu: [
     { label: 'Home', href: '/' },
     { label: 'Method', href: '/#method' },
-    { label: 'Case bank', href: '/#cases' },
+    { label: 'Who can join', href: '/#join' },
     { label: 'FAQ', href: '/#faq' },
   ],
   jurisdictions: [
@@ -53,8 +54,8 @@ export const footerNav = {
     { label: 'Next jurisdiction', href: '/#report' },
   ],
   contact: [
-    { label: 'Report fraud', href: '/#report' },
-    { label: 'Join as a lawyer or firm', href: '/#report' },
+    { label: 'Report fraud', href: appLogin },
+    { label: 'Join as a lawyer or firm', href: appLogin },
     { label: 'Email us', href: `mailto:${site.email}` },
   ],
 };

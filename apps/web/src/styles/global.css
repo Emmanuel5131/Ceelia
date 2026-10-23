@@ -1,3 +1,177 @@
 @layer theme, base, clerk, components, utilities; /* Ensure Clerk is compatible with Tailwind CSS v4 */
 
 @import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+/* Dark mode is not planned (docs/DESIGN.md §12). The variant stays so shadcn's `dark:` classes never follow the OS setting. */
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Celia design tokens (docs/DESIGN.md). Ink on paper, hairlines, square surfaces, pill actions, one red accent with a job.
+   ========================================================================== */
+@theme {
+  /* Colour */
+  --color-ink: #0f1b2d;
+  --color-ink-hover: #1b2a44;
+  --color-ink-muted: #46566e;
+  --color-ink-soft: #7f8da3; /* decorative strokes only, never text */
+  --color-ink-tint: #b9c2d0; /* decorative fills only */
+  --color-surface: #ffffff;
+  --color-paper: #f5f2ea;
+  --color-paper-sunken: #ece7db;
+  --color-on-ink-muted: #d5dbe5;
+  --color-terminal: #08111f;
+  --color-seal: #991f38; /* verdicts and findings only */
+  --color-seal-on-dark: #e0687c;
+  --color-line: rgb(15 27 45 / 0.22);
+  --color-line-soft: rgb(15 27 45 / 0.14);
+
+  /* Type: Aeonik for headings, Mulish for the interface, IBM Plex Mono only for evidence data */
+  --font-display: var(--font-aeonik, Aeonik), var(--font-mulish, Mulish), system-ui, sans-serif;
+  --font-sans: var(--font-mulish, Mulish), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:
+    var(--font-plex-mono, 'IBM Plex Mono'), ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --text-xs: 0.78125rem; /* 12.5px: caption, tag */
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.84375rem; /* 13.5px: table cell, label */
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.9375rem; /* 15px: body, button */
+  --text-base--line-height: 1.375rem;
+  --text-xl: 1.25rem; /* 20px: card title */
+  --text-xl--line-height: 1.5rem;
+  --text-2xl: 1.5rem; /* 24px: section title */
+  --text-2xl--line-height: 1.75rem;
+  --text-3xl: 2rem; /* 32px: page title */
+  --text-3xl--line-height: 2.25rem;
+
+  /* Shape: surfaces are square, actions are pills, there is almost no elevation */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: 0 18px 40px -24px rgb(8 17 31 / 0.35);
+  --shadow-lg: 0 18px 40px -24px rgb(8 17 31 / 0.35);
+  --shadow-xl: 0 18px 40px -24px rgb(8 17 31 / 0.35);
+  --shadow-2xl: 0 18px 40px -24px rgb(8 17 31 / 0.35);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Control heights: every button, input, select and tab trigger uses one of these, so a row of controls always lines up */
+  --control-sm: 2.25rem; /* 36px: dense tables and toolbars */
+  --control-md: 2.75rem; /* 44px: default, and the minimum touch target */
+  --control-lg: 3.25rem; /* 52px: page-level primary actions */
+}
+
+/* shadcn semantic tokens, mapped onto the Celia palette. Components use these names; change the look here, not in the components. */
+:root {
+  --radius: 0;
+  --background: #ffffff;
+  --foreground: #0f1b2d;
+  --card: #f5f2ea;
+  --card-foreground: #0f1b2d;
+  --popover: #ffffff;
+  --popover-foreground: #0f1b2d;
+  --primary: #0f1b2d;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #0f1b2d;
+  --muted: #f5f2ea;
+  --muted-foreground: #46566e;
+  --accent: #ece7db;
+  --accent-foreground: #0f1b2d;
+  --destructive: #991f38;
+  --border: rgb(15 27 45 / 0.22);
+  --input: rgb(15 27 45 / 0.3);
+  --ring: #0f1b2d;
+  --chart-1: #0f1b2d;
+  --chart-2: #46566e;
+  --chart-3: #7f8da3;
+  --chart-4: #b9c2d0;
+  --chart-5: #991f38;
+  --sidebar: #f5f2ea;
+  --sidebar-foreground: #0f1b2d;
+  --sidebar-primary: #0f1b2d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ece7db;
+  --sidebar-accent-foreground: #0f1b2d;
+  --sidebar-border: rgb(15 27 45 / 0.22);
+  --sidebar-ring: #0f1b2d;
+}
+
+@theme inline {
+  --font-heading: var(--font-display);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* One focus treatment everywhere: a 2px ink outline, 3px away (white on ink surfaces). */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-normal;
+  }
+
+  ::selection {
+    @apply bg-ink text-white;
+  }
+
+  /* Anything that lines up in a column or changes in place uses tabular figures. */
+  table,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+}

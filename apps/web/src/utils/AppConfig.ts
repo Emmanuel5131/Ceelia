@@ -16,9 +16,18 @@ export const AppConfig = {
   },
 };
 
+// The Google button reads "Continue with Google" instead of just "Google".
 const supportedLocales: Record<string, LocalizationResource> = {
-  en: enUS,
-  fr: frFR,
+  en: {
+    ...enUS,
+    socialButtonsBlockButton: 'Continue with {{provider|titleize}}',
+    socialButtonsBlockButtonManyInView: 'Continue with {{provider|titleize}}',
+  },
+  fr: {
+    ...frFR,
+    socialButtonsBlockButton: 'Continuer avec {{provider|titleize}}',
+    socialButtonsBlockButtonManyInView: 'Continuer avec {{provider|titleize}}',
+  },
 };
 
 export const ClerkLocalizations = {

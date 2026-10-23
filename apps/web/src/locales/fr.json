@@ -1,4 +1,7 @@
 {
+  "Common": {
+    "close": "Fermer"
+  },
   "RootLayout": {
     "home_link": "Accueil",
     "about_link": "A propos",
@@ -11,12 +14,6 @@
     "description": "Code de démarrage pour Next.js avec Tailwind CSS",
     "footer_text": "© {year} {name}. Fait avec <author></author>.",
     "main_navigation_label": "Navigation principale"
-  },
-  "Index": {
-    "meta_title": "Présentation de Next.js Boilerplate",
-    "meta_description": "Next js Boilerplate est le code de démarrage parfait pour votre projet. Construisez votre application React avec le framework Next.js.",
-    "sponsors_title": "Partenaires",
-    "zap_emoji_label": "Éclair"
   },
   "Counter": {
     "meta_title": "Compteur",
@@ -74,5 +71,17 @@
   },
   "LocaleSwitcher": {
     "change_language": "Changer de langue"
+  },
+  "AuthShell": {
+    "title": "Une banque de dossiers ouverte pour la fraude crypto.",
+    "text": "Signalez une fraude, rejoignez-nous en tant qu’avocat ou cabinet, et suivez un dossier de la preuve au tribunal.",
+    "note": "Nous ne déclarons pas la fraude. Le tribunal décide de l’intention.",
+    "sign_in_title": "Connectez-vous à Celia",
+    "sign_in_text": "Reprenez votre dossier là où vous l’avez laissé.",
+    "sign_up_title": "Créez votre compte",
+    "sign_up_text": "Signalez une fraude, ou rejoignez-nous en tant qu’avocat ou cabinet.",
+    "point_1": "Ajoutez votre portefeuille et une courte vidéo",
+    "point_2": "Prouvez que vous en êtes propriétaire en signant depuis votre portefeuille",
+    "point_3": "Suivez votre dossier de la preuve à l’avocat"
   }
 }

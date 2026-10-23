@@ -1,0 +1,10 @@
+---
+import Button from './ui/Button.astro';
+import SectionHeader from './ui/SectionHeader.astro';
+import { together } from '../data/home';
+---
+<section class="section container" aria-labelledby="together-title">
+  <SectionHeader id="together-title" eyebrow={together.eyebrow} title={together.title} lead={together.lead} align="split">
+    <Button href={together.cta.href} variant="solid">{together.cta.label}</Button>
+  </SectionHeader>
+</section>

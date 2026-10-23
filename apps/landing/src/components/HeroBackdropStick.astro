@@ -28,8 +28,8 @@ for (let y = 0; y < 12; y++) for (let x = 0; x < 20; x++) dots.push([x * 80 + 40
 const LINE = 500;
 const SHRINK = 1, PIVOT: P = [1560, 520]; // the whole story is drawn at full size, then scaled down about the right edge to leave room for the copy
 const FADE = 0.3;
-const SLOW = 2.2; // everything below is written in seconds of the base story; the svg stretches it by this factor
-const LENGTHS = [3.8, 2.0, 3.4, 3.4, 3.8];
+const SLOW = 3.6; // everything below is written in seconds of the base story; the svg stretches it by this factor
+const LENGTHS = [3.8, 2.0, 3.4, 3.4, 6.4];
 const TOTAL = LENGTHS.reduce((sum, n) => sum + n, 0);
 const STARTS = LENGTHS.map((_, i) => LENGTHS.slice(0, i).reduce((sum, n) => sum + n, 0));
 /** Seconds from the start of the run to `offset` seconds into `frame`. */
@@ -39,28 +39,34 @@ const frameStyle = (frame: number) => `--fdl:${STARTS[frame].toFixed(2)}s;--fout
 const captions: [string, number, number][] = [
   ['1 · A new app promises 10% a week', t(0), 1.8],
   ['2 · Victims pay in, then are asked for a fee to withdraw', t(0, 1.8), 2],
-  ['3 · The money moves out and is cashed out', t(1), 2],
+  ['3 · The money’s trail is hidden, then it is cashed out', t(1), 2],
   ['4 · Celia’s case bank holds the wallets of those defrauded', t(2), 1.7],
   ['5 · And the evidence next to them: the sealed chain proofs', t(2, 1.7), 1.7],
   ['6 · Celia connects the case bank to lawyers and law firms', t(3), 1.7],
   ['7 · They start with the wallets and evidence already listed', t(3, 1.7), 1.7],
   ['8 · A lawyer or firm runs the case in court', t(4), 1.9],
   ['9 · Case won: victims hold the platform accountable', t(4, 1.9), 1.9],
+  ['10 · The lawyer pays the listed wallets, or contacts victims', t(4, 3.8), 2.4],
 ];
 
-const victimsAt = (x: number): P[] => [[x, 360], [x, 460], [x, 560]];
+/** The nearest dot of the background grid: every figure's head is centred on a dot. */
+const snap = (n: number) => Math.round((n - 40) / 80) * 80 + 40;
+const victimsAt = (x: number): P[] => [360, 520, 680].map((y): P => [snap(x), y]);
 const hand = (v: P): P => [v[0] + 20, v[1] + 42];
-const building = (x: number, cy = LINE) => ({ roof: `M${x - 64} ${cy - 22}L${x} ${cy - 68}L${x + 64} ${cy - 22}Z`, bodyX: x - 55, bodyY: cy - 22 });
+/** A bank: a triangle roof, a beam, four columns and two steps, centred on `x`. */
+const bankBuilding = (x: number, cy = LINE) => ({ roof: `M${x - 66} ${cy - 22}L${x} ${cy - 72}L${x + 66} ${cy - 22}Z`, beam: { x: x - 66, y: cy - 22, w: 132, h: 9 }, cols: [-46, -16, 16, 46].map((dx) => ({ x: x + dx - 6, y: cy - 13, w: 12, h: 46 })), steps: [{ x: x - 74, y: cy + 33, w: 148, h: 9 }, { x: x - 82, y: cy + 42, w: 164, h: 9 }] });
+/** Scales of justice, drawn inside a roof: a post, a beam and two pans. */
+const scales = (x: number, cy: number) => `M${x} ${cy - 56}V${cy - 32}M${x - 18} ${cy - 46}H${x + 18}M${x - 18} ${cy - 46}L${x - 23} ${cy - 37}M${x - 18} ${cy - 46}L${x - 13} ${cy - 37}M${x - 26} ${cy - 37}Q${x - 18} ${cy - 30} ${x - 10} ${cy - 37}M${x + 18} ${cy - 46}L${x + 13} ${cy - 37}M${x + 18} ${cy - 46}L${x + 23} ${cy - 37}M${x + 10} ${cy - 37}Q${x + 18} ${cy - 30} ${x + 26} ${cy - 37}`;
 
 // frame 1: the promise, the deposits, the gate
 const victims = victimsAt(860);
-const operator: P = [1120, 300];
+const operator: P = [snap(1120), snap(300)];
 const gateX = 985;
-const app: P = [1120, LINE];
+const app: P = [operator[0], LINE];
 
 // frame 2: the same app and operator, now on the left, with the mixer and the exchange across the stage
-const app2: P = [940, LINE];
-const operator2: P = [940, 300];
+const operator2: P = [snap(940), snap(300)];
+const app2: P = [operator2[0], LINE];
 const mixer: P = [1220, LINE];
 const exchange: P = [1500, LINE];
 const strands: P[][] = [[mixer, [1360, 430], exchange], [mixer, exchange], [mixer, [1360, 570], exchange]];
@@ -71,18 +77,19 @@ const bank = { x: 1080, y: 300, w: 460, h: 310 };
 const rows: [string, boolean][] = [['0x7a3f…e91c', true], ['0x19cd…04b2', true], ['0xb6e0…7f35', true], ['0x52a8…c1d9', false], ['0x93de…5a07', false]];
 const rowY = (i: number) => 372 + i * 46;
 const proofs = ['funding trail', 'cohort vs baseline', 'sealed hash', 'certificate'];
-const celia: P = [1310, 664];
+const celia: P = [snap(1310), snap(664)];
 
 // frame 4: the case bank connected to lawyers and law firms
 const hub = { x: 840, y: 400, w: 190, h: 200 };
 const targets: [number, string, 'lawyer' | 'firm'][] = [[320, 'lawyer', 'lawyer'], [520, 'law firm', 'firm'], [700, 'lawyer', 'lawyer']];
-const TX = 1360;
+const TX = snap(1360);
 
 // frame 5: a lawyer runs the case, and more victims join
-const lawyer5: P = [1080, 420];
-const bench = { x: 1380, y: 470, w: 170, h: 76 };
-const judge: P = [bench.x + bench.w / 2, 410];
-const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
+const UP = 160; // the last frame sits two dot rows higher, closer to its caption
+const lawyer5: P = [snap(1080), snap(420) - UP];
+const judge: P = [snap(1465), snap(410) - UP];
+const bench = { x: judge[0] - 85, y: 470 - UP, w: 170, h: 76 };
+const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap(690) - UP]);
 ---
 <svg class="bd" viewBox="0 0 1600 960" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false" style={`--slow:${SLOW}`} data-cycle={Math.round((TOTAL * SLOW + 3) * 1000)}>
   <!-- the dot grid, always on, under the story so it never runs through a tag -->
@@ -97,15 +104,18 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
     <!-- frame 1: the promise, the deposits, the gate -->
     <g class="bd__frame" style={frameStyle(0)}>
       <HeroFigure kind="operator" x={operator[0]} y={operator[1]} delay={t(0)} dur={0.7} />
-      <HeroTag text="operator" x={operator[0]} y={410} delay={t(0, 0.8)} anchor="mid" />
+      <HeroTag text="scammer" x={operator[0]} y={410} delay={t(0, 0.8)} anchor="mid" />
       <g class="bd__fade" style={sty(t(0, 0.1), 0.5)}>
         <rect class="bd__box" x={app[0] - 50} y={LINE - 38} width="100" height="76" rx="6" />
         <text class="bd__glyph" x={app[0]} y={LINE + 7}>+10%</text>
       </g>
-      <g class="bd__tmp" style={sty(t(0, 0.3), 1.7)}>
-        <rect class="bd__box" x="1170" y="236" width="190" height="52" rx="10" />
-        <path class="bd__box bd__tail" d="M1186 288L1146 318L1214 288Z" />
-        <text class="bd__say" x="1186" y="270">10% a week!</text>
+      <HeroTag text="scam crypto app" x={app[0]} y={LINE + 74} delay={t(0, 0.4)} anchor="mid" />
+      <g transform={`translate(${operator[0] - 1120} ${operator[1] - 300})`}>
+        <g class="bd__tmp" style={sty(t(0, 0.3), 1.7)}>
+          <rect class="bd__box" x="1170" y="236" width="190" height="52" rx="10" />
+          <path class="bd__box bd__tail" d="M1186 288L1146 318L1214 288Z" />
+          <text class="bd__say" x="1186" y="270">10% a week!</text>
+        </g>
       </g>
 
       {victims.map((v, i) => (
@@ -117,18 +127,25 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
           <text class="bd__bang" style={sty(t(0, 3.1 + i * 0.05), 0.3)} x="32" y="2">!</text>
         </g>
       ))}
-      <HeroTag text="victims" x={victims[1][0]} y={672} delay={t(0, 1.9)} anchor="mid" />
+      <HeroTag text="victims" x={victims[1][0]} y={victims[2][1] + 118} delay={t(0, 1.9)} anchor="mid" />
       {victims.map((v, i) => <path class="bd__edge bd__edge--thin" style={sty(t(0, 1.8 + i * 0.1), 0.4)} d={d([hand(v), [app[0] - 50, LINE]])} pathLength="1" />)}
       {victims.map((v, i) => <path class="bd__comet" style={sty(t(0, 1.9 + i * 0.12), 0.8)} d={d([hand(v), [app[0] - 50, LINE]])} pathLength="1" />)}
       <circle class="bd__pulse" style={sty(t(0, 2.6), 0.9)} cx={app[0]} cy={app[1]} r="70" />
       <circle class="bd__pulse" style={sty(t(0, 2.8), 0.9)} cx={app[0]} cy={app[1]} r="70" />
 
-      <path class="bd__edge bd__edge--thick" style={sty(t(0, 2.9), 0.35)} d={d([[gateX, 340], [gateX, 660]])} pathLength="1" />
+      <path class="bd__edge bd__edge--thick" style={sty(t(0, 2.9), 0.35)} d={d([[gateX, 340], [gateX, 720]])} pathLength="1" />
+      <g class="bd__fade" style={sty(t(0, 3.2), 0.4)}>
+        <circle class="bd__box" cx={gateX} cy={LINE} r="30" />
+        <path class="bd__shackle" d={`M${gateX - 10} ${LINE - 2}V${LINE - 11}a10 10 0 0 1 20 0V${LINE - 2}`} />
+        <rect class="bd__lock" x={gateX - 15} y={LINE - 3} width="30" height="23" rx="3" />
+      </g>
       <path class="bd__comet bd__comet--stop" style={sty(t(0, 3.0), 0.4)} d={d([[app[0] - 50, LINE], [gateX + 6, LINE]])} pathLength="1" />
-      <g class="bd__tmp" style={sty(t(0, 3.0), 0.7)}>
-        <rect class="bd__box" x="1170" y="236" width="290" height="52" rx="10" />
-        <path class="bd__box bd__tail" d="M1186 288L1146 318L1214 288Z" />
-        <text class="bd__say" x="1186" y="270">pay a fee to withdraw</text>
+      <g transform={`translate(${operator[0] - 1120} ${operator[1] - 300})`}>
+        <g class="bd__tmp" style={sty(t(0, 3.0), 0.7)}>
+          <rect class="bd__box" x="1170" y="236" width="290" height="52" rx="10" />
+          <path class="bd__box bd__tail" d="M1186 288L1146 318L1214 288Z" />
+          <text class="bd__say" x="1186" y="270">pay a fee to withdraw</text>
+        </g>
       </g>
     </g>
 
@@ -141,28 +158,33 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
         <rect class="bd__box" x={app2[0] - 50} y={LINE - 38} width="100" height="76" rx="6" />
         <text class="bd__glyph" x={app2[0]} y={LINE + 7}>+10%</text>
       </g>
+      <HeroTag text="scam crypto app" x={app2[0]} y={LINE + 74} delay={t(1, 0.1)} anchor="mid" />
       <path class="bd__edge bd__edge--thick" style={sty(t(1, 0.1), 0.5)} d={d([[app2[0] + 50, LINE], mixer])} pathLength="1" />
       <g class="bd__fade" style={sty(t(1, 0.3), 0.3)}>
         <circle class="bd__box" cx={mixer[0]} cy={mixer[1]} r="54" />
         <circle class="bd__spin" cx={mixer[0]} cy={mixer[1]} r="32" />
+        <text class="bd__q" x={mixer[0]} y={mixer[1] + 13}>?</text>
       </g>
-      <HeroTag text="mixer" x={mixer[0]} y={mixer[1] + 96} delay={t(1, 0.5)} anchor="mid" />
-      <circle class="bd__packet" style={ride(t(1, 0.2), 0.7, [[app2[0] + 50, LINE], mixer])} r="10" />
+      <HeroTag text="hides the trail" x={mixer[0]} y={mixer[1] + 96} delay={t(1, 0.5)} anchor="mid" />
+      <g class="bd__packet bd__coin" style={ride(t(1, 0.2), 0.7, [[app2[0] + 50, LINE], mixer])}><circle r="14" /><text y="5">$</text></g>
 
       {strands.map((s, i) => <path class="bd__edge" style={sty(t(1, 0.8 + i * 0.05), 0.5)} d={d(s)} pathLength="1" />)}
       <g class="bd__fade" style={sty(t(1, 0.9), 0.3)}>
-        <path class="bd__box" d={building(exchange[0]).roof} />
-        <rect class="bd__box" x={building(exchange[0]).bodyX} y="478" width="110" height="64" />
+        <path class="bd__box" d={bankBuilding(exchange[0]).roof} />
+        <rect class="bd__box" x={bankBuilding(exchange[0]).beam.x} y={bankBuilding(exchange[0]).beam.y} width={bankBuilding(exchange[0]).beam.w} height={bankBuilding(exchange[0]).beam.h} />
+        {bankBuilding(exchange[0]).cols.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
+        {bankBuilding(exchange[0]).steps.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
+        <text class="bd__glyph" x={exchange[0]} y={LINE - 30}>$</text>
       </g>
-      <HeroTag text="exchange" x={exchange[0]} y={exchange[1] + 96} delay={t(1, 1.1)} anchor="mid" />
-      <circle class="bd__packet" style={ride(t(1, 1.0), 0.7, [mixer, exchange])} r="10" />
+      <HeroTag text="exchange · cash out" x={exchange[0]} y={exchange[1] + 96} delay={t(1, 1.1)} anchor="mid" />
+      <g class="bd__packet bd__coin" style={ride(t(1, 1.0), 0.7, [mixer, exchange])}><circle r="14" /><text y="5">$</text></g>
       <circle class="bd__pulse" style={sty(t(1, 1.5), 0.6)} cx={exchange[0]} cy={exchange[1] + 12} r="80" />
     </g>
 
     <!-- frame 3: Celia's case bank -->
     <g class="bd__frame" style={frameStyle(2)}>
       {claimants.map((v, i) => <HeroFigure kind="victim" x={v[0]} y={v[1]} delay={t(2, i * 0.1)} dur={0.5} />)}
-      <HeroTag text="victims" x={claimants[1][0]} y={672} delay={t(2, 0.4)} anchor="mid" />
+      <HeroTag text="victims" x={claimants[1][0]} y={claimants[2][1] + 118} delay={t(2, 0.4)} anchor="mid" />
       <rect class="bd__box" style={sty(t(2, 0.2), 0.4)} x={bank.x} y={bank.y} width={bank.w} height={bank.h} />
       <HeroTag text="Celia · case bank" x={bank.x + bank.w / 2} y={bank.y - 10} delay={t(2, 0.5)} anchor="mid" />
       <path class="bd__edge bd__edge--thin" style={sty(t(2, 0.5), 0.4)} d={d([[bank.x + 230, bank.y + 30], [bank.x + 230, bank.y + bank.h - 20]])} pathLength="1" />
@@ -201,11 +223,14 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
       ))}
       {targets.map(([y, , kind], i) => (
         kind === 'lawyer'
-          ? <HeroFigure kind="lawyer" x={TX} y={y - 20} delay={t(3, 0.5 + i * 0.2)} dur={0.5} scale={0.85} />
+          ? <HeroFigure kind="lawyer" x={TX} y={snap(y - 20)} delay={t(3, 0.5 + i * 0.2)} dur={0.5} scale={0.85} />
           : (
             <g class="bd__fade" style={sty(t(3, 0.5 + i * 0.2), 0.4)}>
-              <path class="bd__box" d={building(TX, y).roof} />
-              <rect class="bd__box" x={building(TX, y).bodyX} y={building(TX, y).bodyY} width="110" height="64" />
+              <path class="bd__box" d={bankBuilding(TX, y).roof} />
+              <rect class="bd__box" x={bankBuilding(TX, y).beam.x} y={bankBuilding(TX, y).beam.y} width={bankBuilding(TX, y).beam.w} height={bankBuilding(TX, y).beam.h} />
+              {bankBuilding(TX, y).cols.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
+              {bankBuilding(TX, y).steps.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
+              <path class="bd__scales" d={scales(TX, y)} />
             </g>
           )
       ))}
@@ -235,7 +260,15 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
         <text class="bd__stamp-text" x={bench.x + 85} y={bench.y + 45}>case won</text>
       </g>
       {crowd.map((v, i) => <HeroFigure kind="victim" x={v[0]} y={v[1]} delay={t(4, 2.1 + i * 0.12)} dur={0.4} arms="up" scale={0.7} />)}
-      <HeroTag text="victims, together" x={900} y={800} delay={t(4, 3.0)} />
+      <HeroTag text="victims gathered by Celia" x={crowd[3][0]} y={crowd[3][1] + 120} delay={t(4, 3.0)} anchor="mid" />
+
+      <!-- after the win the lawyer chooses: pay the wallets Celia lists, or contact the victims directly -->
+      <path class="bd__edge bd__edge--thin" style={sty(t(4, 3.7), 0.5)} d={d([[lawyer5[0] - 15, 530 - UP], [crowd[1][0] + 10, 662 - UP]])} pathLength="1" />
+      <path class="bd__edge bd__edge--thin" style={sty(t(4, 3.7), 0.5)} d={d([[lawyer5[0] + 15, 530 - UP], [crowd[5][0] - 10, 662 - UP]])} pathLength="1" />
+      {[0, 1].map((k) => <g class="bd__packet bd__coin" style={ride(t(4, 4.2 + k * 0.7), 0.9, [[lawyer5[0] - 15, 530 - UP], [crowd[1][0] + 10, 662 - UP]])}><circle r="14" /><text y="5">$</text></g>)}
+      {[0, 1].map((k) => <g class="bd__packet bd__mail" style={ride(t(4, 4.2 + k * 0.7), 0.9, [[lawyer5[0] + 15, 530 - UP], [crowd[5][0] - 10, 662 - UP]])}><rect x="-14" y="-10" width="28" height="20" rx="2" /><path d="M-14 -10L0 2L14 -10" /></g>)}
+      <HeroTag text="pays the wallets Celia lists" x={lawyer5[0] - 20} y={620 - UP} delay={t(4, 3.9)} anchor="end" />
+      <HeroTag text="or contacts victims" x={lawyer5[0] + 20} y={620 - UP} delay={t(4, 3.9)} />
     </g>
     </g>
   </g>
@@ -303,6 +336,14 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i) => [900 + i * 100, 690]);
   .bd__tick { fill: var(--brand); }
   .bd__tick--none { fill: var(--white); stroke: var(--brand); stroke-width: 1.8; stroke-dasharray: 4 3; }
   .bd__tickmark { fill: none; stroke: var(--white); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .bd__shackle { fill: none; stroke: var(--brand); stroke-width: 3.6; stroke-linecap: round; }
+  .bd__lock { fill: var(--brand); }
+  .bd__q { font-family: var(--font-mono); font-size: 38px; font-weight: 600; fill: var(--brand); text-anchor: middle; }
+  .bd__mail rect { fill: var(--white); stroke: var(--brand); stroke-width: 2.2; }
+  .bd__mail path { fill: none; stroke: var(--brand); stroke-width: 2.2; stroke-linejoin: round; }
+  .bd__coin circle { fill: var(--white); stroke: var(--brand); stroke-width: 2.2; }
+  .bd__coin text { font-family: var(--font-mono); font-size: 16px; font-weight: 600; fill: var(--brand); text-anchor: middle; }
+  .bd__scales { fill: none; stroke: var(--brand); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
   .bd__glyph { font-family: var(--font-mono); font-size: 20px; font-weight: 600; fill: var(--brand); text-anchor: middle; }
   .bd__say { font-family: var(--font-mono); font-size: 20px; font-weight: 500; fill: var(--brand); }
   .bd__packet { --kf: bd-packet; --dur: 2.2s; --ease: cubic-bezier(.45, 0, .55, 1); fill: var(--brand); offset-rotate: 0deg; opacity: 0; }

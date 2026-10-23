@@ -10,14 +10,13 @@ const count = jurisdictions.reduce((n, r) => n + r.items.length, 0);
   <div class="hero__inner container">
     <div class="hero__copy">
       <h1 id="hero-title" class="h1" data-split="load"><Lines text={hero.title} /></h1>
-      <p class="hero__tagline" data-reveal="load" data-delay=".3">{hero.tagline}</p>
       <p class="lead" data-reveal="load" data-delay=".45">{hero.lead}</p>
       <div class="hero__ctas" data-stagger="load" data-delay=".6">
         <Button href={hero.primary.href} variant="solid">{hero.primary.label}</Button>
         <Button href={hero.secondary.href}>{hero.secondary.label}</Button>
       </div>
       <div class="hero__proof">
-        <p class="hero__note" data-split="load" data-delay=".8">{hero.note}</p>
+        <p class="hero__note" data-split="load" data-delay=".8"><Lines text={hero.note} /></p>
         <a class="hero__chip" href="/jurisdictions/" data-reveal="load" data-delay="1.1">Evidence rules mapped in {count} jurisdictions<span aria-hidden="true"> →</span></a>
       </div>
     </div>
@@ -28,15 +27,13 @@ const count = jurisdictions.reduce((n, r) => n + r.items.length, 0);
   .hero { position: relative; min-height: clamp(560px, calc(100svh - 76px), 860px); display: grid; align-items: center; overflow: hidden; }
   .hero__bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
   /* the copy is indented from the logo and sits a little below the middle, with room above it, like a landing hero rather than a page header */
-  .hero__inner { position: relative; z-index: 1; padding-block: clamp(40px, 7svh, 96px) clamp(40px, 6svh, 80px); padding-inline: max(24px, 2.5vw); }
-  .hero__copy { display: grid; gap: 24px; max-width: 44rem; justify-items: start; }
+  .hero__inner { position: relative; z-index: 1; padding-block: clamp(56px, 9svh, 120px) clamp(56px, 8svh, 104px); padding-inline: max(24px, 2.5vw); }
+  .hero__copy { display: grid; gap: 32px; max-width: 44rem; justify-items: start; }
   .hero h1 { line-height: var(--lh-tight); letter-spacing: var(--track-xl); word-spacing: var(--words-xl); }
-  .hero__tagline { max-width: 37.5rem; font-size: clamp(1.125rem, 1.7vw, 1.375rem); font-weight: 500; line-height: 1.4; color: var(--brand); }
   .hero .lead { max-width: 37.5rem; font-size: clamp(1.0625rem, 1.4vw, 1.1875rem); }
-  .hero__ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
-  .hero__proof { display: grid; gap: 14px; justify-items: start; margin-top: 4px; padding-top: 20px; border-top: 1px solid var(--line-soft); width: 100%; max-width: 44rem; }
+  .hero__ctas { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
+  .hero__proof { display: grid; gap: 20px; justify-items: start; margin-top: 24px; padding-top: 28px; border-top: 1px solid var(--line-soft); width: 100%; max-width: 44rem; }
   .hero__note { font-weight: 700; font-size: 1rem; line-height: 1.5; color: var(--brand); }
-  @media (min-width: 900px) { .hero__note { white-space: nowrap; } }
   .hero__chip { border: 1px solid var(--brand); color: var(--brand); padding: 4px 10px; font-size: var(--fs-xs); font-weight: 500; transition: background-color .3s, color .3s; }
   .hero__chip:hover { background: var(--brand); color: var(--white); }
   .hero__ctas :global(.btn) { min-width: 200px; }
