@@ -29,12 +29,12 @@ jobs:
         uses: actions/cache@v5
         with:
           path: |
-            .next/cache
+            apps/web/.next/cache
           # Generate a new cache whenever packages or source files change.
-          key: nextjs-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('src/**') }}
+          key: nextjs-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('apps/web/src/**') }}
 
       - name: Build Next.js
-        run: npm run build-local
+        run: pnpm run build-local
         env:
           NEXT_PUBLIC_SENTRY_DISABLED: 'true' # Only upload Sentry source maps in deployment
           NEXT_PUBLIC_APP_URL: http://localhost:3008
@@ -44,8 +44,8 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: |
-            .next
-            next-env.d.ts
+            apps/web/.next
+            apps/web/next-env.d.ts
           key: nextjs-build-${{ matrix.node-version }}-${{ github.sha }}
 
   static:
@@ -69,19 +69,19 @@ jobs:
 
       - if: github.event_name == 'pull_request'
         name: Validate all commits from PR
-        run: npx commitlint --from $BASE_SHA --to $HEAD_SHA --verbose
+        run: pnpm exec commitlint --from $BASE_SHA --to $HEAD_SHA --verbose
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
 
       - name: Linter
-        run: npx next typegen && npm run lint
+        run: pnpm --filter @celia/web exec next typegen && pnpm run lint
 
       - name: Check dependencies
-        run: npm run check:deps
+        run: pnpm run check:deps
 
       - name: I18n check
-        run: npm run check:i18n
+        run: pnpm run check:i18n
 
   unit:
     strategy:
@@ -103,7 +103,7 @@ jobs:
       - name: Run unit tests
         uses: docker://mcr.microsoft.com/playwright:v1.62.1
         with:
-          args: npm run test -- --coverage
+          args: sh -c "corepack enable && pnpm run test --coverage"
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v6
@@ -130,7 +130,7 @@ jobs:
       - name: Run storybook tests
         uses: docker://mcr.microsoft.com/playwright:v1.62.1
         with:
-          args: npm run storybook:test
+          args: sh -c "corepack enable && pnpm run storybook:test"
 
   e2e:
     strategy:
@@ -156,19 +156,20 @@ jobs:
       - name: Run E2E tests
         uses: docker://mcr.microsoft.com/playwright:v1.62.1
         with:
-          args: sh -c "HOME=/root npm run test:e2e" # Set HOME to /root to avoid Playwright error with Firebox
+          args: sh -c "corepack enable && HOME=/root pnpm run test:e2e" # Set HOME to /root to avoid Playwright error with Firebox
         env:
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
 
       - name: Fix test results permission # Give permissions to test results needed by Chromatic
         run: |
-          sudo chmod -R 777 test-results
+          sudo chmod -R 777 apps/web/test-results
 
       - name: Run visual regression tests
         uses: chromaui/action@v17
         with:
           playwright: true
           exitOnceUploaded: true # Speed up by skipping the build results
+          workingDir: apps/web
           outputDir: storybook-static
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
 
@@ -177,7 +178,7 @@ jobs:
         if: always()
         with:
           name: test-results
-          path: test-results/
+          path: apps/web/test-results/
           retention-days: 7
 
   synchronize-with-crowdin:
