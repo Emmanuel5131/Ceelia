@@ -1,0 +1,31 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import { welcome } from '../data/home';
+---
+<section id="join" class="section container" aria-labelledby="join-title">
+  <SectionHeader id="join-title" align="split" leadBelow title={welcome.title} lead={welcome.lead} />
+  <ul class="people" role="list" data-stagger data-each=".12">
+    {welcome.people.map((p, i) => (
+      <li class="person">
+        <p class="person__n">0{i + 1}</p>
+        <h3 class="person__who">{p.who}</h3>
+        <p class="person__text">{p.text}</p>
+        <a class="person__cta" href={p.cta.href}>{p.cta.label}<span aria-hidden="true"> →</span></a>
+      </li>
+    ))}
+  </ul>
+</section>
+<style>
+  .people { margin-top: 56px; display: grid; border-top: 1px solid var(--line); }
+  .person { padding: 28px 0 32px; border-bottom: 1px solid var(--line); display: grid; gap: 12px; align-content: start; }
+  .person__n { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--brand-ink); }
+  .person__who { font-size: var(--fs-h3); line-height: var(--lh-tight); letter-spacing: var(--track-l); }
+  .person__text { font-size: .95rem; line-height: 1.55; color: var(--brand-ink); max-width: 34ch; }
+  .person__cta { margin-top: 8px; justify-self: start; font-size: var(--fs-small); font-weight: 500; color: var(--brand); text-decoration: underline; text-underline-offset: 4px; }
+  .person__cta:hover { text-decoration-thickness: 2px; }
+  @media (min-width: 900px) {
+    .people { grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--line); }
+    .person { padding: 32px 24px 36px; border-bottom: 0; border-left: 1px solid var(--line); }
+    .person:first-child { padding-left: 0; border-left: 0; }
+  }
+</style>

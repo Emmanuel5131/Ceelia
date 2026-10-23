@@ -1,3 +1,4 @@
+import { appLogin } from './app';
 /**
  * Homepage content. Celia is a case bank: victims of the same scheme add their wallet and a short video, the evidence is
  * sealed from the chain, and the case is open to lawyers and law firms with the list of affected victims already built. Celia is only
@@ -9,12 +10,11 @@
  */
 export const hero = {
   eyebrow: 'Legal tech · onchain case bank for lawyers and law firms',
-  title: 'Celia is a case bank\nfor crypto fraud.',
-  tagline: 'Victim wallets. Preserved evidence. Investigations ready for legal action.',
-  lead: 'Celia brings victims, researchers, and lawyers together to turn on-chain evidence into cases that can stand up to scrutiny.',
-  note: 'We don’t declare fraud. The court decides intent. We build every file to hold up in court.',
-  primary: { label: 'Join as a lawyer or firm', href: '/#lawyers' },
-  secondary: { label: 'Report fraud', href: '/#victims' },
+  title: 'An open case bank\nfor crypto fraud.',
+  lead: 'It brings victims, researchers and lawyers together to turn onchain evidence into cases that can stand up to scrutiny.',
+  note: 'We don’t declare fraud. The court decides intent.\nWe build every file to hold up in court.',
+  primary: { label: 'Join as a lawyer or firm', href: appLogin },
+  secondary: { label: 'Report fraud', href: appLogin },
 };
 
 /**
@@ -108,36 +108,27 @@ export const services: {
 ];
 
 export const process = {
-  title: 'From victims\nto counsel',
-  lead: 'Celia is the case bank. The lawyer or law firm runs the case. The evidence method is committed first, so the case stands on what the chain shows, and intent is left to the court.',
+  title: 'From one victim\nto a public case',
+  lead: 'You are not the only one. Celia pools the victims of the same platform into one case that lawyers and researchers can find and build on. The method is committed first, so the case stands on what the chain shows, and intent is left to the court.',
+  cta: {
+    victim: { label: 'Report fraud', href: appLogin },
+    lawyer: { label: 'Join as a lawyer or firm', href: appLogin },
+  },
   steps: [
-    { title: 'Victims come to us', text: 'Each adds a wallet and records a short video: what they were promised and what they lost. Ownership is proven by signing from the wallet.' },
-    { title: 'We seal the evidence', text: 'The method is committed onchain before any data is touched. The chain establishes falsity and loss and evidences knowledge. The videos are the reliance.' },
-    { title: 'We build the case', text: 'Claims are pooled by scheme and jurisdiction into one evidence file: the wallets of those defrauded, the evidence and a certificate for the court.' },
-    { title: 'Counsel takes it', text: 'A lawyer or law firm opens the case from the bank and runs it in its own court. Celia holds no funds and runs no cases.' },
+    { title: 'Don’t be a lone victim', text: 'Join the others hurt by the same platform. One claim is easy to ignore. Many together show a pattern.' },
+    { title: 'Report the fraud', text: 'Add your wallet and record a short video: what you were promised and what you lost. Ownership is proven by signing from the wallet.' },
+    { title: 'We create the case', text: 'Claims for the same platform are pooled into one case file: the wallets of those defrauded and the evidence, sealed from the chain before any data is touched.' },
+    { title: 'We advertise the case', text: 'The case is listed in the case bank, so lawyers, law firms and researchers can find it and see what is proven and what is not.' },
+    { title: 'The public case grows', text: 'Anyone can inspect the method and the chain evidence. Researchers review it, a lawyer or firm takes it to court, and the court decides intent. Your video stays private, shared only with the lawyer or firm.' },
   ],
 };
 
-/**
- * The frame: Project Celia is an open, onchain evidence file that four roles build together. The onchain / open / one-case
- * principles say how; the roles say who. Credit and outcomes are never promised: contributions are signed and recorded, and
- * what each case pays is set by its own agreement.
- */
-export const collective = {
-  title: 'One open case.\nFour roles.\nAll onchain.',
-  lead: 'Project Celia is an open-source, onchain evidence file. Anyone can inspect the method and verify the evidence. Each role adds to the same case, and every contribution is signed and recorded onchain.',
-  principles: [
-    { title: 'Onchain', text: 'The method is committed first. Evidence hashes and the claimant list are recorded onchain.' },
-    { title: 'Open source', text: 'The tests and the reports are public, so anyone can run them again and check the result.' },
-    { title: 'One case', text: 'One file per platform, with every claimant in it. The court decides intent.' },
-  ],
-  rolesTitle: 'Who builds the case',
-  roles: [
-    { role: 'Coordinator', does: 'Pools the victims of one platform into one claim group and checks that each wallet is theirs.', record: 'Signed claimant list' },
-    { role: 'Analyst', does: 'Traces the funds and runs the fixed tests on the chain, with the thresholds set before the run.', record: 'Results hashed against the commitment' },
-    { role: 'Researcher', does: 'Reviews the analysis, challenges it, and adds what the chain can’t show: the promises, the ads, the entities.', record: 'Reviews and corrections, signed' },
-    { role: 'Lawyer', does: 'Opens the case from the bank, files it in court, and runs it. Celia holds no funds and pays no one.', record: 'Filing reference' },
-  ],
+/** The first thing after the hero: one line for a victim, so nobody reads on thinking they have to build a case alone. */
+export const together = {
+  eyebrow: 'For victims',
+  title: 'Don’t be a\nsolo victim.',
+  lead: 'Your claim joins others hurt by the same scheme, so it is worth a lawyer’s time. Tell it once, add your wallet and a short video, and your evidence is sealed.',
+  cta: { label: 'Report fraud', href: appLogin },
 };
 
 /** Who the page is for: two cards, one per side of the case bank. */
@@ -145,30 +136,30 @@ export const audience = [
   {
     id: 'lawyers',
     label: 'For lawyers and law firms',
-    title: 'The case is built. Your job is to win it.',
-    text: 'Celia holds the wallets of those defrauded and the evidence, so you start with the list already built. Whether you are a solo lawyer or a firm, you take the case and run it.',
+    title: 'The file is built. What you do with it is yours to decide.',
+    text: 'Celia holds the wallets of those defrauded and the evidence, so you start with the list already built. Whether you are a solo lawyer or a firm, you decide whether to take the case and how to run it. Celia does not tell you what to do, and does not promise a result.',
     points: ['Pooled claimants by jurisdiction, with ownership proven', 'Sealed evidence and a certificate for your court', 'Evidence you can verify yourself'],
-    cta: { label: 'Join as a lawyer or firm', href: '/#report' },
+    cta: { label: 'Join as a lawyer or firm', href: appLogin },
   },
   {
     id: 'victims',
     label: 'For victims',
-    title: 'You don’t have to build the case alone.',
-    text: 'Your claim joins others hurt by the same scheme, so it is worth a lawyer’s time. You tell it once, in your own words, and your evidence is sealed.',
-    points: ['Add your wallet and a short video', 'Prove ownership by signing from your wallet', 'Follow your case from evidence to lawyer'],
-    cta: { label: 'Report fraud', href: '/#report' },
+    title: 'You don’t have to document it alone.',
+    text: 'Your wallet and your account sit alongside those of others hurt by the same platform, so a lawyer can see the whole picture. You tell it once, in your own words, and your evidence is sealed. Celia can’t promise that a lawyer takes your case or that you recover anything.',
+    points: ['Add your wallet and a short video', 'Prove ownership by signing from your wallet', 'See where your file stands'],
+    cta: { label: 'Report fraud', href: appLogin },
   },
 ];
 
-/** Case bank preview. Sample cases: the figures are illustrative until real cases are in. `stage` = steps completed (of 3). */
-export const caseBank = {
-  title: 'The case bank',
-  lead: 'Pooled, evidenced and ready for counsel to take. These are sample cases, with illustrative figures.',
-  stages: ['Evidence sealed', 'Taken by counsel', 'Filed'],
-  cases: [
-    { name: 'Protocol P · App A', scheme: 'Stablecoin off-ramp', claimants: 214, jurisdictions: ['NG', 'US', 'UK', 'AE'], loss: '$1.8M', stage: 1 },
-    { name: 'Case 0412', scheme: 'Yield platform', claimants: 96, jurisdictions: ['NG', 'GH', 'KE'], loss: '$640K', stage: 2 },
-    { name: 'Case 0409', scheme: 'Token launch', claimants: 58, jurisdictions: ['US', 'CA'], loss: '$320K', stage: 3 },
+/** Who is welcome on the platform: everyone who can help turn a fraud into a case. */
+export const welcome = {
+  title: 'Everyone who can help\nis welcome.',
+  lead: 'Celia is open to the people a case needs. Pick the part that fits you. Each one adds to the same file.',
+  people: [
+    { who: 'Victims', text: 'Add your wallet and a short video. Your claim sits alongside others hurt by the same platform, and your video stays private.', cta: { label: 'Report fraud', href: appLogin } },
+    { who: 'Lawyers and law firms', text: 'Open a case from the case bank, with the wallets of those defrauded and the evidence already listed, and take it forward in your own court.', cta: { label: 'Join as a lawyer or firm', href: appLogin } },
+    { who: 'Researchers', text: 'Review the evidence, challenge the method, and add what the chain cannot show: the promises, the ads, the entities.', cta: { label: 'Join as a researcher', href: appLogin } },
+    { who: 'Analysts', text: 'Trace the funds and run the fixed tests on the chain, with the thresholds set before the run.', cta: { label: 'Join as an analyst', href: appLogin } },
   ],
 };
 

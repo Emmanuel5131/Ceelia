@@ -4,8 +4,7 @@ import Header from '../components/Header.astro';
 import SectionHero from '../components/SectionHero.astro';
 import SectionProcess from '../components/SectionProcess.astro';
 import SectionAudience from '../components/SectionAudience.astro';
-import SectionCollective from '../components/SectionCollective.astro';
-import SectionCaseBank from '../components/SectionCaseBank.astro';
+import SectionWelcome from '../components/SectionWelcome.astro';
 import SectionServices from '../components/SectionServices.astro';
 // import SectionVerificationLog from '../components/SectionVerificationLog.astro'; // hidden for now
 import SectionFAQ from '../components/SectionFAQ.astro';
@@ -31,8 +30,7 @@ const jsonLd = graph(
     <SectionHero />
     <SectionProcess />
     <SectionAudience />
-    <SectionCollective />
-    <SectionCaseBank />
+    <SectionWelcome />
     <SectionServices />
     {/* <SectionVerificationLog /> is hidden for now; jurisdictions live on /jurisdictions/ */}
     <SectionFAQ items={faqs} />

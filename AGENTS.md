@@ -34,6 +34,13 @@ All env vars validated in `Env.ts`; never read `process.env` directly.
 ## Styling
 Tailwind v4 utility classes. Reuse shared components. Responsive. No unnecessary classes.
 
+## UI (apps/web)
+- Build screens from `components/ui` (shadcn on Radix) and `components/layout`; no raw `button`/`input`/`table` or hand-built cards. Add missing parts with `pnpm dlx shadcn@latest add <name>`, then restyle to `docs/DESIGN.md` §12.
+- Pages use `PageContainer` + `PageHeader`; spacing on the 8pt scale (`p-2/4/6/8`, `gap-*` likewise); controls take their height from the control tokens, never `h-*`.
+- Icons: Phosphor regular only (`@phosphor-icons/react`, `Icon` suffix); no weight or size props.
+- Colours and radius come from tokens (`bg-ink`, `bg-paper`, `text-ink-muted`, `border-border`); no hex values or ad-hoc palette classes. Seal red only for a verdict or finding.
+- `components/ui/*` follow shadcn's own style (destructured props) so they stay easy to update; everything else follows the React rules below.
+
 ## React
 - No `useMemo`/`useCallback` (React compiler handles it). Avoid `useEffect`.
 - Single `props` param with inline type; access as `props.foo` (no destructuring).

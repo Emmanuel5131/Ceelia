@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
+import { IBM_Plex_Mono, Mulish } from 'next/font/google';
+import localFont from 'next/font/local';
 import { notFound } from 'next/navigation';
-import { DemoBadge } from '@/components/DemoBadge';
+import { IconProvider } from '@/components/IconProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { routing } from '@/libs/I18nRouting';
 import '@/styles/global.css';
 
@@ -31,6 +34,32 @@ export const metadata: Metadata = {
   ],
 };
 
+const mulish = Mulish({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-mulish',
+  display: 'swap',
+});
+
+// Evidence data only: hashes, addresses, ids and timestamps.
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-plex-mono',
+  display: 'swap',
+  preload: false,
+});
+
+// Trial files: replace with the licensed Aeonik before launch (docs/DESIGN.md §12).
+const aeonik = localFont({
+  src: [
+    { path: '../../assets/fonts/AeonikTRIAL-Regular.otf', weight: '400' },
+    { path: '../../assets/fonts/AeonikTRIAL-Bold.otf', weight: '700' },
+  ],
+  variable: '--font-aeonik',
+  display: 'swap',
+});
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -53,12 +82,12 @@ export default async function RootLayout(props: {
   setRequestLocale(locale);
 
   return (
-    <html lang={locale}>
-      <body>
+    <html lang={locale} className={`${mulish.variable} ${plexMono.variable} ${aeonik.variable}`}>
+      <body className="bg-background font-sans text-foreground antialiased">
         <NextIntlClientProvider>
-          {props.children}
-
-          <DemoBadge />
+          <IconProvider>
+            <TooltipProvider>{props.children}</TooltipProvider>
+          </IconProvider>
         </NextIntlClientProvider>
       </body>
     </html>
