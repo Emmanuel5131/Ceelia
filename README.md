@@ -197,7 +197,7 @@ Run the following command on your local environment:
 ```shell
 git clone --depth=1 https://github.com/ixartz/Next-js-Boilerplate.git my-project-name
 cd my-project-name
-npm install
+pnpm install
 ```
 
 For your information, all dependencies are updated every month.
@@ -205,7 +205,7 @@ For your information, all dependencies are updated every month.
 Then, you can run the project locally in development mode with live reload by executing:
 
 ```shell
-npm run dev
+pnpm run dev
 ```
 
 Open http://localhost:3000 with your favorite browser to see your project. For your information, the project is already pre-configured with a local database using PGlite. No extra setup is required to run the project locally.
@@ -303,7 +303,7 @@ To modify the database schema in the project, you can update the schema file loc
 After making changes to the schema, generate a migration by running the following command:
 
 ```shell
-npm run db:generate
+pnpm run db:generate
 ```
 
 This will create a migration file that reflects your schema changes.
@@ -311,7 +311,7 @@ This will create a migration file that reflects your schema changes.
 After making sure your database is running, you can apply the generated migration using:
 
 ```shell
-npm run db:migrate
+pnpm run db:migrate
 ```
 
 There is no need to restart the Next.js server for the changes to take effect.
@@ -321,7 +321,7 @@ There is no need to restart the Next.js server for the changes to take effect.
 The project follows the [Conventional Commits](https://www.conventionalcommits.org/) specification, meaning all commit messages must be formatted accordingly. To help you write commit messages, the project provides an interactive CLI that guides you through the commit process. To use it, run the following command:
 
 ```shell
-npm run commit
+pnpm run commit
 ```
 
 One of the benefits of using Conventional Commits is the ability to automatically generate GitHub releases. It also allows us to automatically determine the next version number based on the types of commits that are included in a release.
@@ -355,7 +355,7 @@ Setting up CodeRabbit is simple, visit [coderabbit.ai](https://www.coderabbit.ai
 All unit tests are located alongside the source code in the same directory, making them easier to find. The unit test files follow this format: `*.test.ts` or `*.test.tsx`. The project uses Vitest and React Testing Library for unit testing. You can run the tests with the following command:
 
 ```shell
-npm run test
+pnpm run test
 ```
 
 ### Integration & E2E Testing
@@ -363,8 +363,8 @@ npm run test
 The project uses Playwright for integration and end-to-end (E2E) testing. Integration test files use the `*.integ.ts` extension, while E2E test files use the `*.e2e.ts` extension. You can run the tests with the following commands:
 
 ```shell
-npx playwright install # Only for the first time in a new environment
-npm run test:e2e
+pnpm exec playwright install # Only for the first time in a new environment
+pnpm run test:e2e
 ```
 
 ### Storybook
@@ -376,7 +376,7 @@ Stories are located alongside your components in the `src` directory and follow 
 You can run Storybook in development mode with:
 
 ```shell
-npm run storybook
+pnpm run storybook
 ```
 
 This will start Storybook on http://localhost:6006 where you can view and interact with your UI components in isolation.
@@ -384,7 +384,7 @@ This will start Storybook on http://localhost:6006 where you can view and intera
 To run Storybook tests in headless mode, you can use the following command:
 
 ```shell
-npm run storybook:test
+pnpm run storybook:test
 ```
 
 ### Local Production Build
@@ -392,7 +392,7 @@ npm run storybook:test
 Generate an optimized production build locally using a temporary in-memory Postgres database:
 
 ```shell
-npm run build-local
+pnpm run build-local
 ```
 
 This command:
@@ -404,8 +404,8 @@ This command:
 
 Notes:
 
-- By default, it uses a local database, but you can also use `npm run build` with a remote database.
-- This only creates the build, it doesn't start the server. To run the build locally, use `npm run start`.
+- By default, it uses a local database, but you can also use `pnpm run build` with a remote database.
+- This only creates the build, it doesn't start the server. To run the build locally, use `pnpm run start`.
 
 ### Deploy to production
 
@@ -414,13 +414,13 @@ During the build process, database migrations are automatically executed, so the
 Then, you can generate a production build with:
 
 ```shell
-$ npm run build
+$ pnpm run build
 ```
 
 It generates an optimized production build of the boilerplate. To test the generated build, run:
 
 ```shell
-$ npm run start
+$ pnpm run start
 ```
 
 You also need to defined the environment variables `CLERK_SECRET_KEY` using your own key.
@@ -492,18 +492,18 @@ Arcjet is configured with a central client at `src/libs/Arcjet.ts` that includes
 
 The project includes several commands to ensure code quality and consistency. You can run:
 
-- `npm run lint` to check for linting errors
-- `npm run lint:fix` to automatically fix fixable issues from the linter
-- `npm run check:types` to verify type safety across the entire project
-- `npm run check:deps` help identify unused dependencies and files
-- `npm run check:i18n` ensures all translations are complete and properly formatted
+- `pnpm run lint` to check for linting errors
+- `pnpm run lint:fix` to automatically fix fixable issues from the linter
+- `pnpm run check:types` to verify type safety across the entire project
+- `pnpm run check:deps` help identify unused dependencies and files
+- `pnpm run check:i18n` ensures all translations are complete and properly formatted
 
 #### Bundle Analyzer
 
 Next.js Boilerplate includes a built-in bundle analyzer. It can be used to analyze the size of your JavaScript bundles. To begin, run the following command:
 
 ```shell
-npm run build-stats
+pnpm run build-stats
 ```
 
 By running the command, it'll automatically open a new browser window with the results.
@@ -513,7 +513,7 @@ By running the command, it'll automatically open a new browser window with the r
 The project is already configured with Drizzle Studio to explore the database. You can run the following command to open the database studio:
 
 ```shell
-npm run db:studio
+pnpm run db:studio
 ```
 
 Then, you can open https://local.drizzle.studio with your favorite browser to explore your database.
