@@ -14,7 +14,7 @@ export const site = {
   language: 'en',
   tagline: 'Celia is a case bank for crypto fraud.',
   description:
-    'Celia is an onchain case bank for lawyers and law firms. Victims of the same scheme add their wallet and a short video, Celia is the case bank: it holds the wallets of those defrauded and the sealed evidence from the chain, so nobody has to build the list of those affected. The lawyer or firm runs the case. Celia holds no funds and does not declare fraud: the court decides intent.',
+    'Celia is an onchain case bank for lawyers and law firms. Victims of the same scheme add their wallet and a few lines of text, Celia is the case bank: it holds the wallets of those defrauded and the sealed evidence from the chain, so nobody has to build the list of those affected. The lawyer or firm runs the case. Celia holds no funds and does not declare fraud.',
   shortDescription: 'Onchain case bank for lawyers and law firms: the wallets of those defrauded and sealed evidence, ready for counsel.',
   email: 'hello@example.com',
   areaServed: 'Worldwide',

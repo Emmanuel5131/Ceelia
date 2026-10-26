@@ -50,24 +50,16 @@
     "code_review_powered_by": "Code review propulsé par"
   },
   "SignIn": {
-    "meta_title": "Se connecter",
-    "meta_description": "Connectez-vous à votre compte avec facilité."
+    "meta_title": "Connexion",
+    "meta_description": "Connectez-vous pour suivre votre dossier ou parcourir la banque de dossiers."
   },
   "SignUp": {
-    "meta_title": "S'inscrire",
-    "meta_description": "Créez un compte facilement grâce à notre processus d'inscription intuitif."
-  },
-  "Dashboard": {
-    "hello_message": "Bonjour {email}!",
-    "alternative_message": "Besoin de fonctionnalités avancées ? Multi-tenant et équipes, rôles et permissions, Shadcn UI, typage de bout en bout avec oRPC, paiement Stripe, mode clair / sombre. Essayez <url></url>.",
-    "max_message": "Ou, besoin d'une stack d'auth auto-hébergée (Better Auth) ? Essayez <url></url>."
+    "meta_title": "Créer un compte",
+    "meta_description": "Signalez une fraude crypto ou rejoignez Celia en tant qu’avocat, cabinet ou chercheur."
   },
   "DashboardLayout": {
     "meta_title": "Tableau de bord",
-    "meta_description": "Gérez votre compte depuis le tableau de bord.",
-    "dashboard_link": "Tableau de bord",
-    "user_profile_link": "Gérer votre compte",
-    "sign_out": "Se déconnecter"
+    "meta_description": "Vos dossiers, réclamations et preuves au même endroit."
   },
   "LocaleSwitcher": {
     "change_language": "Changer de langue"
@@ -75,13 +67,132 @@
   "AuthShell": {
     "title": "Une banque de dossiers ouverte pour la fraude crypto.",
     "text": "Signalez une fraude, rejoignez-nous en tant qu’avocat ou cabinet, et suivez un dossier de la preuve au tribunal.",
-    "note": "Nous ne déclarons pas la fraude. Le tribunal décide de l’intention.",
+    "note": "Nous ne déclarons pas la fraude.",
     "sign_in_title": "Connectez-vous à Celia",
     "sign_in_text": "Reprenez votre dossier là où vous l’avez laissé.",
     "sign_up_title": "Créez votre compte",
     "sign_up_text": "Signalez une fraude, ou rejoignez-nous en tant qu’avocat ou cabinet.",
-    "point_1": "Ajoutez votre portefeuille et une courte vidéo",
+    "point_1": "Ajoutez votre portefeuille et quelques lignes de texte",
     "point_2": "Prouvez que vous en êtes propriétaire en signant depuis votre portefeuille",
     "point_3": "Suivez votre dossier de la preuve à l’avocat"
+  },
+  "Jurisdictions": {
+    "meta_title": "Juridictions",
+    "meta_description": "Trouvez la règle qui décide si une preuve électronique est admise, partout dans le monde.",
+    "page_title": "Juridictions",
+    "page_description": "Saisissez un pays, un État ou une province pour voir quel type de règle décide de l’admission d’une preuve électronique.",
+    "search_label": "Pays, État ou province",
+    "search_placeholder": "Essayez Nigeria, New York ou Royaume-Uni",
+    "results_label": "Juridictions correspondantes",
+    "try_label": "Essayez",
+    "law_label": "La loi",
+    "celia_label": "Ce que fait Celia",
+    "status_built": "Celia est construite selon cette règle.",
+    "status_mapped": "Cartographiée. Un avocat ne l’a pas encore confirmée.",
+    "status_inherited": "Applique la règle nationale de {country}.",
+    "none_message": "Nous n’avons pas encore cartographié {name}. Dites-nous quel tribunal et nous l’ajouterons.",
+    "kind_certificate_title": "Certificat",
+    "kind_certificate_text": "La personne responsable du système certifie comment le document a été produit.",
+    "kind_certificate_answer": "Notre certificat nomme le système, l’heure et la méthode.",
+    "kind_authentication_title": "Authentification",
+    "kind_authentication_text": "Vous montrez que le document est bien ce qu’il prétend être et que le système l’a gardé intact.",
+    "kind_authentication_answer": "Le rapport est haché et scellé par rapport à l’engagement.",
+    "kind_presumption_title": "Présomption",
+    "kind_presumption_text": "Le système est présumé avoir fonctionné, sauf contestation.",
+    "kind_presumption_answer": "La méthode a été fixée avant que toute donnée soit touchée.",
+    "kind_equal_title": "Égalité de traitement",
+    "kind_equal_text": "Un document ne peut pas être refusé au seul motif qu’il est électronique.",
+    "kind_equal_answer": "Chaque constat indique ce qui est établi et ce qui ne l’est pas.",
+    "disclaimer": "Ce sont des notes de recherche, pas des conseils juridiques. Nous confirmons chaque règle avec un avocat avant d’affirmer qu’elle est respectée."
+  },
+  "AppShell": {
+    "skip_to_content": "Aller au contenu",
+    "home_label": "Accueil Celia",
+    "main_navigation": "Navigation principale",
+    "nav_overview": "Vue d’ensemble",
+    "nav_cases": "Banque de dossiers",
+    "nav_jurisdictions": "Juridictions",
+    "nav_settings": "Paramètres"
+  },
+  "Overview": {
+    "meta_title": "Vue d’ensemble",
+    "meta_description": "Ce qui demande votre attention aujourd’hui.",
+    "greeting": "Bon retour, {name}",
+    "greeting_anonymous": "Bon retour",
+    "subtitle": "Voici ce qui demande votre attention aujourd’hui.",
+    "primary_action": "Parcourir la banque de dossiers",
+    "sample_notice": "Données d’exemple. Les vrais dossiers et activités apparaîtront ici une fois connectés.",
+    "stat_new_cases": "Nouveaux dossiers dans vos juridictions",
+    "stat_new_cases_hint": "{count} ajoutés cette semaine",
+    "stat_open_cases": "Vos dossiers ouverts",
+    "stat_open_cases_hint": "{count} demandent une réponse",
+    "stat_claimants": "Plaignants en attente d’un avocat",
+    "stat_claimants_hint": "Répartis sur {count} dossiers",
+    "stat_sealed": "Dossiers de preuves scellés",
+    "stat_sealed_hint": "{count} scellés ce mois-ci",
+    "attention_title": "Demande votre attention",
+    "attention_description": "Dossiers prêts pour un avocat ou encore en préparation.",
+    "view_all": "Voir tous les dossiers",
+    "activity_title": "Activité récente",
+    "activity_claims_added": "{count} réclamations ont été ajoutées à {case}",
+    "activity_evidence_sealed": "Les preuves de {case} ont été scellées",
+    "activity_case_taken": "Un avocat ou un cabinet a pris {case}",
+    "activity_method_reviewed": "Un chercheur a examiné la méthode de {case}",
+    "claim_title": "Votre réclamation",
+    "claim_description": "Où en est votre réclamation, de votre portefeuille à un avocat ou un cabinet.",
+    "claim_step_wallet": "Portefeuille ajouté",
+    "claim_step_video": "Courte vidéo ajoutée",
+    "claim_step_ownership": "Propriété prouvée en signant depuis votre portefeuille",
+    "claim_step_pooled": "Regroupée dans un dossier avec d’autres victimes de la même plateforme",
+    "claim_step_counsel": "Prise en charge par un avocat ou un cabinet",
+    "claim_others": "{count} autres victimes de la même plateforme sont dans votre dossier."
+  },
+  "CaseBank": {
+    "meta_title": "Banque de dossiers",
+    "title": "Banque de dossiers",
+    "description": "Dossiers regroupant les victimes d’une même plateforme, avec les preuves scellées depuis la chaîne.",
+    "search_placeholder": "Rechercher par plateforme ou numéro de dossier",
+    "col_case": "Dossier",
+    "col_jurisdiction": "Juridiction",
+    "col_claimants": "Plaignants",
+    "col_status": "Statut",
+    "col_updated": "Mis à jour",
+    "status_collecting": "Collecte des réclamations",
+    "status_building": "Préparation des preuves",
+    "status_sealed": "Scellé",
+    "status_counsel": "Chez un avocat",
+    "meta_description": "Des dossiers regroupant les victimes d’une même plateforme, avec des preuves scellées depuis la chaîne."
+  },
+  "DataTable": {
+    "sort_ascending": "Tri croissant",
+    "sort_descending": "Tri décroissant",
+    "sort_clear": "Annuler le tri",
+    "hide_column": "Masquer la colonne",
+    "sorted_ascending": "Trié par ordre croissant",
+    "sorted_descending": "Trié par ordre décroissant",
+    "view_columns": "Colonnes",
+    "toggle_columns": "Afficher les colonnes",
+    "rows_per_page": "Lignes par page",
+    "rows_total": "{total, plural, one {# ligne} other {# lignes}}",
+    "rows_selected": "{selected} sur {total} sélectionnées",
+    "page_of": "Page {page} sur {total}",
+    "first_page": "Première page",
+    "previous_page": "Page précédente",
+    "next_page": "Page suivante",
+    "last_page": "Dernière page",
+    "filter_clear": "Effacer le filtre",
+    "filters_reset": "Réinitialiser",
+    "search_label": "Rechercher",
+    "no_results": "Aucun résultat.",
+    "select_all": "Tout sélectionner",
+    "select_row": "Sélectionner la ligne"
+  },
+  "App": {
+    "meta_title": "Celia : une banque de dossiers ouverte pour la fraude crypto",
+    "meta_description": "Signalez une fraude crypto, rejoignez Celia en tant qu’avocat ou cabinet, et suivez un dossier de la preuve scellée au tribunal. Celia ne détient aucun fonds et ne déclare pas la fraude."
+  },
+  "UserProfile": {
+    "meta_title": "Compte",
+    "meta_description": "Gérez votre profil, votre e-mail et vos méthodes de connexion."
   }
 }

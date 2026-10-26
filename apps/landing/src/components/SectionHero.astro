@@ -2,8 +2,7 @@
 import Lines from './ui/Lines.astro';
 import Button from './ui/Button.astro';
 import HeroBackdrop from './HeroBackdropStick.astro';
-import { hero, jurisdictions } from '../data/home';
-const count = jurisdictions.reduce((n, r) => n + r.items.length, 0);
+import { hero } from '../data/home';
 ---
 <section class="hero" aria-labelledby="hero-title">
   <div class="hero__bg" aria-hidden="true"><HeroBackdrop /></div>
@@ -17,7 +16,7 @@ const count = jurisdictions.reduce((n, r) => n + r.items.length, 0);
       </div>
       <div class="hero__proof">
         <p class="hero__note" data-split="load" data-delay=".8"><Lines text={hero.note} /></p>
-        <a class="hero__chip" href="/jurisdictions/" data-reveal="load" data-delay="1.1">Evidence rules mapped in {count} jurisdictions<span aria-hidden="true"> →</span></a>
+        <a class="hero__chip" href="/jurisdictions/" data-reveal="load" data-delay="1.1">Find the evidence rule for your jurisdiction<span aria-hidden="true"> →</span></a>
       </div>
     </div>
   </div>

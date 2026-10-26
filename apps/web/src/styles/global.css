@@ -86,14 +86,15 @@
   --chart-3: #7f8da3;
   --chart-4: #b9c2d0;
   --chart-5: #991f38;
-  --sidebar: #f5f2ea;
-  --sidebar-foreground: #0f1b2d;
-  --sidebar-primary: #0f1b2d;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ece7db;
-  --sidebar-accent-foreground: #0f1b2d;
-  --sidebar-border: rgb(15 27 45 / 0.22);
-  --sidebar-ring: #0f1b2d;
+  /* The sidebar is an ink surface: white text, a faint white wash for hover and the active item. */
+  --sidebar: #0f1b2d;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #0f1b2d;
+  --sidebar-accent: rgb(255 255 255 / 0.1);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgb(255 255 255 / 0.14);
+  --sidebar-ring: #ffffff;
 }
 
 @theme inline {

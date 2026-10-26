@@ -1,9 +1,26 @@
 'use client';
 
+import { FR, GB } from 'country-flag-icons/react/3x2';
 import { useLocale, useTranslations } from 'next-intl';
-import type { ChangeEventHandler } from 'react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { usePathname, useRouter } from '@/libs/I18nNavigation';
 import { routing } from '@/libs/I18nRouting';
+
+// The flag shown beside each language, when there is one. A flag stands for a language here, not a country: English uses the British flag.
+const flags: Record<string, typeof GB | undefined> = { en: GB, fr: FR };
+
+// A language named in itself, with a capital: "English", "Français".
+const languageName = (locale: string) => {
+  const name = new Intl.DisplayNames(locale, { type: 'language' }).of(locale) ?? locale;
+
+  return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1);
+};
 
 export const LocaleSwitcher = () => {
   const t = useTranslations('LocaleSwitcher');
@@ -11,9 +28,7 @@ export const LocaleSwitcher = () => {
   const pathname = usePathname();
   const locale = useLocale();
 
-  const handleChange: ChangeEventHandler<HTMLSelectElement> = (event) => {
-    const newLocale = event.target.value;
-
+  const handleChange = (newLocale: string) => {
     if (newLocale === locale) {
       return;
     }
@@ -23,17 +38,25 @@ export const LocaleSwitcher = () => {
   };
 
   return (
-    <select
-      defaultValue={locale}
-      onChange={handleChange}
-      className="border border-gray-300 font-medium focus:outline-hidden focus-visible:ring-3"
-      aria-label={t('change_language')}
-    >
-      {routing.locales.map((elt) => (
-        <option key={elt} value={elt}>
-          {elt.toUpperCase()}
-        </option>
-      ))}
-    </select>
+    <Select value={locale} onValueChange={handleChange}>
+      <SelectTrigger size="sm" className="w-36" aria-label={t('change_language')}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {routing.locales.map((elt) => {
+          const Flag = flags[elt];
+
+          return (
+            <SelectItem key={elt} value={elt}>
+              {Flag && (
+                <Flag className="h-4 w-6 shrink-0 border border-line-soft" aria-hidden="true" />
+              )}
+              {/* Each language is named in itself, so it can be found whatever the page language is. */}
+              {languageName(elt)}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 };

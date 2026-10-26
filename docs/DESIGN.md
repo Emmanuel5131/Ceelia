@@ -364,6 +364,20 @@ The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a to
 11. **Type:** only the sizes in §3 (`text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-3xl`). Headings use Aeonik through the `font-heading` and `font-display` classes; mono is only for evidence data.
 12. **Text is translated.** No user-visible string is hard-coded in a component (`next-intl`).
 
+**Where each pattern lives.** Style a pattern once, in its component, and reuse it. A page composes these and adds no look of its own.
+
+| Pattern | Component | Notes |
+|---|---|---|
+| App frame | `shell/AppShell` on shadcn `Sidebar` | Collapsible to icons (cookie `sidebar_state`, shortcut Ctrl or Cmd + B), a sheet on mobile. An ink surface (`--sidebar` tokens in `global.css`) with white text and the on-dark logo, beside a white page. Items come from `shell/nav.ts` per role. |
+| Page section | `layout/PageSection` | Title, optional description and action, then the content. 48px between sections. |
+| Stat or panel | `ui/Card` (+ `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardValue`) | `variant="default"` is paper; `variant="outline"` is white with a hairline, for content that must stand out. |
+| Activity or steps | `ui/Timeline`, `TimelineItem` | The marker carries the state by shape: `filled` done or sealed, `dashed` current, `hollow` event, `muted` not yet. |
+| Any table | `data-table/DataTable` on TanStack Table | Sorting, global search, faceted filters, column visibility, row selection and pagination, all from one set of features in `data-table/table.ts`. |
+
+**Adding a table.** Define the columns once at module scope with `createAppColumnHelper<Row>()` (see `overview/case-columns.tsx`), then render `<DataTable columns data getRowId filters />`. Use `DataTableColumnHeader` for sortable headers and `createSelectColumn` for a checkbox column. Set `filterFn: 'inSet'` on a column to make it filterable by the faceted menu. To page on the server later, change `table.ts`, not the columns.
+
+**Vendored shadcn code.** `ui/sidebar.tsx` stays close to the registry source so it is easy to update; `oxlint.config.ts` relaxes a few rules for that one file.
+
 **Icons: Phosphor, regular weight** (`@phosphor-icons/react`). One weight and one family across the app, set once in `IconProvider`, so icons never take a `weight` prop. Size follows the control: 16px inside `sm` controls, 20px by default, 24px in `lg` and empty states. Name icons with the `Icon` suffix (`WalletIcon`). Add `aria-label` to an icon-only button. Use `fill` or `bold` only for a selected state, never to decorate. Do not mix in another icon set.
 
 **Why Phosphor:** one consistent drawing grid in six weights (so a selected or emphasised state is the same icon in a heavier weight), a large set that already covers wallet, file, seal and gavel concepts, and a regular weight that sits well beside hairline borders. Font Awesome's free tier has fewer outline icons and a very recognisable default look. Lucide and Tabler are good alternatives with a thinner stroke.

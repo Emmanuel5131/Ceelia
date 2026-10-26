@@ -1,7 +1,7 @@
 /**
  * Services-section tiles for Celia, drawn with the same blueprint kit as the case studies (hairline strokes, mono labels,
  * motion hooks driven by src/scripts/artMotion.ts). One tile per service, all 640 × 340, with labels big enough to read:
- *   intake    what a victim submits (wallet, short video, signature) and the claimants table the case bank builds from it
+ *   intake    what a victim submits (wallet, account of events, signature) and the claimants table the case bank builds from it
  *   evidence  the fixed tests as a chart: observed value against a threshold committed before the run, and the order of events
  *   file      the pooled claims in one evidence file (proven / not proven), and a certificate ring per jurisdiction
  *   access    the case bank (defrauded wallets and evidence) opened by a lawyer or a law firm
@@ -56,7 +56,7 @@ export const intakeArt: Art = (W, H, c) => {
   s += `<rect class="a-d" data-o="1.2" x="${tx}" y="${ty}" width="${tw}" height="${th}" ${BG} stroke="${c}" stroke-opacity=".8"/>`;
   s += `<path class="a-x" data-o="1.5" d="M${tx} ${r0}H${tx + tw}" stroke="${c}" stroke-opacity=".35"/>`;
   s += hook(T(tx + 12, ty + 17, 'claimant', c, 9, 0.6), 'a-t', 1.6) + hook(T(tx + 92, ty + 17, 'wallet', c, 9, 0.6), 'a-t', 1.6) +
-    hook(T(tx + 200, ty + 17, 'video', c, 9, 0.6, 'middle'), 'a-t', 1.6) + hook(T(tx + 262, ty + 17, 'owner', c, 9, 0.6, 'middle'), 'a-t', 1.6);
+    hook(T(tx + 200, ty + 17, 'account', c, 9, 0.6, 'middle'), 'a-t', 1.6) + hook(T(tx + 262, ty + 17, 'owner', c, 9, 0.6, 'middle'), 'a-t', 1.6);
   const rows: [string, string][] = [['01', '0x7a3f…e91c'], ['02', '0x19cd…04b2'], ['03', '0xb6e0…7f35'], ['04', '0x52a8…c1d9']];
   rows.forEach(([id, wallet], i) => {
     const cy = r0 + i * rowH + rowH / 2, o = 3 + i * 0.5;
@@ -137,7 +137,7 @@ export const fileArt: Art = (W, H, c) => {
   s += hook(T(dx + 18, dy + 28, 'evidence file · one platform', c, 10.5, 1, 'start', 500), 'a-t', 1.4);
   s += hook(T(dx + 18, dy + 46, '5 claimants pooled', c, 9.5, 0.7), 'a-t', 1.6);
   s += `<path class="a-x" data-o="1.7" d="M${dx + 18} ${dy + 58}H${dx + dw - 18}" stroke="${c}" stroke-opacity=".3"/>`;
-  const find: [string, string][] = [['tick', 'falsity · proven'], ['tick', 'loss · proven'], ['none', 'intent · for the court']];
+  const find: [string, string][] = [['tick', 'falsity · proven'], ['tick', 'loss · proven']];
   find.forEach(([kind, label], i) => {
     const y = dy + 88 + i * 40, o = 2 + i * 0.5;
     s += `<g class="a-p" data-o="${f(o)}">${kind === 'tick' ? tick(dx + 28, y, 16, c) : none(dx + 28, y, 16, c)}</g>`;
