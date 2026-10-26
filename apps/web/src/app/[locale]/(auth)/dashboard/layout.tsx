@@ -1,9 +1,10 @@
-import { SignOutButton } from '@clerk/nextjs';
+import { UserButton } from '@clerk/nextjs';
+import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { LocaleSwitcher } from '@/components/LocaleSwitcher';
-import { Link } from '@/libs/I18nNavigation';
-import { BaseTemplate } from '@/templates/BaseTemplate';
+import { cookies } from 'next/headers';
+import { AppShell } from '@/components/shell/AppShell';
+import { parseRole } from '@/utils/Role';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -12,61 +13,31 @@ type DashboardLayoutProps = {
 
 export async function generateMetadata(props: DashboardLayoutProps): Promise<Metadata> {
   const { locale } = await props.params;
-  const t = await getTranslations({
-    locale,
-    namespace: 'DashboardLayout',
-  });
+  const t = await getTranslations({ locale, namespace: 'DashboardLayout' });
 
   return {
     title: t('meta_title'),
     description: t('meta_description'),
+    // The app is for signed-in people only, so search engines have nothing to index here.
+    robots: { index: false, follow: false },
   };
 }
 
 export default async function DashboardLayout(props: DashboardLayoutProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
-  const t = await getTranslations({
-    locale,
-    namespace: 'DashboardLayout',
-  });
+  const user = await currentUser();
+  const cookieStore = await cookies();
+  // The sidebar remembers whether it was collapsed in a cookie (set by the shadcn sidebar).
+  const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
 
   return (
-    <BaseTemplate
-      leftNav={
-        <>
-          <li>
-            <Link href="/dashboard/" className="border-none text-gray-700 hover:text-gray-900">
-              {t('dashboard_link')}
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/dashboard/user-profile/"
-              className="border-none text-gray-700 hover:text-gray-900"
-            >
-              {t('user_profile_link')}
-            </Link>
-          </li>
-        </>
-      }
-      rightNav={
-        <>
-          <li>
-            <SignOutButton>
-              <button className="border-none text-gray-700 hover:text-gray-900" type="button">
-                {t('sign_out')}
-              </button>
-            </SignOutButton>
-          </li>
-
-          <li>
-            <LocaleSwitcher />
-          </li>
-        </>
-      }
+    <AppShell
+      userRole={parseRole(user?.publicMetadata.role)}
+      userMenu={<UserButton />}
+      defaultOpen={defaultOpen}
     >
       {props.children}
-    </BaseTemplate>
+    </AppShell>
   );
 }

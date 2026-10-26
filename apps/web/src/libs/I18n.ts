@@ -19,6 +19,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
+    // Dates render in one time zone on the server and in the browser, so they never differ between the two.
+    timeZone: 'UTC',
     // oxlint-disable-next-line unicorn/no-await-expression-member
     messages: (await import(`../locales/${locale}.json`)).default,
   };

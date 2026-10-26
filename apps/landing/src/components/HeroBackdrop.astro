@@ -5,9 +5,9 @@ import HeroCaption from './HeroCaption.astro';
  * one step at a time, and a single caption names the step that is playing:
  *   1  a new app promises 10% a week        2  victims pay in             3  a gate drops: withdrawals blocked
  *   4  the money moves out through a mixer  5  it is cashed out at an exchange
- *   6  the victims' claims are pooled into one evidence file, sealed in red; intent stays an empty outline for the court
- * Only the caption carries words, so the picture stays quiet. The captions name actions, never people or intent: the court
- * decides intent. Seal red appears only on the sealed evidence file.
+ *   6  the victims' claims are pooled into one evidence file, sealed in red
+ * Only the caption carries words, so the picture stays quiet. The captions name actions, never people or intent.
+ * Seal red appears only on the sealed evidence file.
  * A small script restarts the animation (class `on` on the svg) after a pause; CSS does the rest: every element animates in
  * with its own delay (--d) and duration (--dur). Elements rest in their finished state, so the reduced-motion and no-script
  * views are never half drawn. Grid units are 80px in a 1600 × 960 viewBox.
@@ -35,7 +35,7 @@ const strands: P[][] = [[mixer, [17.3, ROW - 0.8], exchange], [mixer, exchange],
 const CAP: P = [g(11.4) - 14, g(3)];
 const SLOT = 1.7;
 const SCALE = 1.12, PIVOT: P = [1560, 560]; // the story is drawn on the grid, then scaled up about the right edge so it fills the half beside the copy
-const captions = ['1 · A new app promises 10% a week', '2 · Victims pay in', '3 · Withdrawals blocked', '4 · The money moves out through a mixer', '5 · It is cashed out at an exchange', '6 · Evidence filed · the court decides intent'];
+const captions = ['1 · A new app promises 10% a week', '2 · Victims pay in', '3 · Withdrawals blocked', '4 · The money moves out through a mixer', '5 · It is cashed out at an exchange', '6 · Evidence filed'];
 ---
 <svg class="bd" viewBox={`0 0 ${COLS * U} ${ROWS * U}`} preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
   <g class="bd__scenes">

@@ -1,6 +1,8 @@
 import { SignIn } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 import { getI18nPath } from '@/utils/Helpers';
 
 type SignInPageProps = {
@@ -9,10 +11,7 @@ type SignInPageProps = {
 
 export async function generateMetadata(props: SignInPageProps): Promise<Metadata> {
   const { locale } = await props.params;
-  const t = await getTranslations({
-    locale,
-    namespace: 'SignIn',
-  });
+  const t = await getTranslations({ locale, namespace: 'SignIn' });
 
   return {
     title: t('meta_title'),
@@ -24,5 +23,14 @@ export default async function SignInPage(props: SignInPageProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
 
-  return <SignIn path={getI18nPath('/sign-in', locale)} />;
+  const dashboardUrl = getI18nPath('/dashboard', locale);
+
+  // Someone who is already signed in has nothing to do here, and Clerk would show an error instead of the form.
+  const { userId } = await auth();
+
+  if (userId) {
+    redirect(dashboardUrl);
+  }
+
+  return <SignIn path={getI18nPath('/sign-in', locale)} forceRedirectUrl={dashboardUrl} />;
 }

@@ -9,11 +9,13 @@ const baseConfig: NextConfig = {
     position: 'bottom-right',
   },
   poweredByHeader: false,
+  // The jurisdictions package ships TypeScript source, so Next compiles it with the app.
+  transpilePackages: ['@celia/jurisdictions'],
   reactStrictMode: true,
   reactCompiler: process.env.NODE_ENV === 'production', // Keep the development environment fast
   experimental: {
-    // Clean up unused compilation work from memory and disk caches.
-    turbopackGc: true,
+    // `turbopackGc` is off on purpose: in Next 16.4 it collects tasks the HMR state still references, and the dev server
+    // dies with "task is missing in memory or persistent storage". Turn it back on after upgrading Next.
     // Use the Rust version, instead of the OG Babel one
     turbopackRustReactCompiler: process.env.NODE_ENV === 'production',
   },

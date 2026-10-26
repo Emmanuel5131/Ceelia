@@ -2,9 +2,9 @@
 import { heroReport as r, heroFile as file, type TrailKind, type TrailLinkKind } from '../data/home';
 /**
  * Hero visual: one sample evidence file, pooled from five victims' submissions and played as one flow (a beat per caption:
- * nodes appear, links draw, packets run), then split into what the chain confirms and what it does not; intent is left to the
- * court. It starts after the loader and plays once.
- * State is shown by shape (filled = confirmed, dashed = not confirmed, hollow = left to the court). Seal red marks only the
+ * nodes appear, links draw, packets run), then split into what the chain confirms and what it does not.
+ * It starts after the loader and plays once.
+ * State is shown by shape (filled = confirmed, dashed = not confirmed). Seal red marks only the
  * thing a finding points at, and the seal. Without JS or with reduced motion the finished file is shown. Desktop only:
  * on phones the copy takes the whole hero. The viewBox is 500 × 200, so 11px text stays 11px.
  */
@@ -105,8 +105,6 @@ const kindClass: Record<TrailLinkKind, string> = { in: 'e--in', out: 'e--out', t
               </ul>
             </div>
           </div>
-
-          <p class="rep__intent a" style={sty(seal - 0.3)}><span class="rep__k">{r.intentLabel}</span><span class="rep__open"><span class="sq sq--open" aria-hidden="true"></span>{r.intent}</span></p>
           <span class="rep__stamp a stamp" style={sty(seal + 0.1)}>{r.status}</span>
         </section>
       );
@@ -168,8 +166,6 @@ const kindClass: Record<TrailLinkKind, string> = { in: 'e--in', out: 'e--out', t
   .sq--yes { background: var(--brand); }
   .sq--no { border: 1.5px dashed var(--brand); }
   .sq--open { display: inline-block; border: 1.5px solid var(--brand-ink); margin-right: 10px; }
-  .rep__intent { display: flex; align-items: baseline; gap: 16px; margin: 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: .9375rem; color: var(--brand-ink); }
-  .rep__intent .rep__k { width: 4.5rem; flex: none; }
   .rep__stamp { position: absolute; right: 0; bottom: 0; font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--seal); border: 1.5px solid var(--seal); padding: 4px 10px; rotate: -4deg; }
   .scn { position: relative; }
 

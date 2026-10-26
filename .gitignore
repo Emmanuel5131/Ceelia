@@ -68,3 +68,6 @@ dist/
 # agent local state
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Third-party product screenshots kept for local reference only (see docs/research/dashboard-research.md)
+docs/research/dashboard-inspiration/*.png

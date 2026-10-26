@@ -35,6 +35,21 @@ export default defineConfig({
     'jsdoc/require-returns': 'error',
     'jsdoc/require-returns-description': 'error',
   },
+  overrides: [
+    {
+      // Vendored from shadcn and kept close to the registry source so it stays easy to update.
+      files: ['src/components/ui/sidebar.tsx'],
+      rules: {
+        'no-shadow': 'off',
+        'no-param-reassign': 'off',
+        'react/hook-use-state': 'off',
+        'react/button-has-type': 'off',
+        'unicorn/no-document-cookie': 'off',
+        'typescript/no-unsafe-type-assertion': 'off',
+        'typescript/no-confusing-void-expression': 'off',
+      },
+    },
+  ],
   options: {
     reportUnusedDisableDirectives: 'error',
   },

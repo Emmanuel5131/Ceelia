@@ -30,7 +30,11 @@ import { audience } from '../data/home';
   .card__points { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid var(--line); }
   .card--ink .card__points { border-top-color: var(--line-on-brand); }
   .card__points li { display: flex; gap: 12px; align-items: baseline; font-size: var(--fs-small); }
-  .card__points li::before { content: ''; flex: none; width: 8px; height: 8px; border: 1.5px solid currentColor; transform: translateY(-1px); }
+  /* Phosphor "check" (regular) as a mask, so it takes the text colour */
+  .card__points li::before {
+    content: ''; flex: none; width: 16px; height: 16px; background: currentColor; transform: translateY(3px);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
   .card__cta { margin-top: 12px; }
   @media (min-width: 900px) { .aud { grid-template-columns: 1fr 1fr; } .card { padding: 56px 48px; } }
   @media (max-width: 600px) { .card { padding-left: var(--card-x-m); padding-right: var(--card-x-m); } }

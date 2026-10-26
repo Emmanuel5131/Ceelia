@@ -1,38 +1,55 @@
 import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { IBM_Plex_Mono, Mulish } from 'next/font/google';
 import localFont from 'next/font/local';
 import { notFound } from 'next/navigation';
 import { IconProvider } from '@/components/IconProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { routing } from '@/libs/I18nRouting';
+import { AppConfig } from '@/utils/AppConfig';
+import { getBaseUrl } from '@/utils/Helpers';
 import '@/styles/global.css';
 
-export const metadata: Metadata = {
-  icons: [
-    {
-      rel: 'apple-touch-icon',
-      url: '/apple-touch-icon.png',
-    },
-    {
-      rel: 'icon',
-      type: 'image/png',
-      sizes: '32x32',
-      url: '/favicon-32x32.png',
-    },
-    {
-      rel: 'icon',
-      type: 'image/png',
-      sizes: '16x16',
-      url: '/favicon-16x16.png',
-    },
-    {
-      rel: 'icon',
-      url: '/favicon.ico',
-    },
-  ],
-};
+export async function generateMetadata(props: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await props.params;
+  const t = await getTranslations({ locale, namespace: 'App' });
+
+  return {
+    metadataBase: new URL(getBaseUrl()),
+    applicationName: AppConfig.name,
+    // Pages give a short title, and the site name is added after it.
+    title: { default: t('meta_title'), template: `%s · ${AppConfig.name}` },
+    description: t('meta_description'),
+    // No og:title or og:description here: a page's own title and description are the fallback for link previews.
+    openGraph: { type: 'website', siteName: AppConfig.name, locale },
+    twitter: { card: 'summary' },
+    icons: [
+      {
+        rel: 'apple-touch-icon',
+        url: '/apple-touch-icon.png',
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        url: '/favicon-32x32.png',
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '16x16',
+        url: '/favicon-16x16.png',
+      },
+      {
+        rel: 'icon',
+        url: '/favicon.ico',
+      },
+    ],
+  };
+}
 
 const mulish = Mulish({
   subsets: ['latin'],

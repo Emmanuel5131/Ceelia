@@ -1,0 +1,18 @@
+{
+  "name": "@celia/jurisdictions",
+  "private": true,
+  "type": "module",
+  "description": "Every country, state, province and region, and the kind of electronic-evidence rule that applies there.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "i18n-iso-countries": "7.14.0",
+    "iso-3166-2": "1.0.0",
+    "vitest": "4.1.10"
+  }
+}

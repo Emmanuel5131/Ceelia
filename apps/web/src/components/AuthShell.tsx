@@ -1,3 +1,4 @@
+import { CheckIcon } from '@phosphor-icons/react/ssr';
 import { getTranslations } from 'next-intl/server';
 import { AuthHeading } from '@/components/AuthHeading';
 import { Logo } from '@/components/Logo';
@@ -27,10 +28,7 @@ export async function AuthShell(props: { children: React.ReactNode }) {
           <ul className="grid gap-4 border-t border-white/30 pt-8">
             {points.map((point) => (
               <li key={point} className="flex items-baseline gap-4 text-sm text-white">
-                <span
-                  className="size-2 shrink-0 translate-y-px border-[1.5px] border-white"
-                  aria-hidden="true"
-                />
+                <CheckIcon className="size-4 shrink-0 translate-y-0.5" aria-hidden="true" />
                 {point}
               </li>
             ))}

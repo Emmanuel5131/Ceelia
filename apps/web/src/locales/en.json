@@ -51,23 +51,15 @@
   },
   "SignIn": {
     "meta_title": "Sign in",
-    "meta_description": "Seamlessly sign in to your account with our user-friendly login process."
+    "meta_description": "Sign in to follow your case or browse the case bank."
   },
   "SignUp": {
-    "meta_title": "Sign up",
-    "meta_description": "Effortlessly create an account through our intuitive sign-up process."
-  },
-  "Dashboard": {
-    "hello_message": "Hello {email}!",
-    "alternative_message": "Need advanced features? Multi-tenancy & Teams, Roles & Permissions, Shadcn UI, End-to-End Typesafety with oRPC, Stripe Payment, Light / Dark mode. Try <url></url>.",
-    "max_message": "Or, need a Self-hosted auth stack (Better Auth)? Try <url></url>."
+    "meta_title": "Create an account",
+    "meta_description": "Report crypto fraud or join as a lawyer, firm or researcher."
   },
   "DashboardLayout": {
     "meta_title": "Dashboard",
-    "meta_description": "Manage your account from the dashboard.",
-    "dashboard_link": "Dashboard",
-    "user_profile_link": "Manage your account",
-    "sign_out": "Sign out"
+    "meta_description": "Your cases, claims and evidence in one place."
   },
   "LocaleSwitcher": {
     "change_language": "Change language"
@@ -75,13 +67,132 @@
   "AuthShell": {
     "title": "An open case bank for crypto fraud.",
     "text": "Report fraud, join as a lawyer or firm, and follow a case from evidence to court.",
-    "note": "We don’t declare fraud. The court decides intent.",
+    "note": "We don’t declare fraud.",
     "sign_in_title": "Sign in to Celia",
     "sign_in_text": "Pick up your case where you left it.",
     "sign_up_title": "Create your account",
     "sign_up_text": "Report fraud, or join as a lawyer or firm.",
-    "point_1": "Add your wallet and a short video",
+    "point_1": "Add your wallet and a few lines of text",
     "point_2": "Prove ownership by signing from your wallet",
     "point_3": "Follow your case from evidence to lawyer"
+  },
+  "Jurisdictions": {
+    "meta_title": "Jurisdictions",
+    "meta_description": "Find which rule decides whether electronic evidence is accepted, anywhere in the world.",
+    "page_title": "Jurisdictions",
+    "page_description": "Type a country, state or province to see which kind of rule decides whether electronic evidence is accepted there.",
+    "search_label": "Country, state or province",
+    "search_placeholder": "Try Nigeria, New York or United Kingdom",
+    "results_label": "Matching jurisdictions",
+    "try_label": "Try",
+    "law_label": "The law",
+    "celia_label": "What Celia does",
+    "status_built": "Celia is built to this rule.",
+    "status_mapped": "Mapped. Counsel has not confirmed it yet.",
+    "status_inherited": "Uses the national rule of {country}.",
+    "none_message": "We haven’t mapped {name} yet. Tell us which court and we will add it.",
+    "kind_certificate_title": "Certificate",
+    "kind_certificate_text": "The person responsible for the system certifies how the record was made.",
+    "kind_certificate_answer": "Our certificate names the system, the time and the method.",
+    "kind_authentication_title": "Authentication",
+    "kind_authentication_text": "You show the record is what it claims to be and that the system kept it intact.",
+    "kind_authentication_answer": "The report is hashed and sealed against the commitment.",
+    "kind_presumption_title": "Presumption",
+    "kind_presumption_text": "The system is presumed to have worked unless someone challenges it.",
+    "kind_presumption_answer": "The method was fixed before any data was touched.",
+    "kind_equal_title": "Equal treatment",
+    "kind_equal_text": "A record can’t be refused only because it is electronic.",
+    "kind_equal_answer": "Every finding states what is proven and what is not.",
+    "disclaimer": "These are research notes, not legal advice. We confirm each rule with counsel before we say it is met."
+  },
+  "AppShell": {
+    "skip_to_content": "Skip to content",
+    "home_label": "Celia home",
+    "main_navigation": "Main navigation",
+    "nav_overview": "Overview",
+    "nav_cases": "Case bank",
+    "nav_jurisdictions": "Jurisdictions",
+    "nav_settings": "Settings"
+  },
+  "Overview": {
+    "meta_title": "Overview",
+    "meta_description": "What needs your attention today.",
+    "greeting": "Welcome back, {name}",
+    "greeting_anonymous": "Welcome back",
+    "subtitle": "Here is what needs your attention today.",
+    "primary_action": "Browse the case bank",
+    "sample_notice": "Sample data. Real cases and activity appear here once they are connected.",
+    "stat_new_cases": "New cases in your jurisdictions",
+    "stat_new_cases_hint": "{count} added this week",
+    "stat_open_cases": "Your open cases",
+    "stat_open_cases_hint": "{count} need a response",
+    "stat_claimants": "Claimants waiting for counsel",
+    "stat_claimants_hint": "Across {count} cases",
+    "stat_sealed": "Sealed evidence files",
+    "stat_sealed_hint": "{count} sealed this month",
+    "attention_title": "Needs your attention",
+    "attention_description": "Cases that are ready for counsel or still being built.",
+    "view_all": "View all cases",
+    "activity_title": "Recent activity",
+    "activity_claims_added": "{count} claims were added to {case}",
+    "activity_evidence_sealed": "Evidence for {case} was sealed",
+    "activity_case_taken": "A lawyer or firm took {case}",
+    "activity_method_reviewed": "A researcher reviewed the method for {case}",
+    "claim_title": "Your claim",
+    "claim_description": "Where your claim stands, from your wallet to a lawyer or firm.",
+    "claim_step_wallet": "Wallet added",
+    "claim_step_video": "Short video added",
+    "claim_step_ownership": "Ownership proven by signing from your wallet",
+    "claim_step_pooled": "Pooled into a case with others hurt by the same platform",
+    "claim_step_counsel": "Taken by a lawyer or firm",
+    "claim_others": "{count} others hurt by the same platform are in your case."
+  },
+  "CaseBank": {
+    "meta_title": "Case bank",
+    "title": "Case bank",
+    "description": "Cases pooled from victims of the same platform, with the evidence sealed from the chain.",
+    "search_placeholder": "Search by platform or case number",
+    "col_case": "Case",
+    "col_jurisdiction": "Jurisdiction",
+    "col_claimants": "Claimants",
+    "col_status": "Status",
+    "col_updated": "Updated",
+    "status_collecting": "Collecting claims",
+    "status_building": "Building evidence",
+    "status_sealed": "Sealed",
+    "status_counsel": "With counsel",
+    "meta_description": "Cases pooled from victims of the same platform, with the evidence sealed from the chain."
+  },
+  "DataTable": {
+    "sort_ascending": "Sort ascending",
+    "sort_descending": "Sort descending",
+    "sort_clear": "Clear sort",
+    "hide_column": "Hide column",
+    "sorted_ascending": "Sorted ascending",
+    "sorted_descending": "Sorted descending",
+    "view_columns": "Columns",
+    "toggle_columns": "Toggle columns",
+    "rows_per_page": "Rows per page",
+    "rows_total": "{total, plural, one {# row} other {# rows}}",
+    "rows_selected": "{selected} of {total} selected",
+    "page_of": "Page {page} of {total}",
+    "first_page": "First page",
+    "previous_page": "Previous page",
+    "next_page": "Next page",
+    "last_page": "Last page",
+    "filter_clear": "Clear filter",
+    "filters_reset": "Reset",
+    "search_label": "Search",
+    "no_results": "No results.",
+    "select_all": "Select all rows",
+    "select_row": "Select row"
+  },
+  "App": {
+    "meta_title": "Celia: an open case bank for crypto fraud",
+    "meta_description": "Report crypto fraud, join as a lawyer or firm, and follow a case from sealed evidence to court. Celia holds no funds and does not declare fraud."
+  },
+  "UserProfile": {
+    "meta_title": "Account",
+    "meta_description": "Manage your profile, email and sign-in methods."
   }
 }

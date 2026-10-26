@@ -1,0 +1,847 @@
+[
+{
+"parent": null,
+"name": "Australia",
+"year": "2011"
+},
+{
+"parent": null,
+"name": "Australian Capital Territory",
+"year": "2012"
+},
+{
+"parent": null,
+"name": "New South Wales",
+"year": "2010"
+},
+{
+"parent": null,
+"name": "Northern Territory",
+"year": "2011"
+},
+{
+"parent": null,
+"name": "Queensland",
+"year": "2013"
+},
+{
+"parent": null,
+"name": "South Australia",
+"year": "2011"
+},
+{
+"parent": null,
+"name": "Tasmania",
+"year": "2010"
+},
+{
+"parent": null,
+"name": "Victoria",
+"year": "2011"
+},
+{
+"parent": null,
+"name": "Western Australia",
+"year": "2011"
+},
+{
+"parent": null,
+"name": "Bahamas",
+"year": "2003"
+},
+{
+"parent": null,
+"name": "Bahrain",
+"year": "2018"
+},
+{
+"parent": null,
+"name": "Bangladesh",
+"year": "2006"
+},
+{
+"parent": null,
+"name": "Barbados",
+"year": "2001"
+},
+{
+"parent": null,
+"name": "Belize",
+"year": "2021"
+},
+{
+"parent": null,
+"name": "Bhutan",
+"year": "2006"
+},
+{
+"parent": null,
+"name": "Botswana",
+"year": "2014"
+},
+{
+"parent": null,
+"name": "Brunei Darussalam",
+"year": "2000"
+},
+{
+"parent": null,
+"name": "Cabo Verde",
+"year": "2003"
+},
+{
+"parent": null,
+"name": "Cambodia",
+"year": "2019"
+},
+{
+"parent": "Canada",
+"name": "Alberta",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "British Columbia",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "Manitoba",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "New Brunswick",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "Newfoundland and Labrador",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "Northwest Territories",
+"year": "2011"
+},
+{
+"parent": "Canada",
+"name": "Nova Scotia",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Nunavut",
+"year": "2004"
+},
+{
+"parent": "Canada",
+"name": "Ontario",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "Prince Edward Island",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "Quebec",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "Saskatchewan",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Yukon",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "China",
+"year": "2004"
+},
+{
+"parent": "Canada",
+"name": "Hong Kong, China",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Macao, China",
+"year": "2004"
+},
+{
+"parent": "Canada",
+"name": "Colombia",
+"year": "1999"
+},
+{
+"parent": "Canada",
+"name": "Dominica",
+"year": "2013"
+},
+{
+"parent": "Canada",
+"name": "Dominican Republic",
+"year": "2002"
+},
+{
+"parent": "Canada",
+"name": "Ecuador",
+"year": "2002"
+},
+{
+"parent": "Canada",
+"name": "El Salvador",
+"year": "2015, 2021"
+},
+{
+"parent": "Canada",
+"name": "Eswatini",
+"year": "2022"
+},
+{
+"parent": "Canada",
+"name": "Ethiopia",
+"year": "2020"
+},
+{
+"parent": "Canada",
+"name": "Fiji",
+"year": "2017"
+},
+{
+"parent": "Canada",
+"name": "France",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Gambia",
+"year": "2009"
+},
+{
+"parent": "Canada",
+"name": "Ghana",
+"year": "2008"
+},
+{
+"parent": "Canada",
+"name": "Grenada",
+"year": "2013"
+},
+{
+"parent": "Canada",
+"name": "Guatemala",
+"year": "2008"
+},
+{
+"parent": "Canada",
+"name": "Guyana",
+"year": "2023"
+},
+{
+"parent": "Canada",
+"name": "Haiti",
+"year": "2017"
+},
+{
+"parent": "Canada",
+"name": "Honduras",
+"year": "2015"
+},
+{
+"parent": "Canada",
+"name": "India",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Iran (Islamic Republic of)",
+"year": "2004"
+},
+{
+"parent": "Canada",
+"name": "Ireland",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Jamaica",
+"year": "2006"
+},
+{
+"parent": "Canada",
+"name": "Jordan",
+"year": "2015"
+},
+{
+"parent": "Canada",
+"name": "Kiribati",
+"year": "2021"
+},
+{
+"parent": "Canada",
+"name": "Kuwait",
+"year": "2014"
+},
+{
+"parent": "Canada",
+"name": "Lao People's Democratic Republic",
+"year": "2012"
+},
+{
+"parent": "Canada",
+"name": "Liberia",
+"year": "2002"
+},
+{
+"parent": "Canada",
+"name": "Libya",
+"year": "2022"
+},
+{
+"parent": "Canada",
+"name": "Madagascar",
+"year": "2014"
+},
+{
+"parent": "Canada",
+"name": "Malawi",
+"year": "2016"
+},
+{
+"parent": "Canada",
+"name": "Malaysia",
+"year": "2006"
+},
+{
+"parent": "Canada",
+"name": "Maldives",
+"year": "2022"
+},
+{
+"parent": "Canada",
+"name": "Malta",
+"year": "2002"
+},
+{
+"parent": "Canada",
+"name": "Marshall Islands",
+"year": "2025"
+},
+{
+"parent": "Canada",
+"name": "Mauritius",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Mexico",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Mozambique",
+"year": "2017"
+},
+{
+"parent": "Canada",
+"name": "Namibia",
+"year": "2019"
+},
+{
+"parent": "Canada",
+"name": "New Zealand",
+"year": "2002"
+},
+{
+"parent": "Canada",
+"name": "Oman",
+"year": "2008"
+},
+{
+"parent": "Canada",
+"name": "Pakistan",
+"year": "2002"
+},
+{
+"parent": "Canada",
+"name": "Panama",
+"year": "2001, 2008"
+},
+{
+"parent": "Canada",
+"name": "Papua New Guinea",
+"year": "2022"
+},
+{
+"parent": "Canada",
+"name": "Paraguay",
+"year": "2021"
+},
+{
+"parent": "Canada",
+"name": "Philippines",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "Qatar",
+"year": "2010"
+},
+{
+"parent": "Canada",
+"name": "Republic of Korea",
+"year": "1999"
+},
+{
+"parent": "Canada",
+"name": "Rwanda",
+"year": "2010"
+},
+{
+"parent": "Canada",
+"name": "Saint Kitts and Nevis",
+"year": "2011"
+},
+{
+"parent": "Canada",
+"name": "Saint Lucia",
+"year": "2011"
+},
+{
+"parent": "Canada",
+"name": "Saint Vincent and the Grenadines",
+"year": "2007"
+},
+{
+"parent": "Canada",
+"name": "Samoa",
+"year": "2008"
+},
+{
+"parent": "Canada",
+"name": "San Marino",
+"year": "2013"
+},
+{
+"parent": "Canada",
+"name": "Saudi Arabia",
+"year": "2007"
+},
+{
+"parent": "Canada",
+"name": "Seychelles",
+"year": "2001"
+},
+{
+"parent": "Canada",
+"name": "Sierra Leone",
+"year": "2019"
+},
+{
+"parent": "Canada",
+"name": "Singapore",
+"year": "2010"
+},
+{
+"parent": "Canada",
+"name": "Slovenia",
+"year": "2000"
+},
+{
+"parent": "Canada",
+"name": "South Africa",
+"year": "2002"
+},
+{
+"parent": "Canada",
+"name": "Sri Lanka",
+"year": "2017"
+},
+{
+"parent": "Canada",
+"name": "Suriname",
+"year": "2017"
+},
+{
+"parent": "Canada",
+"name": "Syrian Arab Republic",
+"year": "2014"
+},
+{
+"parent": "Canada",
+"name": "Thailand",
+"year": "2019"
+},
+{
+"parent": "Canada",
+"name": "Timor-Leste",
+"year": "2024"
+},
+{
+"parent": "Canada",
+"name": "Togo",
+"year": "2017"
+},
+{
+"parent": "Canada",
+"name": "Trinidad and Tobago",
+"year": "2011"
+},
+{
+"parent": "Canada",
+"name": "Uganda",
+"year": "2011"
+},
+{
+"parent": "Canada",
+"name": "United Arab Emirates",
+"year": "2006"
+},
+{
+"parent": "Canada",
+"name": "Abu Dhabi Global Market",
+"year": "2021"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Anguilla",
+"year": "2006"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Bailiwick of Guernsey",
+"year": "2000"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Bailiwick of Jersey",
+"year": "2000"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Bermuda",
+"year": "1999"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "British Virgin Islands",
+"year": "2021"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Cayman Islands",
+"year": "2000"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Isle of Man",
+"year": "2000"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Montserrat",
+"year": "2009"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "Turks and Caicos Islands",
+"year": "2000"
+},
+{
+"parent": "United Kingdom of Great Britain and Northern Ireland",
+"name": "United Republic of Tanzania",
+"year": "2015"
+},
+{
+"parent": "United States of America",
+"name": "Alabama",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Alaska",
+"year": "2004"
+},
+{
+"parent": "United States of America",
+"name": "Arizona",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Arkansas",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "California",
+"year": "1999"
+},
+{
+"parent": "United States of America",
+"name": "Colorado",
+"year": "2002"
+},
+{
+"parent": "United States of America",
+"name": "Connecticut",
+"year": "2002"
+},
+{
+"parent": "United States of America",
+"name": "Delaware",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "District of Columbia",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Florida",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Georgia",
+"year": "2009"
+},
+{
+"parent": "United States of America",
+"name": "Guam",
+"year": "2015"
+},
+{
+"parent": "United States of America",
+"name": "Hawaii",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Idaho",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Illinois",
+"year": "2021"
+},
+{
+"parent": "United States of America",
+"name": "Indiana",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Iowa",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Kansas",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Kentucky",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Louisiana",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Maine",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Maryland",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Massachusetts",
+"year": "2003"
+},
+{
+"parent": "United States of America",
+"name": "Michigan",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Minnesota",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Mississippi",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Missouri",
+"year": "2003"
+},
+{
+"parent": "United States of America",
+"name": "Montana",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Nebraska",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Nevada",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "New Hampshire",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "New Jersey",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "New Mexico",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "North Carolina",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "North Dakota",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Ohio",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Oklahoma",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Oregon",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Pennsylvania",
+"year": "1999"
+},
+{
+"parent": "United States of America",
+"name": "Puerto Rico",
+"year": "2006"
+},
+{
+"parent": "United States of America",
+"name": "Rhode Island",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "South Carolina",
+"year": "2004"
+},
+{
+"parent": "United States of America",
+"name": "South Dakota",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Tennessee",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Texas",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "United States Virgin Islands",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Utah",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Vermont",
+"year": "2003"
+},
+{
+"parent": "United States of America",
+"name": "Virginia",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Washington",
+"year": "2020"
+},
+{
+"parent": "United States of America",
+"name": "West Virginia",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Wisconsin",
+"year": "2004"
+},
+{
+"parent": "United States of America",
+"name": "Wyoming",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Vanuatu",
+"year": "2000"
+},
+{
+"parent": "United States of America",
+"name": "Venezuela (Bolivarian Republic of)",
+"year": "2001"
+},
+{
+"parent": "United States of America",
+"name": "Viet Nam",
+"year": "2005"
+},
+{
+"parent": "United States of America",
+"name": "Zambia",
+"year": "2009"
+}
+]
