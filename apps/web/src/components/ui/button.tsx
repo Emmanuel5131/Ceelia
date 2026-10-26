@@ -13,12 +13,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-ink bg-ink text-white hover:border-ink-hover hover:bg-ink-hover',
+        default: 'border-ink bg-ink text-on-ink hover:border-ink-hover hover:bg-ink-hover',
         outline:
-          'border-ink bg-surface text-ink hover:bg-ink hover:text-white aria-expanded:bg-ink aria-expanded:text-white',
+          'border-ink bg-surface text-ink hover:bg-ink hover:text-on-ink aria-expanded:bg-ink aria-expanded:text-on-ink',
         secondary: 'border-transparent bg-paper text-ink hover:bg-paper-sunken',
         ghost: 'border-transparent bg-transparent text-ink hover:bg-paper aria-expanded:bg-paper',
-        destructive: 'border-seal bg-surface text-seal hover:bg-seal hover:text-white',
+        destructive: 'border-seal bg-surface text-seal hover:bg-seal hover:text-on-ink',
         link: 'h-auto rounded-none border-transparent px-0 text-ink underline underline-offset-4 hover:text-ink-muted',
       },
       size: {

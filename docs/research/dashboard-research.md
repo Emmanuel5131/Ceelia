@@ -108,12 +108,12 @@ Celia differs from all of these in three ways that should shape the dashboard:
 - Header: case name in Aeonik, status badge, jurisdiction chips, the seal state, primary action (Take this case).
 - Tabs: **Summary · Claimants · Evidence · Timeline · Documents · Activity**.
 - **Summary** leads with a short written callout, then **Confirmed** and **Not confirmed** lists, then intent left to the court.
-- **Claimants:** a table of wallets with ownership proven or pending; videos stay private and are visible only to the lawyer or firm.
+- **Claimants:** a table of wallets with ownership proven or pending; the victim's statement stays private and is visible only to the lawyer or firm.
 - **Evidence:** the tests, thresholds, hashes and seal (mono for hashes).
 - **Activity:** an append-only audit log, with export.
 - A right-hand detail panel (like Chainalysis) for whatever row is selected.
 
-**My claim** (victim): a stepper in plain language, with wallet, short video, ownership proof, then the status of the pooled case.
+**My claim** (victim): a stepper in plain language, with wallet, ownership proof (signed from the wallet), the victim's account of what happened, then the status of the pooled case.
 
 **Settings:** the Sardine pattern: grouped left nav, underlined tabs, bordered cards.
 

@@ -1,0 +1,20 @@
+{
+  "name": "@celia/core",
+  "private": true,
+  "type": "module",
+  "description": "Domain code shared by the web app and, later, the worker: wallet addresses, ownership proofs and hashing.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0",
+    "@scure/base": "^2.4.0"
+  }
+}

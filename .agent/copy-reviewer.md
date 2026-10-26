@@ -24,7 +24,7 @@ Copy that is:
 3. **Law**: a jurisdiction row names a real rule and says "in counsel review" until counsel signs off. Flag a rule claimed as met without that.
 4. **Outcomes**: "case won" and any payout are illustrations. They must be labelled so.
 5. **Open and onchain claims**: "open source" and "onchain" are claims about how Celia works. Flag them if the thing is not actually public or onchain.
-6. **Victims**: video and wallet data are shared only with the lawyer or firm handling the case, and never published. Flag copy that suggests otherwise.
+6. **Victims**: a victim's statement and the link between their identity and their wallet are shared only with the lawyer or firm handling the case, and never published. Wallet addresses and chain evidence are public onchain, so never say they are secret. Flag copy that suggests otherwise.
 7. **Voice**: sentence case, no exclamation marks, no "simply" or "just", no jargon without a plain word beside it.
 
 ## Your Feedback Style

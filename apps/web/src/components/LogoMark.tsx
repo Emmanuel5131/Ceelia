@@ -29,7 +29,7 @@ export function LogoMark(props: { size?: number; onDark?: boolean; className?: s
     >
       <title>Celia</title>
       <path fill="currentColor" d={`${diag} ${leg}`} />
-      <path fill={props.onDark ? '#E0687C' : '#991F38'} d={arm} />
+      <path className={props.onDark ? 'fill-seal-on-dark' : 'fill-seal'} d={arm} />
     </svg>
   );
 }

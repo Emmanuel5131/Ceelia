@@ -1,8 +1,10 @@
 import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { redirect } from 'next/navigation';
 import { OverviewContent } from '@/components/overview/OverviewContent';
-import { parseRole } from '@/utils/Role';
+import { parseAccount } from '@/utils/Account';
+import { getI18nPath } from '@/utils/Helpers';
 
 type OverviewPageProps = {
   params: Promise<{ locale: string }>;
@@ -23,7 +25,17 @@ export default async function OverviewPage(props: OverviewPageProps) {
   setRequestLocale(locale);
   const user = await currentUser();
 
+  const account = parseAccount(user?.publicMetadata);
+
+  if (!user || !account) {
+    redirect(getI18nPath('/onboarding', locale));
+  }
+
   return (
-    <OverviewContent userRole={parseRole(user?.publicMetadata.role)} firstName={user?.firstName} />
+    <OverviewContent
+      accountType={account.accountType}
+      userId={user.id}
+      firstName={user.firstName}
+    />
   );
 }

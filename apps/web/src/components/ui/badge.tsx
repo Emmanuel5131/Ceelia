@@ -14,7 +14,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default: 'border-border bg-surface text-ink [a]:hover:bg-paper',
-        solid: 'border-ink bg-ink text-white',
+        solid: 'border-ink bg-ink text-on-ink',
         muted: 'border-transparent bg-paper text-ink-muted',
         seal: 'border-seal bg-surface text-seal',
         dashed: 'border-dashed border-ink bg-surface text-ink',

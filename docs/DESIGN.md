@@ -61,7 +61,7 @@ Primary-button hover fill is `#1B2A44` (one step lighter than ink).
 - Large solid blocks are ink with white text. This is the landing's signature (process, footer, dark tiles) **(landing)**.
 - Seal red never fills a large area. Allowed: a verdict chip, a threshold marker, a delta band, a stamp.
 - Overlays on ink use white at low opacity (`white/10` to `white/32`), not grey.
-- Dark mode is **not** planned. If it is needed later, build it from the ink and terminal tokens, not by inverting paper.
+- Dark mode is **app only** (the landing stays light). It is the same roles with the lightness flipped, set in the `.dark` block of `apps/web/src/styles/global.css`: `ink` becomes the light colour, `surface` and `paper` become deep navy, `seal` becomes `seal-on-dark`. Components keep their class names. Text on an ink fill uses `text-on-ink` (never `text-white`), and a surface that must stay dark in both modes uses `bg-night`.
 
 ---
 
@@ -372,9 +372,12 @@ The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a to
 | Page section | `layout/PageSection` | Title, optional description and action, then the content. 48px between sections. |
 | Stat or panel | `ui/Card` (+ `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardValue`) | `variant="default"` is paper; `variant="outline"` is white with a hairline, for content that must stand out. |
 | Activity or steps | `ui/Timeline`, `TimelineItem` | The marker carries the state by shape: `filled` done or sealed, `dashed` current, `hollow` event, `muted` not yet. |
+| Settings | `layout/SettingsList`, `SettingsRow` | One card, a row per setting: name and one sentence on the left, the control (button, select, switch) on the right; the control drops under the text on a phone. Account management opens Clerk's modal. Add a setting by adding a row. |
 | Any table | `data-table/DataTable` on TanStack Table | Sorting, global search, faceted filters, column visibility, row selection and pagination, all from one set of features in `data-table/table.ts`. |
 
 **Adding a table.** Define the columns once at module scope with `createAppColumnHelper<Row>()` (see `overview/case-columns.tsx`), then render `<DataTable columns data getRowId filters />`. Use `DataTableColumnHeader` for sortable headers and `createSelectColumn` for a checkbox column. Set `filterFn: 'inSet'` on a column to make it filterable by the faceted menu. To page on the server later, change `table.ts`, not the columns.
+
+**Light and dark mode.** `next-themes` puts a `dark` class on `<html>`; it follows the system setting until someone picks a theme with the toggle in the sidebar footer (the choice is remembered). The footer also holds the red sign-out button. Never hard-code a hex colour or `text-white` on an ink fill: use the tokens, and both modes work. Check any new screen in both.
 
 **Vendored shadcn code.** `ui/sidebar.tsx` stays close to the registry source so it is easy to update; `oxlint.config.ts` relaxes a few rules for that one file.
 
@@ -392,7 +395,7 @@ The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a to
 2. ~~**Input shape.**~~ **Decided: square**, with pill buttons (§12).
 3. **App header height and sidebar.** 64px with an optional 240px sidebar is the starting point.
 4. **Chart library.** Not chosen. Must follow §7.
-5. **Dark mode.** Not planned.
+5. **Dark mode.** Built for the app (see §2 Rules). Decide whether the landing gets it too.
 6. **Status colours beyond seal red.** Not added on purpose. Revisit only if shape and label prove insufficient in the app.
 
 ---

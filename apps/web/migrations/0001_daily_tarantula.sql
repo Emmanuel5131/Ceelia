@@ -1,0 +1,20 @@
+CREATE TABLE "claim" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" text NOT NULL,
+	"chain" text NOT NULL,
+	"wallet_address" text NOT NULL,
+	"platform_name" text NOT NULL,
+	"platform_key" text NOT NULL,
+	"platform_url" text,
+	"statement" text,
+	"country" text,
+	"ownership" text DEFAULT 'unsigned' NOT NULL,
+	"nonce" text NOT NULL,
+	"signature" text,
+	"signed_at" timestamp,
+	"status" text DEFAULT 'draft' NOT NULL,
+	"submitted_at" timestamp,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "claim_one_wallet_per_platform" UNIQUE("user_id","chain","wallet_address","platform_key")
+);

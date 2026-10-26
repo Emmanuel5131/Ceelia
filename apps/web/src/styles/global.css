@@ -4,8 +4,8 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/* Dark mode is not planned (docs/DESIGN.md §12). The variant stays so shadcn's `dark:` classes never follow the OS setting. */
-@custom-variant dark (&:is(.dark *));
+/* Light and dark follow the `dark` class on <html>, set by next-themes (docs/DESIGN.md §12). */
+@custom-variant dark (&:is(.dark, .dark *));
 
 /* ==========================================================================
    Celia design tokens (docs/DESIGN.md). Ink on paper, hairlines, square surfaces, pill actions, one red accent with a job.
@@ -18,6 +18,8 @@
   --color-ink-soft: #7f8da3; /* decorative strokes only, never text */
   --color-ink-tint: #b9c2d0; /* decorative fills only */
   --color-surface: #ffffff;
+  --color-on-ink: #ffffff; /* text and icons on an ink fill: white in light mode, the page colour in dark mode */
+  --color-night: #0f1b2d; /* a dark surface that stays dark in both modes (auth panel, overlays) */
   --color-paper: #f5f2ea;
   --color-paper-sunken: #ece7db;
   --color-on-ink-muted: #d5dbe5;
@@ -97,6 +99,50 @@
   --sidebar-ring: #ffffff;
 }
 
+/* Dark mode: the same roles with the lightness flipped. Ink becomes the light colour, paper and surface become deep navy,
+   the seal red switches to its lighter on-dark value. Components keep their class names; only these values change. */
+.dark {
+  color-scheme: dark;
+  --color-ink: #e8edf5;
+  --color-ink-hover: #ffffff;
+  --color-ink-muted: #9fadc2;
+  --color-ink-soft: #6b7a92;
+  --color-ink-tint: #2a3a56;
+  --color-surface: #0d1626;
+  --color-on-ink: #0d1626;
+  --color-paper: #142033;
+  --color-paper-sunken: #1b2a44;
+  --color-seal: #e0687c;
+  --color-line: rgb(232 237 245 / 0.22);
+  --color-line-soft: rgb(232 237 245 / 0.14);
+
+  --background: #0d1626;
+  --foreground: #e8edf5;
+  --card: #142033;
+  --card-foreground: #e8edf5;
+  --popover: #142033;
+  --popover-foreground: #e8edf5;
+  --primary: #e8edf5;
+  --primary-foreground: #0d1626;
+  --secondary: #0d1626;
+  --secondary-foreground: #e8edf5;
+  --muted: #142033;
+  --muted-foreground: #9fadc2;
+  --accent: #1b2a44;
+  --accent-foreground: #e8edf5;
+  --destructive: #e0687c;
+  --border: rgb(232 237 245 / 0.22);
+  --input: rgb(232 237 245 / 0.3);
+  --ring: #e8edf5;
+  --chart-1: #e8edf5;
+  --chart-2: #9fadc2;
+  --chart-3: #6b7a92;
+  --chart-4: #2a3a56;
+  --chart-5: #e0687c;
+  /* The sidebar goes one step deeper than the page, so it still reads as a separate surface. */
+  --sidebar: #08101d;
+}
+
 @theme inline {
   --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -139,7 +185,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* One focus treatment everywhere: a 2px ink outline, 3px away (white on ink surfaces). */
+/* One focus treatment everywhere: a 2px ink outline, 3px away. Ink is the light colour in dark mode. */
 @utility focus-ring {
   &:focus-visible {
     outline: 2px solid var(--color-ink);
@@ -167,7 +213,7 @@
   }
 
   ::selection {
-    @apply bg-ink text-white;
+    @apply bg-ink text-on-ink;
   }
 
   /* Anything that lines up in a column or changes in place uses tabular figures. */

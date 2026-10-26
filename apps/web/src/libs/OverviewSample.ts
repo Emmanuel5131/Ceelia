@@ -171,8 +171,3 @@ export const sampleStats = {
   sealedFiles: 9,
   sealedThisMonth: 2,
 };
-
-export const sampleClaim = {
-  claimantsInCase: 141,
-  steps: ['done', 'done', 'current', 'todo', 'todo'] as const,
-};
