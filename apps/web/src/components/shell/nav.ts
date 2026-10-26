@@ -1,4 +1,4 @@
-import type { Role } from '@/utils/Role';
+import type { AccountType } from '@/utils/Account';
 
 export type NavId = 'overview' | 'cases' | 'jurisdictions' | 'settings';
 
@@ -6,13 +6,14 @@ export const navHref: Record<NavId, string> = {
   overview: '/dashboard',
   cases: '/dashboard/cases',
   jurisdictions: '/dashboard/jurisdictions',
-  settings: '/dashboard/user-profile',
+  settings: '/dashboard/settings',
 };
 
-/** The left navigation for each role. Victims see their own case, so they do not get the case bank list. */
-export const navByRole: Record<Role, NavId[]> = {
-  victim: ['overview', 'jurisdictions', 'settings'],
-  lawyer: ['overview', 'cases', 'jurisdictions', 'settings'],
-  researcher: ['overview', 'cases', 'jurisdictions', 'settings'],
-  analyst: ['overview', 'cases', 'jurisdictions', 'settings'],
+/**
+ * The left navigation for each account type. The case bank is public, so both see it; what they see inside differs.
+ * Counsel will gain "my cases" and "firm" here.
+ */
+export const navByAccount: Record<AccountType, NavId[]> = {
+  person: ['overview', 'cases', 'jurisdictions', 'settings'],
+  counsel: ['overview', 'cases', 'jurisdictions', 'settings'],
 };

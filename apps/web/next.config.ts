@@ -10,7 +10,7 @@ const baseConfig: NextConfig = {
   },
   poweredByHeader: false,
   // The jurisdictions package ships TypeScript source, so Next compiles it with the app.
-  transpilePackages: ['@celia/jurisdictions'],
+  transpilePackages: ['@celia/core', '@celia/jurisdictions'],
   reactStrictMode: true,
   reactCompiler: process.env.NODE_ENV === 'production', // Keep the development environment fast
   experimental: {

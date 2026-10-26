@@ -78,7 +78,7 @@ export function JurisdictionFinder(props: { onSelect?: (jurisdiction: Jurisdicti
             <button
               key={name}
               type="button"
-              className="border border-border px-3 py-1 text-ink focus-ring transition-colors hover:bg-ink hover:text-white"
+              className="border border-border px-3 py-1 text-ink focus-ring transition-colors hover:bg-ink hover:text-on-ink"
               onClick={() => {
                 const [first] = searchJurisdictions(name, { limit: 1 });
 

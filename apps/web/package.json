@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@arcjet/next": "1.10.0",
+    "@celia/core": "workspace:*",
     "@celia/jurisdictions": "workspace:*",
     "@clerk/localizations": "4.15.3",
     "@clerk/nextjs": "7.5.12",
@@ -48,6 +49,7 @@
     "drizzle-orm": "0.45.2",
     "next": "16.4.0",
     "next-intl": "4.13.4",
+    "next-themes": "^0.4.6",
     "pg": "8.23.0",
     "radix-ui": "^1.8.1",
     "react": "19.2.8",

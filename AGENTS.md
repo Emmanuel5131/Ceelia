@@ -1,6 +1,7 @@
 # AGENTS
 
 ## Structure
+- `packages/core` (`@celia/core`): domain code shared by the web app and, later, the worker (wallet addresses, ownership proofs, platform keys). Pure TypeScript with tests; no framework imports.
 - `apps/web`: the Celia app (Next.js). All `src/`, tests, migrations and tool configs live here.
 - `apps/landing`: the marketing site (Astro), own `package.json`. Flat `src/components` with one `Section*.astro` per section.
 - `docs/`: design and product notes. The root only holds workspace config, CI, hooks and these guides.
@@ -28,6 +29,10 @@ Only these `bun run` scripts: `build-local`, `lint`, `check:types`, `check:deps`
 ## Git Commits
 Conventional Commits: `type: summary` without scope. The summary should be a short, specific sentence that explains what changed and where or why, not a vague phrase. Types: `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`. `BREAKING CHANGE:` footer when needed.
 
+## Accounts
+- Account type (`person` or `counsel`) is written to Clerk `publicMetadata` by the server only, in onboarding; read it with `parseAccount`. There is no default type: no type means onboarding.
+- Never put an account type or review status in `unsafeMetadata`. Counsel start `pending`; only staff set `verified`.
+
 ## Env
 All env vars validated in `Env.ts`; never read `process.env` directly.
 
@@ -40,7 +45,7 @@ Tailwind v4 utility classes. Reuse shared components. Responsive. No unnecessary
 - Every table is `data-table/DataTable` (TanStack Table); columns live at module scope via `createAppColumnHelper`. Never build a one-off table.
 - Pages use `PageContainer` + `PageHeader`; spacing on the 8pt scale (`p-2/4/6/8`, `gap-*` likewise); controls take their height from the control tokens, never `h-*`.
 - Icons: Phosphor regular only (`@phosphor-icons/react`, `Icon` suffix); no weight or size props.
-- Colours and radius come from tokens (`bg-ink`, `bg-paper`, `text-ink-muted`, `border-border`); no hex values or ad-hoc palette classes. Seal red only for a verdict or finding.
+- Colours and radius come from tokens (`bg-ink`, `bg-paper`, `text-ink-muted`, `border-border`); no hex values or ad-hoc palette classes. The app has light and dark mode: use `text-on-ink` on an ink fill (not `text-white`) and check new screens in both. Seal red only for a verdict or finding.
 - `components/ui/*` follow shadcn's own style (destructured props) so they stay easy to update; everything else follows the React rules below.
 
 ## React

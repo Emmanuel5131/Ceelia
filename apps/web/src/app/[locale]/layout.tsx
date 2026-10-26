@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { ThemeProvider } from 'next-themes';
 import { IBM_Plex_Mono, Mulish } from 'next/font/google';
 import localFont from 'next/font/local';
 import { notFound } from 'next/navigation';
@@ -99,13 +100,24 @@ export default async function RootLayout(props: {
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} className={`${mulish.variable} ${plexMono.variable} ${aeonik.variable}`}>
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${mulish.variable} ${plexMono.variable} ${aeonik.variable}`}
+    >
       <body className="bg-background font-sans text-foreground antialiased">
-        <NextIntlClientProvider>
-          <IconProvider>
-            <TooltipProvider>{props.children}</TooltipProvider>
-          </IconProvider>
-        </NextIntlClientProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NextIntlClientProvider>
+            <IconProvider>
+              <TooltipProvider>{props.children}</TooltipProvider>
+            </IconProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

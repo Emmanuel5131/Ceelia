@@ -11,9 +11,11 @@ import { Logo } from '@/components/Logo';
 import { LogoMark } from '@/components/LogoMark';
 import type { NavId } from '@/components/shell/nav';
 import { navHref } from '@/components/shell/nav';
+import { ThemeToggle } from '@/components/shell/ThemeToggle';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -36,9 +38,10 @@ const icons = {
  * Ctrl/Cmd+B), keeps its state in a cookie, and becomes a slide-out menu on phones. The current page is marked.
  * @param props - The sidebar props.
  * @param props.items - Which areas to show, in order.
+ * @param props.signOut - The sign-out button, so the sidebar does not depend on Clerk.
  * @returns The sidebar.
  */
-export function AppSidebar(props: { items: NavId[] }) {
+export function AppSidebar(props: { items: NavId[]; signOut: React.ReactNode }) {
   const t = useTranslations('AppShell');
   const pathname = usePathname();
   const labels: Record<NavId, string> = {
@@ -92,6 +95,10 @@ export function AppSidebar(props: { items: NavId[] }) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="flex-row items-center justify-between border-t border-sidebar-border px-4 py-3 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-2 group-data-[collapsible=icon]:px-0">
+        <ThemeToggle />
+        {props.signOut}
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

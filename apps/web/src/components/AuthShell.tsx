@@ -17,7 +17,7 @@ export async function AuthShell(props: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-screen bg-surface lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       {/* The dot grid is the landing page's background, kept faint so it never competes with the text. */}
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-ink bg-[radial-gradient(circle,rgb(255_255_255/0.16)_1.5px,transparent_1.5px)] bg-size-[40px_40px] p-12 text-white lg:flex xl:p-16">
+      <aside className="relative hidden flex-col justify-between overflow-hidden bg-night bg-[radial-gradient(circle,rgb(255_255_255/0.16)_1.5px,transparent_1.5px)] bg-size-[40px_40px] p-12 text-white lg:flex xl:p-16">
         <Logo height={40} onDark className="text-white" />
 
         <div className="grid max-w-md gap-8">

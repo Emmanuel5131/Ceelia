@@ -3,13 +3,13 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { PageSection } from '@/components/layout/PageSection';
 import { ActivityFeed } from '@/components/overview/ActivityFeed';
 import { CaseDataTable } from '@/components/overview/CaseDataTable';
-import { ClaimProgress } from '@/components/overview/ClaimProgress';
+import { PersonOverview } from '@/components/overview/PersonOverview';
 import { SampleNotice } from '@/components/overview/SampleNotice';
 import { StatCard } from '@/components/overview/StatCard';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/libs/I18nNavigation';
 import { sampleActivity, sampleCases, sampleStats } from '@/libs/OverviewSample';
-import type { Role } from '@/utils/Role';
+import type { AccountType } from '@/utils/Account';
 
 // Sealed cases are ready for counsel, then cases still being built, then cases still collecting claims.
 const priority = { sealed: 0, building: 1, collecting: 2, counsel: 3 } as const;
@@ -18,11 +18,16 @@ const priority = { sealed: 0, building: 1, collecting: 2, counsel: 3 } as const;
  * The overview: what needs the person's attention today. Lawyers, researchers and analysts get headline numbers, the cases that
  * need them and recent activity; a victim gets the progress of their claim.
  * @param props - The content props.
- * @param props.userRole - The signed-in person's role.
+ * @param props.accountType - The signed-in person's account type: a person sees their claim, counsel see the case bank numbers.
+ * @param props.userId - The Clerk user id, to find their claims.
  * @param props.firstName - Their first name, for the greeting.
  * @returns The overview page content.
  */
-export async function OverviewContent(props: { userRole: Role; firstName?: string | null }) {
+export async function OverviewContent(props: {
+  accountType: AccountType;
+  userId: string;
+  firstName?: string | null;
+}) {
   const t = await getTranslations('Overview');
   const s = sampleStats;
 
@@ -37,19 +42,19 @@ export async function OverviewContent(props: { userRole: Role; firstName?: strin
     <>
       <PageHeader
         title={props.firstName ? t('greeting', { name: props.firstName }) : t('greeting_anonymous')}
-        description={t('subtitle')}
+        description={props.accountType === 'person' ? t('subtitle_person') : t('subtitle')}
         actions={
-          props.userRole === 'victim' ? null : (
+          props.accountType === 'person' ? null : (
             <Button asChild size="lg">
               <Link href="/dashboard/cases">{t('primary_action')}</Link>
             </Button>
           )
         }
       />
-      <SampleNotice />
+      {props.accountType === 'person' ? null : <SampleNotice />}
 
-      {props.userRole === 'victim' ? (
-        <ClaimProgress />
+      {props.accountType === 'person' ? (
+        <PersonOverview userId={props.userId} />
       ) : (
         <div className="grid grid-cols-[minmax(0,1fr)] gap-12">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
