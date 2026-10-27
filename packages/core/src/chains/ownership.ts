@@ -4,6 +4,8 @@ import { keccak_256 } from '@noble/hashes/sha3.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { base58, base64, createBase58check } from '@scure/base';
+import type { ChainId } from './chains';
+import { chainFamily } from './chains';
 import type { ChainFamily } from './families';
 
 const base58check = createBase58check(sha256);
@@ -13,23 +15,23 @@ const verifiable: ChainFamily[] = ['evm', 'solana', 'tron'];
 
 /**
  * Tells whether a signed message from a wallet on this chain can be checked.
- * @param chain - The chain family.
- * @returns True for EVM, Solana and Tron.
+ * @param chain - The chain.
+ * @returns True for EVM chains, Solana and Tron.
  */
-export function canVerifyOwnership(chain: ChainFamily) {
-  return verifiable.includes(chain);
+export function canVerifyOwnership(chain: ChainId) {
+  return verifiable.includes(chainFamily(chain));
 }
 
 /**
  * The text a person signs to show they control a wallet. It names the wallet and the chain and carries a one-time nonce, so a
  * signature cannot be reused for another claim. It says nothing about money and authorises nothing.
  * @param input - The claim's wallet, chain and nonce.
- * @param input.chain - The chain family.
+ * @param input.chain - The chain.
  * @param input.address - The wallet address.
  * @param input.nonce - A one-time value created for this claim.
  * @returns The message to sign.
  */
-export function ownershipMessage(input: { chain: ChainFamily; address: string; nonce: string }) {
+export function ownershipMessage(input: { chain: ChainId; address: string; nonce: string }) {
   return [
     'Celia ownership proof',
     'I control this wallet and I am adding it to my claim on Celia. Signing this does not move funds or give anyone access to them.',
@@ -95,38 +97,39 @@ function readSolanaSignature(signature: string) {
  * - Tron: TIP-191 message signing.
  * - Solana: an ed25519 signature over the message bytes.
  * @param input - What to check.
- * @param input.chain - The chain family.
+ * @param input.chain - The chain.
  * @param input.address - The wallet address that should have signed.
  * @param input.message - The exact text that was signed.
  * @param input.signature - The signature as the wallet shows it (hex for EVM and Tron, base58 or base64 for Solana).
  * @returns True only when the signature proves control of the wallet.
  */
 export function verifyOwnership(input: {
-  chain: ChainFamily;
+  chain: ChainId;
   address: string;
   message: string;
   signature: string;
 }) {
   const signature = input.signature.trim();
   const address = input.address.trim();
+  const family = chainFamily(input.chain);
 
   try {
-    if (input.chain === 'evm') {
+    if (family === 'evm') {
       const key = recoverPublicKey(signature, toHash('\x19Ethereum Signed Message:\n', input.message));
 
-      return Boolean(key) && evmAddress(key as Uint8Array).toLowerCase() === address.toLowerCase();
+      return key !== null && evmAddress(key).toLowerCase() === address.toLowerCase();
     }
 
-    if (input.chain === 'tron') {
+    if (family === 'tron') {
       const key = recoverPublicKey(signature, toHash('\x19TRON Signed Message:\n', input.message));
 
-      return Boolean(key) && tronAddress(key as Uint8Array) === address;
+      return key !== null && tronAddress(key) === address;
     }
 
-    if (input.chain === 'solana') {
+    if (family === 'solana') {
       const bytes = readSolanaSignature(signature);
 
-      return Boolean(bytes) && ed25519.verify(bytes as Uint8Array, utf8ToBytes(input.message), base58.decode(address));
+      return bytes !== null && ed25519.verify(bytes, utf8ToBytes(input.message), base58.decode(address));
     }
   } catch {
     return false;

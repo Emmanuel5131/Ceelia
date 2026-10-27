@@ -1,7 +1,9 @@
 'use client';
 
+import type { FraudType } from '@celia/core';
 import { useTranslations } from 'next-intl';
 import type { ClaimState } from '@/app/[locale]/(auth)/dashboard/claims/actions';
+import { useClaimLabels } from '@/components/claims/claim-labels';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -13,21 +15,24 @@ import { useFormAction } from '@/hooks/use-form-action';
  * withdraw. The chain cannot show this, so the file lists it as a victim report, not confirmed.
  * @param props - The card props.
  * @param props.statement - The saved account, if any.
+ * @param props.fraudType - What kind of loss it is, which decides what the hint asks them to cover.
  * @param props.action - The server action that saves it.
  * @returns The card.
  */
 export function StatementCard(props: {
   statement: string | null;
+  fraudType: FraudType;
   action: (state: ClaimState, formData: FormData) => Promise<ClaimState>;
 }) {
   const t = useTranslations('ClaimPage');
+  const labels = useClaimLabels();
   const { state, onSubmit, pending } = useFormAction(props.action, { errors: [] });
 
   return (
     <Card variant="outline">
       <CardHeader>
         <CardTitle className="font-sans text-base font-medium">{t('statement_title')}</CardTitle>
-        <CardDescription>{t('statement_text')}</CardDescription>
+        <CardDescription>{labels.statementHint[props.fraudType]}</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid gap-4" noValidate onSubmit={onSubmit}>

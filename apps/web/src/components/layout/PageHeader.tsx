@@ -2,13 +2,13 @@
  * The title row of every app page: title on the left, the page's one primary action on the right. Below it sits 32px of space.
  * @param props - The header props.
  * @param props.title - The page title (Aeonik 32).
- * @param props.description - One optional sentence under the title.
+ * @param props.description - One optional sentence under the title, or a short line of details.
  * @param props.actions - The page's actions; at most one primary button.
  * @returns The page header.
  */
 export function PageHeader(props: {
-  title: string;
-  description?: string;
+  title: React.ReactNode;
+  description?: React.ReactNode;
   actions?: React.ReactNode;
 }) {
   return (

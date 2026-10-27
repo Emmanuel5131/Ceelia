@@ -1,11 +1,18 @@
 'use server';
 
-import { canVerifyOwnership, ownershipMessage, platformKey, verifyOwnership } from '@celia/core';
+import {
+  canVerifyOwnership,
+  ownershipMessage,
+  platformHost,
+  platformKey,
+  verifyOwnership,
+} from '@celia/core';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import type * as z from 'zod';
 import { getClaim } from '@/libs/Claims';
 import { db } from '@/libs/DB';
 import { claimSchema } from '@/models/Schema';
@@ -43,41 +50,117 @@ async function requirePerson() {
   return { userId, user };
 }
 
+const names = [
+  'fraudType',
+  'paymentMethod',
+  'chain',
+  'walletAddress',
+  'txHash',
+  'unknownOperator',
+  'platformName',
+  'platformUrl',
+  'operatorHandle',
+  'tokenContract',
+  'contactChannel',
+  'amountLost',
+] as const;
+
 /**
- * Starts a claim: checks the wallet and the platform and creates a draft. The one-time nonce for the ownership message is
- * made here, so it cannot be chosen by the person. Filing the same wallet for the same platform twice is refused.
+ * Reads the new-claim form into the shape the validation expects. An empty answer, such as an unchosen "how did it start?",
+ * is left out.
+ * @param formData - The submitted form.
+ * @returns The raw input.
+ */
+function readClaimForm(formData: FormData) {
+  const input: Record<string, FormDataEntryValue> = {};
+
+  for (const name of names) {
+    const value = formData.get(name);
+
+    if (value !== null && value !== '') {
+      input[name] = value;
+    }
+  }
+
+  return input;
+}
+
+type NewClaim = z.infer<typeof CreateClaimValidation>;
+
+/**
+ * Finds a claim this person has already filed for the same wallet and operator, or for the same transaction.
+ * @param input - What to compare.
+ * @param input.userId - The Clerk user id.
+ * @param input.claim - The validated new claim.
+ * @param input.key - The operator's pooling key, or an empty string when unnamed.
+ * @returns The earlier claim's id, if there is one.
+ */
+async function findDuplicate(input: { userId: string; claim: NewClaim; key: string }) {
+  const { userId, claim, key } = input;
+  const same =
+    claim.paymentMethod === 'wallet'
+      ? and(
+          eq(claimSchema.chain, claim.chain),
+          eq(claimSchema.walletAddress, claim.walletAddress ?? ''),
+          key ? eq(claimSchema.platformKey, key) : isNull(claimSchema.platformKey),
+        )
+      : eq(claimSchema.txHash, claim.txHash ?? '');
+  const [existing] = await db
+    .select({ id: claimSchema.id })
+    .from(claimSchema)
+    .where(and(eq(claimSchema.userId, userId), same));
+
+  return existing;
+}
+
+/**
+ * Turns a validated claim into the row to store. The operator's name, website host and token contract are normalised here so
+ * claims about the same operator can be pooled.
+ * @param claim - The validated new claim.
+ * @param named - The operator's name, if known.
+ * @returns The columns, except the owner and the country.
+ */
+function claimColumns(claim: NewClaim, named: string | undefined) {
+  const key = named ? platformKey(named) : '';
+
+  return {
+    fraudType: claim.fraudType,
+    paymentMethod: claim.paymentMethod,
+    chain: claim.chain,
+    walletAddress: claim.paymentMethod === 'wallet' ? (claim.walletAddress ?? null) : null,
+    txHash: claim.txHash ?? null,
+    platformName: named ?? null,
+    platformKey: key === '' ? null : key,
+    platformUrl: claim.platformUrl ?? null,
+    platformHost: claim.platformUrl ? (platformHost(claim.platformUrl) ?? null) : null,
+    operatorHandle: claim.operatorHandle ?? null,
+    tokenContract: claim.tokenContract?.toLowerCase() ?? null,
+    contactChannel: claim.contactChannel ?? null,
+    amountLost: claim.amountLost ?? null,
+    nonce: crypto.randomUUID(),
+  };
+}
+
+/**
+ * Starts a claim: checks what happened, how it was paid and who took the money, and creates a draft. The one-time nonce for
+ * the ownership message is made here, so it cannot be chosen by the person. Filing the same wallet for the same operator, or
+ * the same transaction, twice is refused.
  * @param _state - The previous state (unused).
  * @param formData - The submitted form.
  * @returns The failed fields; on success it redirects to the claim.
  */
 export async function createClaim(_state: ClaimState, formData: FormData): Promise<ClaimState> {
   const { userId, user } = await requirePerson();
-  const parsed = CreateClaimValidation.safeParse({
-    chain: text(formData, 'chain'),
-    walletAddress: text(formData, 'walletAddress'),
-    platformName: text(formData, 'platformName'),
-    platformUrl: text(formData, 'platformUrl'),
-  });
+  const parsed = CreateClaimValidation.safeParse(readClaimForm(formData));
 
   if (!parsed.success) {
     return failed([...new Set(parsed.error.issues.map((issue) => String(issue.path[0])))]);
   }
 
-  const { chain, walletAddress, platformName, platformUrl } = parsed.data;
-  const key = platformKey(platformName);
-  const [existing] = await db
-    .select({ id: claimSchema.id })
-    .from(claimSchema)
-    .where(
-      and(
-        eq(claimSchema.userId, userId),
-        eq(claimSchema.chain, chain),
-        eq(claimSchema.walletAddress, walletAddress),
-        eq(claimSchema.platformKey, key),
-      ),
-    );
+  const claim = parsed.data;
+  const named = claim.unknownOperator === 'on' ? undefined : claim.platformName;
 
-  if (existing) {
+  if (await findDuplicate({ userId, claim, key: named ? platformKey(named) : '' })) {
     return failed(['duplicate']);
   }
 
@@ -85,14 +168,9 @@ export async function createClaim(_state: ClaimState, formData: FormData): Promi
   const [created] = await db
     .insert(claimSchema)
     .values({
+      ...claimColumns(claim, named),
       userId,
-      chain,
-      walletAddress,
-      platformName,
-      platformKey: key,
-      platformUrl: platformUrl === '' ? null : (platformUrl ?? null),
       country: typeof country === 'string' ? country : null,
-      nonce: crypto.randomUUID(),
     })
     .returning({ id: claimSchema.id });
 
@@ -116,7 +194,7 @@ export async function verifyClaimOwnership(
   const claim = await getClaim(userId, claimId);
   const parsed = SignatureValidation.safeParse({ signature: text(formData, 'signature') });
 
-  if (!claim) {
+  if (!claim?.walletAddress) {
     return failed(['claim']);
   }
 

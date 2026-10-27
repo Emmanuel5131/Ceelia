@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { ClaimMeta, OperatorName } from '@/components/claims/ClaimMeta';
 import { PageSection } from '@/components/layout/PageSection';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,13 +53,13 @@ export async function PersonOverview(props: { userId: string }) {
             <Card key={claim.id} variant="outline">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between gap-4">
-                  {claim.platformName}
+                  <OperatorName name={claim.platformName} />
                   <Badge variant={claim.status === 'submitted' ? 'solid' : 'dashed'}>
                     {claim.status === 'submitted' ? t('claim_sent') : t('claim_draft')}
                   </Badge>
                 </CardTitle>
-                <CardDescription className="font-mono">
-                  {claim.walletAddress.slice(0, 8)}…{claim.walletAddress.slice(-6)}
+                <CardDescription>
+                  <ClaimMeta claim={claim} />
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4">

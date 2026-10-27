@@ -15,7 +15,7 @@
 - Named exports only (no default exports, except Next.js pages).
 - Absolute imports via `@/` unless same directory.
 - Follow existing ESLint setup; don't reformat unrelated code.
-- Zod type-only: `import type * as z from 'zod';`.
+- Zod: `import type * as z from 'zod';` where only the type is used; a file that builds or runs a schema imports it normally (`import * as z from 'zod';`).
 - Let compiler infer return types unless annotation adds clarity.
 - Options object for 3+ params, optional flags, or ambiguous args.
 - Hypothesis-driven debugging: 1-3 causes, validate most likely first.
@@ -58,7 +58,7 @@ Tailwind v4 utility classes. Reuse shared components. Responsive. No unnecessary
 - Default export name ends with `Page`. Props alias (if reused) ends with `PageProps`.
 - Locale pages: `props: { params: Promise<{ locale: string }> }` → `await props.params` → `setRequestLocale(locale)`.
 - Escape glob chars in shell commands for Next.js paths.
-- Dashboard pages (sit behind auth); define meta once in layout, not in each page.
+- Dashboard pages (sit behind auth): each page sets its own title and description with `generateMetadata` (the root layout adds " · Celia"); the dashboard layout adds `noindex`. Do not repeat `noindex` in pages.
 
 ## i18n (next-intl)
 - Never hard-code user-visible strings. Page namespaces end with `Page`.

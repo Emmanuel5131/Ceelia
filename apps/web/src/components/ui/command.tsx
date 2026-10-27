@@ -64,4 +64,33 @@ function CommandItem({ className, ...props }: React.ComponentProps<typeof Comman
   );
 }
 
-export { Command, CommandInput, CommandItem, CommandList };
+function CommandGroup({
+  className,
+  ...props
+}: React.ComponentProps<typeof CommandPrimitive.Group>) {
+  return (
+    <CommandPrimitive.Group
+      data-slot="command-group"
+      className={cn(
+        '[&_[cmdk-group-heading]]:px-4 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-ink-muted',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CommandEmpty({
+  className,
+  ...props
+}: React.ComponentProps<typeof CommandPrimitive.Empty>) {
+  return (
+    <CommandPrimitive.Empty
+      data-slot="command-empty"
+      className={cn('px-4 py-6 text-center text-sm text-ink-muted', className)}
+      {...props}
+    />
+  );
+}
+
+export { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList };
