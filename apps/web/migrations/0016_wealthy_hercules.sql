@@ -1,0 +1,1 @@
+ALTER TABLE "claim" ADD COLUMN "fraud_description" text;

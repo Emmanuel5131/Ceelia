@@ -18,6 +18,7 @@ const listColumns = {
   lastPaymentOn: claimSchema.lastPaymentOn,
   assetSent: claimSchema.assetSent,
   tokenName: claimSchema.tokenName,
+  fraudDescription: claimSchema.fraudDescription,
   tokenContract: claimSchema.tokenContract,
   chain: claimSchema.chain,
   walletAddress: claimSchema.walletAddress,

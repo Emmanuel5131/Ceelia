@@ -4,6 +4,7 @@ import {
   fraudTypes,
   isValidAddress,
   isValidTxHash,
+  paidOnChain,
   paymentMethods,
   walletApps,
   walletTypes,
@@ -53,6 +54,7 @@ const claimShape = z.object({
   operatorHandle: optionalText(100),
   tokenContract: optionalText(200),
   tokenName: optionalText(100),
+  fraudDescription: optionalText(300),
   contactChannel: z.enum(contactChannels).optional(),
   amountLost: optionalText(100),
 });
@@ -63,25 +65,26 @@ type ClaimInput = z.infer<typeof claimShape>;
 type Fail = (path: string) => void;
 
 /**
- * Checks how the money was paid: the wallet for a wallet payment, the transaction hash for any other, and every optional
- * address or hash that was given, against the chain.
+ * Checks how the money was paid: the wallet for a wallet payment, and every address or hash that was given, against the chain.
+ * A bank or cash payment has no chain, so none of those are checked for it.
  * @param claim - The parsed form.
  * @param fail - Reports a failed field.
  */
 function checkPayment(claim: ClaimInput, fail: Fail) {
-  if (claim.paymentMethod === 'wallet') {
-    if (!claim.walletAddress || !isValidAddress(claim.chain, claim.walletAddress)) {
-      fail('walletAddress');
-    }
-  } else if (!claim.txHash || !isValidTxHash(claim.chain, claim.txHash)) {
-    fail('txHash');
-  }
-
+  // Only a wallet payment has to name something: the wallet. Anyone else may not have a transaction hash, and a bank or cash
+  // payment has none, so what they give is checked but never required.
   if (
     claim.paymentMethod === 'wallet' &&
-    claim.txHash &&
-    !isValidTxHash(claim.chain, claim.txHash)
+    (!claim.walletAddress || !isValidAddress(claim.chain, claim.walletAddress))
   ) {
+    fail('walletAddress');
+  }
+
+  if (!paidOnChain(claim.paymentMethod)) {
+    return;
+  }
+
+  if (claim.txHash && !isValidTxHash(claim.chain, claim.txHash)) {
     fail('txHash');
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { paymentMethods } from '@celia/core';
+import { paidOnChain, paymentMethods } from '@celia/core';
 import type { PaymentMethod } from '@celia/core';
 import { useTranslations } from 'next-intl';
 import { ChainSelect } from '@/components/claims/ChainSelect';
@@ -27,6 +27,7 @@ import {
  * @param props.onMethodChange - Called when they choose another way.
  * @param props.errors - The names of the fields the server refused.
  * @param props.defaults - The saved answers, when a draft is being edited.
+ * @param props.total - How many steps the form has for this claim.
  * @returns The section.
  */
 export function HowYouPaidSection(props: {
@@ -34,14 +35,16 @@ export function HowYouPaidSection(props: {
   onMethodChange: (method: PaymentMethod) => void;
   errors: string[];
   defaults?: ClaimDefaults;
+  total: number;
 }) {
   const t = useTranslations('ClaimPage');
   const labels = useClaimLabels();
   const fromWallet = props.method === 'wallet';
+  const onChain = paidOnChain(props.method);
   const { defaults } = props;
 
   return (
-    <FormStep step={2} title={t('q_pay')}>
+    <FormStep step={2} total={props.total} title={t('q_pay')}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid content-start gap-2">
           <Label htmlFor="paymentMethod">{t('pay_label')}</Label>
@@ -68,10 +71,17 @@ export function HowYouPaidSection(props: {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid content-start gap-2">
-          <Label htmlFor="chain">{fromWallet ? t('chain_label') : t('chain_payment_label')}</Label>
-          <ChainSelect id="chain" name="chain" defaultValue={defaults?.chain} />
-        </div>
+        {onChain ? (
+          <div className="grid content-start gap-2">
+            <Label htmlFor="chain">
+              {fromWallet ? t('chain_label') : t('chain_payment_label')}
+            </Label>
+            <ChainSelect id="chain" name="chain" defaultValue={defaults?.chain} />
+          </div>
+        ) : (
+          // A bank, card or cash payment is on no chain; "another chain" is what the claim is filed under.
+          <input type="hidden" name="chain" value="other" />
+        )}
       </div>
 
       {fromWallet ? (
@@ -91,13 +101,15 @@ export function HowYouPaidSection(props: {
             {t('error_address')}
           </FieldMessage>
         </div>
-      ) : (
+      ) : null}
+      {!fromWallet && onChain && (
         <TxHashField
-          label={t('tx_label')}
+          label={t('tx_label_optional')}
           defaultValue={defaults?.txHash}
           invalid={props.errors.includes('txHash')}
         />
       )}
+      {!onChain && <p className="text-sm text-ink-muted">{t('pay_offchain_note')}</p>}
     </FormStep>
   );
 }

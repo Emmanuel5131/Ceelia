@@ -27,6 +27,7 @@ export type ClaimDefaults = {
   operatorHandle: string;
   tokenContract: string;
   tokenName: string;
+  fraudDescription: string;
   contactChannel: ContactChannel | null;
   amountLost: string;
 };
@@ -55,6 +56,7 @@ export function toClaimDefaults(claim: Claim): ClaimDefaults {
     operatorHandle: claim.operatorHandle ?? '',
     tokenContract: claim.tokenContract ?? '',
     tokenName: claim.tokenName ?? '',
+    fraudDescription: claim.fraudDescription ?? '',
     contactChannel: claim.contactChannel,
     amountLost: claim.amountLost ?? '',
   };

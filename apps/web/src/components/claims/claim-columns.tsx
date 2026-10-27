@@ -5,6 +5,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { deleteClaim } from '@/app/[locale]/(auth)/dashboard/claims/actions';
 import { ChainLabel } from '@/components/claims/ChainLabel';
 import { useClaimLabels } from '@/components/claims/claim-labels';
+import { shortReference } from '@/components/claims/claim-row';
 import type { ClaimRow } from '@/components/claims/claim-row';
 import { OperatorName } from '@/components/claims/ClaimMeta';
 import { DeleteClaimDialog } from '@/components/claims/DeleteClaimDialog';
@@ -55,7 +56,7 @@ function ClaimCell(props: { claim: ClaimRow }) {
         <OperatorName name={props.claim.operator} />
       </span>
       <span className="font-mono text-xs text-ink-muted">
-        {props.claim.reference.slice(0, 8)}…{props.claim.reference.slice(-6)}
+        {shortReference(props.claim.reference)}
       </span>
     </Link>
   );

@@ -84,6 +84,8 @@ export const claimSchema = pgTable(
     operatorHandle: text('operator_handle'),
     /** The token contract, for a rug pull. Lowercased so spellings match. */
     tokenContract: text('token_contract'),
+    /** What kind of fraud it was, in the person's own words, when none of the listed kinds fitted. */
+    fraudDescription: text('fraud_description'),
     /** The token or NFT's name and symbol, in the person's own words, such as "Moon Inu (MINU)". */
     tokenName: text('token_name'),
     /** The kind of wallet the money left from, when it was their own. */

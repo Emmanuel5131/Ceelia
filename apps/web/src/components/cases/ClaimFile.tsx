@@ -74,6 +74,9 @@ export function ClaimFile(props: ClaimFileProps) {
         </CardHeader>
         <CardContent>
           <dl className="grid gap-4">
+            {claim.fraudDescription && (
+              <Row label={t('fraud_description')}>{claim.fraudDescription}</Row>
+            )}
             <Row label={t('chain')}>
               <ChainLabel chain={claim.chain} />
             </Row>

@@ -116,8 +116,37 @@ describe('Claim input', () => {
       expect(CreateClaimValidation.safeParse(exchange).success).toBeTruthy();
     });
 
-    it('needs a transaction hash instead of a wallet', () => {
-      expect(CreateClaimValidation.safeParse({ ...exchange, txHash: '' }).success).toBeFalsy();
+    it('does not need a transaction hash, because many people do not have one', () => {
+      expect(CreateClaimValidation.safeParse({ ...exchange, txHash: '' }).success).toBeTruthy();
+    });
+
+    it('still rejects a transaction hash that does not fit the chain', () => {
+      expect(CreateClaimValidation.safeParse({ ...exchange, txHash: 'nope' }).success).toBeFalsy();
+    });
+
+    it('accepts a payment by bank, card or cash with no chain details', () => {
+      for (const paymentMethod of ['bank_card', 'cash', 'other']) {
+        expect(
+          CreateClaimValidation.safeParse({
+            fraudTypes: ['romance_scam'],
+            paymentMethod,
+            chain: 'other',
+            unknownOperator: 'on',
+          }).success,
+        ).toBeTruthy();
+      }
+    });
+  });
+
+  describe('what happened', () => {
+    it('accepts any listed kind of fraud, and a description of something else', () => {
+      const claim = CreateClaimValidation.safeParse({
+        ...exchange,
+        fraudTypes: ['phishing', 'hack_exploit', 'other'],
+        fraudDescription: 'A fake invoice from a supplier',
+      });
+
+      expect(claim.success && claim.data.fraudDescription).toBe('A fake invoice from a supplier');
     });
   });
 
@@ -171,7 +200,7 @@ describe('Claim input', () => {
       CreateClaimValidation.safeParse({ ...wallet, fraudTypes: ['market_loss'] }).success,
     ).toBeFalsy();
     expect(
-      CreateClaimValidation.safeParse({ ...wallet, paymentMethod: 'cash' }).success,
+      CreateClaimValidation.safeParse({ ...wallet, paymentMethod: 'barter' }).success,
     ).toBeFalsy();
   });
 

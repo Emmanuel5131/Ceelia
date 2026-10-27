@@ -8,7 +8,10 @@ import {
   ChartLineUpIcon,
   CoinsIcon,
   CopyIcon,
+  BugIcon,
   DotsThreeIcon,
+  FishIcon,
+  HeartIcon,
   KeyIcon,
   LockIcon,
   LifebuoyIcon,
@@ -34,6 +37,9 @@ const typeIcons = {
   extortion: WarningIcon,
   fake_job: BriefcaseIcon,
   account_takeover: KeyIcon,
+  romance_scam: HeartIcon,
+  phishing: FishIcon,
+  hack_exploit: BugIcon,
   other: DotsThreeIcon,
 } as const;
 
@@ -44,12 +50,14 @@ const typeIcons = {
  * @param props.value - The kinds of loss chosen so far.
  * @param props.onChange - Called when the person ticks or unticks one.
  * @param props.invalid - Whether the server refused the form for a missing answer.
+ * @param props.total - How many steps the form has for this claim.
  * @returns The section.
  */
 export function WhatHappenedSection(props: {
   value: FraudType[];
   onChange: (value: FraudType[]) => void;
   invalid: boolean;
+  total: number;
 }) {
   const t = useTranslations('ClaimPage');
   const labels = useClaimLabels();
@@ -66,7 +74,7 @@ export function WhatHappenedSection(props: {
   });
 
   return (
-    <FormStep step={1} title={t('q_what')}>
+    <FormStep step={1} total={props.total} title={t('q_what')}>
       <MultiChoiceCards
         name="fraudType"
         label={t('q_what')}

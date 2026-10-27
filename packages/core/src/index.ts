@@ -33,6 +33,7 @@ export {
   accountKinds,
   contactChannels,
   fraudTypes,
+  paidOnChain,
   paymentMethods,
   walletApps,
   walletTypes,

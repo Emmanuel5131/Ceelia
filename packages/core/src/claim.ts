@@ -15,15 +15,39 @@ export const fraudTypes = [
   'extortion',
   'fake_job',
   'account_takeover',
+  'romance_scam',
+  'phishing',
+  'hack_exploit',
   'other',
 ] as const;
 
 export type FraudType = (typeof fraudTypes)[number];
 
-/** How the money left the victim. Only `wallet` can be proven by signing; the rest are backed by a transaction hash. */
-export const paymentMethods = ['wallet', 'exchange', 'atm', 'p2p'] as const;
+/**
+ * How the money left the victim. Only `wallet` can be proven by signing. The other ways on a chain may be backed by a
+ * transaction hash when the person has one; `bank_card` and `cash` never touch a chain, so they ask for no chain or hash.
+ */
+export const paymentMethods = [
+  'wallet',
+  'exchange',
+  'atm',
+  'p2p',
+  'bank_card',
+  'cash',
+  'other',
+] as const;
 
 export type PaymentMethod = (typeof paymentMethods)[number];
+
+/**
+ * Whether the money moved on a chain, so a chain, a transaction and an address mean something. Paying by bank transfer, card or
+ * cash does not.
+ * @param method - How the money was paid.
+ * @returns False for a bank, card or cash payment.
+ */
+export function paidOnChain(method: PaymentMethod) {
+  return method !== 'bank_card' && method !== 'cash';
+}
 
 /**
  * How the wallet the money left from is kept, when it was their own. Optional: it shows how a loss happens, such as a drainer.

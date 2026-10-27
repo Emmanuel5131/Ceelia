@@ -17,12 +17,16 @@ import { Label } from '@/components/ui/label';
  * @param props.fraudTypes - What kinds of loss it is; the token contract is only asked for a token or when unsure.
  * @param props.errors - The names of the fields the server refused.
  * @param props.defaults - The saved answers, when a draft is being edited.
+ * @param props.step - Which step this is.
+ * @param props.total - How many steps the form has for this claim.
  * @returns The section.
  */
 export function WhoSection(props: {
   fraudTypes: FraudType[];
   errors: string[];
   defaults?: ClaimDefaults;
+  step: number;
+  total: number;
 }) {
   const t = useTranslations('ClaimPage');
   const [unknown, setUnknown] = React.useState(
@@ -33,7 +37,7 @@ export function WhoSection(props: {
   );
 
   return (
-    <FormStep step={4} title={t('q_who')}>
+    <FormStep step={props.step} total={props.total} title={t('q_who')}>
       <div className="flex items-center gap-3">
         <Checkbox
           id="unknownOperator"

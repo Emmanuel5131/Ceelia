@@ -113,6 +113,13 @@
       "when": 1793133789489,
       "tag": "0015_handy_gorilla_man",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793134820654,
+      "tag": "0016_wealthy_hercules",
+      "breakpoints": true
     }
   ]
 }

@@ -29,6 +29,9 @@ export function ReportedPattern(props: { pattern: Pattern | null; note?: boolean
     extortion: t('extortion'),
     fake_job: t('fake_job'),
     account_takeover: t('account_takeover'),
+    romance_scam: t('romance_scam'),
+    phishing: t('phishing'),
+    hack_exploit: t('hack_exploit'),
     other: t('other'),
   };
 

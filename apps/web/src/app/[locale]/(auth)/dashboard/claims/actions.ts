@@ -73,6 +73,7 @@ const names = [
   'operatorHandle',
   'tokenContract',
   'tokenName',
+  'fraudDescription',
   'contactChannel',
   'amountLost',
 ] as const;
@@ -118,6 +119,12 @@ async function findDuplicate(input: {
   exceptId?: string;
 }) {
   const { userId, claim, key } = input;
+
+  // A claim with no wallet and no transaction has nothing to compare, so it can never repeat another.
+  if (claim.paymentMethod !== 'wallet' && !claim.txHash) {
+    return null;
+  }
+
   const same =
     claim.paymentMethod === 'wallet'
       ? and(
@@ -160,6 +167,21 @@ function walletColumns(claim: NewClaim, accountKind: AccountKind | null) {
 }
 
 /**
+ * What is kept about the payment itself: the transaction, where the money went, when and what was sent.
+ * @param claim - The validated new claim.
+ * @returns The payment columns.
+ */
+function paymentColumns(claim: NewClaim) {
+  return {
+    txHash: claim.txHash ?? null,
+    destinationAddress: claim.destinationAddress ?? null,
+    firstPaymentOn: claim.firstPaymentOn ?? null,
+    lastPaymentOn: claim.lastPaymentOn ?? null,
+    assetSent: claim.assetSent ?? null,
+  };
+}
+
+/**
  * Turns a validated claim into the row to store. The operator's name, website host and token contract are normalised here so
  * claims about the same operator can be pooled.
  * @param claim - The validated new claim.
@@ -176,11 +198,7 @@ function claimColumns(claim: NewClaim, named: string | undefined, accountKind: A
     paymentMethod: claim.paymentMethod,
     chain: claim.chain,
     ...walletColumns(claim, accountKind),
-    txHash: claim.txHash ?? null,
-    destinationAddress: claim.destinationAddress ?? null,
-    firstPaymentOn: claim.firstPaymentOn ?? null,
-    lastPaymentOn: claim.lastPaymentOn ?? null,
-    assetSent: claim.assetSent ?? null,
+    ...paymentColumns(claim),
     platformName: named ?? null,
     platformKey: key === '' ? null : key,
     platformUrl: claim.platformUrl ?? null,
@@ -188,6 +206,8 @@ function claimColumns(claim: NewClaim, named: string | undefined, accountKind: A
     operatorHandle: claim.operatorHandle ?? null,
     tokenContract: claim.tokenContract?.toLowerCase() ?? null,
     tokenName: claim.tokenName ?? null,
+    // Only kept when the person said none of the listed kinds fitted.
+    fraudDescription: claim.fraudTypes.includes('other') ? (claim.fraudDescription ?? null) : null,
     contactChannel: claim.contactChannel ?? null,
     amountLost: claim.amountLost ?? null,
     nonce: crypto.randomUUID(),

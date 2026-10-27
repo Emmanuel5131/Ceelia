@@ -21,6 +21,9 @@ export function useClaimLabels() {
       extortion: t('type_extortion'),
       fake_job: t('type_fake_job'),
       account_takeover: t('type_account_takeover'),
+      romance_scam: t('type_romance_scam'),
+      phishing: t('type_phishing'),
+      hack_exploit: t('type_hack_exploit'),
       other: t('type_other'),
     },
     fraudTypeText: {
@@ -35,6 +38,9 @@ export function useClaimLabels() {
       extortion: t('type_extortion_text'),
       fake_job: t('type_fake_job_text'),
       account_takeover: t('type_account_takeover_text'),
+      romance_scam: t('type_romance_scam_text'),
+      phishing: t('type_phishing_text'),
+      hack_exploit: t('type_hack_exploit_text'),
       other: t('type_other_text'),
     },
     statementHint: {
@@ -49,6 +55,9 @@ export function useClaimLabels() {
       extortion: t('hint_extortion'),
       fake_job: t('hint_fake_job'),
       account_takeover: t('hint_account_takeover'),
+      romance_scam: t('hint_romance_scam'),
+      phishing: t('hint_phishing'),
+      hack_exploit: t('hint_hack_exploit'),
       other: t('hint_other'),
     },
     // Brand names are the same in every language; only "other" is translated.
@@ -84,6 +93,9 @@ export function useClaimLabels() {
       exchange: t('pay_exchange'),
       atm: t('pay_atm'),
       p2p: t('pay_p2p'),
+      bank_card: t('pay_bank_card'),
+      cash: t('pay_cash'),
+      other: t('pay_other'),
     },
     contactChannel: {
       social_dating: t('contact_social_dating'),

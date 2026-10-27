@@ -18,6 +18,16 @@ export type ClaimRow = {
 };
 
 /**
+ * A wallet address or transaction hash cut to its start and end, or a dash when the claim has neither, as when it was paid by
+ * bank, card or cash.
+ * @param reference - The full address or hash, or an empty string.
+ * @returns The short form.
+ */
+export function shortReference(reference: string) {
+  return reference ? `${reference.slice(0, 8)}…${reference.slice(-6)}` : '—';
+}
+
+/**
  * Reduces a claim to the fields the claims table shows. Progress counts the first four steps, the ones the person controls.
  * @param claim - The claim.
  * @returns The table row.

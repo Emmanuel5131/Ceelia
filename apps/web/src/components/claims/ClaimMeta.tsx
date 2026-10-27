@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { ChainLabel } from '@/components/claims/ChainLabel';
 import { useClaimLabels } from '@/components/claims/claim-labels';
+import { shortReference } from '@/components/claims/claim-row';
 import type { Claim } from '@/libs/Claims';
 
 /**
@@ -22,9 +23,7 @@ export function ClaimMeta(props: { claim: Claim }) {
           .join(', ')}
       </span>
       <ChainLabel chain={props.claim.chain} />
-      <span className="font-mono text-sm">
-        {reference.slice(0, 8)}…{reference.slice(-6)}
-      </span>
+      <span className="font-mono text-sm">{shortReference(reference)}</span>
     </span>
   );
 }
