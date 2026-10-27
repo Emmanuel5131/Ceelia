@@ -13,6 +13,6 @@
   "devDependencies": {
     "i18n-iso-countries": "7.14.0",
     "iso-3166-2": "1.0.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.12"
   }
 }
