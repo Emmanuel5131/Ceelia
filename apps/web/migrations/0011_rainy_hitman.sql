@@ -1,0 +1,1 @@
+ALTER TABLE "claim" ADD COLUMN "funding_tx_hash" text;

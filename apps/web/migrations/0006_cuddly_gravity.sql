@@ -1,0 +1,1 @@
+ALTER TABLE "case_report" DROP COLUMN "notebook_url";
