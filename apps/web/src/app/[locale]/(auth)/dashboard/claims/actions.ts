@@ -15,7 +15,9 @@ import { redirect } from 'next/navigation';
 import type * as z from 'zod';
 import { getClaim } from '@/libs/Claims';
 import { db } from '@/libs/DB';
-import { claimSchema } from '@/models/Schema';
+import { notify } from '@/libs/Notify';
+import { saveLocale } from '@/libs/UserSettings';
+import { caseSchema, claimSchema } from '@/models/Schema';
 import { parseAccount } from '@/utils/Account';
 import { getI18nPath } from '@/utils/Helpers';
 import {
@@ -221,11 +223,23 @@ export async function verifyClaimOwnership(
     return failed(['signature']);
   }
 
-  await db
-    .update(claimSchema)
-    .set({ ownership: 'signed', signature: parsed.data.signature, signedAt: new Date() })
-    .where(eq(claimSchema.id, claim.id));
-  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, await getLocale()));
+  const locale = await getLocale();
+  await saveLocale(userId, locale);
+  await db.transaction(async (tx) => {
+    await tx
+      .update(claimSchema)
+      .set({ ownership: 'signed', signature: parsed.data.signature, signedAt: new Date() })
+      .where(eq(claimSchema.id, claim.id));
+    await notify(tx, [
+      {
+        userId,
+        type: 'ownership_confirmed',
+        dedupeKey: `ownership_confirmed:${claim.id}`,
+        data: { claimId: claim.id },
+      },
+    ]);
+  });
+  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, locale));
 
   return { errors: [], done: true };
 }
@@ -281,11 +295,42 @@ export async function submitClaim(claimId: string): Promise<ClaimState> {
     return failed(['statement']);
   }
 
-  await db
-    .update(claimSchema)
-    .set({ status: 'submitted', submittedAt: new Date() })
-    .where(eq(claimSchema.id, claim.id));
-  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, await getLocale()));
+  const locale = await getLocale();
+  await saveLocale(userId, locale);
+  await db.transaction(async (tx) => {
+    await tx
+      .update(claimSchema)
+      .set({ status: 'submitted', submittedAt: new Date() })
+      .where(eq(claimSchema.id, claim.id));
+
+    // When a case already exists for this platform, the claim joins it the moment it is sent.
+    const [existing] = claim.platformKey
+      ? await tx
+          .select({ id: caseSchema.id })
+          .from(caseSchema)
+          .where(eq(caseSchema.platformKey, claim.platformKey))
+      : [];
+
+    await notify(tx, [
+      {
+        userId,
+        type: 'claim_submitted',
+        dedupeKey: `claim_submitted:${claim.id}`,
+        data: { claimId: claim.id },
+      },
+      ...(existing
+        ? [
+            {
+              userId,
+              type: 'claim_in_case' as const,
+              dedupeKey: `claim_in_case:${existing.id}`,
+              data: { caseId: existing.id },
+            },
+          ]
+        : []),
+    ]);
+  });
+  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, locale));
 
   return { errors: [], done: true };
 }

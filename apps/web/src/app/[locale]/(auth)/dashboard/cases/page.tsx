@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { CaseDataTable } from '@/components/overview/CaseDataTable';
-import { SampleNotice } from '@/components/overview/SampleNotice';
-import { sampleCases } from '@/libs/OverviewSample';
+import { listCases } from '@/libs/Cases';
 
 type CaseBankPageProps = {
   params: Promise<{ locale: string }>;
@@ -27,8 +26,7 @@ export default async function CaseBankPage(props: CaseBankPageProps) {
   return (
     <>
       <PageHeader title={t('title')} description={t('description')} />
-      <SampleNotice />
-      <CaseDataTable cases={sampleCases} />
+      <CaseDataTable cases={await listCases()} />
     </>
   );
 }

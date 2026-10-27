@@ -8,6 +8,8 @@ const AccountValidation = z.object({
   accountType: z.enum(['person', 'counsel']),
   /** Counsel only: `pending` until staff have checked the registration. */
   review: z.enum(['pending', 'verified']).optional(),
+  /** Celia staff. Set from Clerk by hand or script, never by a form. Staff still have an account type of their own. */
+  staff: z.literal(true).optional(),
 });
 
 export type Account = z.infer<typeof AccountValidation>;

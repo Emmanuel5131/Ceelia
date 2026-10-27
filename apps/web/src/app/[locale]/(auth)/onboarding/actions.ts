@@ -3,6 +3,10 @@
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { getLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { saveCounselProfile } from '@/libs/CounselProfile';
+import { db } from '@/libs/DB';
+import { notify } from '@/libs/Notify';
+import { saveLocale } from '@/libs/UserSettings';
 import { parseAccount } from '@/utils/Account';
 import { getI18nPath } from '@/utils/Helpers';
 import { OnboardingValidation } from '@/validations/OnboardingValidation';
@@ -18,14 +22,11 @@ const consentVersion = '2026-10';
 const text = (formData: FormData, name: string) => formData.get(name) ?? undefined;
 
 /**
- * Reads the form into the shape the validation expects. Registrations arrive as two parallel lists, one entry per row.
+ * Reads the form into the shape the validation expects. Registrations arrive as a list of jurisdictions, one per row.
  * @param formData - The submitted form.
  * @returns The raw input, not yet validated.
  */
 function readForm(formData: FormData) {
-  const jurisdictions = formData.getAll('registrationJurisdiction');
-  const numbers = formData.getAll('registrationNumber');
-
   return {
     accountType: text(formData, 'accountType'),
     country: text(formData, 'country'),
@@ -34,9 +35,8 @@ function readForm(formData: FormData) {
     firmName: text(formData, 'firmName'),
     acceptTerms: text(formData, 'acceptTerms'),
     confirmConflicts: text(formData, 'confirmConflicts'),
-    registrations: jurisdictions.map((jurisdiction, i) => ({
+    registrations: formData.getAll('registrationJurisdiction').map((jurisdiction) => ({
       jurisdiction,
-      number: numbers[i] ?? '',
     })),
   };
 }
@@ -91,6 +91,22 @@ export async function completeOnboarding(
             terms: { version: consentVersion, at },
           },
   });
+
+  await saveLocale(userId, locale);
+
+  if (input.accountType === 'counsel') {
+    await db.transaction(async (tx) => {
+      await saveCounselProfile(tx, {
+        userId,
+        review: 'pending',
+        firm: input.independent === 'on' ? null : (input.firmName ?? null),
+        jurisdictions: input.registrations.map((registration) => registration.jurisdiction),
+      });
+      await notify(tx, [
+        { userId, type: 'counsel_received', dedupeKey: `counsel_received:${userId}` },
+      ]);
+    });
+  }
 
   return redirect(getI18nPath('/dashboard', locale));
 }

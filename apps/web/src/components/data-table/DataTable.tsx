@@ -33,6 +33,10 @@ type DataTableProps<TData extends RowData> = {
   pagination?: boolean;
   /** Show the "n of m selected" count, for tables with a selection column. */
   selectable?: boolean;
+  /** Shown in place of the whole table when there is no data at all, such as an empty state with its first action. */
+  empty?: React.ReactElement;
+  /** Adds an "Export" button to the toolbar. It receives the rows left after search and filters, not just the current page. */
+  onExport?: (rows: TData[]) => void;
 };
 
 /**
@@ -56,6 +60,11 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
   });
 
   const { rows } = table.getRowModel();
+  const exportRows = props.onExport;
+
+  if (props.empty && props.data.length === 0) {
+    return props.empty;
+  }
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
@@ -65,6 +74,13 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
           labels={labels}
           searchPlaceholder={props.searchPlaceholder ?? ''}
           filters={props.filters ?? []}
+          onExport={
+            exportRows
+              ? () => {
+                  exportRows(table.getFilteredRowModel().rows.map((row) => row.original));
+                }
+              : undefined
+          }
         />
       )}
       <div className="border border-border">

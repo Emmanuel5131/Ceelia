@@ -1,21 +1,13 @@
+import type { CaseRow } from '@/utils/Case';
+
 /**
  * Sample data for the overview and the case bank, until cases are connected to the database. The screens say so on the page.
  * Platform names are placeholders: the real ones stay anonymized until the platform consents to being named.
  * Timestamps are fixed ISO strings, so server and browser always render the same text.
  */
-export type CaseStatus = 'collecting' | 'building' | 'sealed' | 'counsel';
+export type { CaseStatus } from '@/utils/Case';
 
-export type SampleCase = {
-  id: string;
-  number: string;
-  name: string;
-  /** A jurisdiction id from `@celia/jurisdictions`. */
-  jurisdiction: string;
-  claimants: number;
-  status: CaseStatus;
-  /** ISO timestamp of the last change. */
-  updatedAt: string;
-};
+export type SampleCase = CaseRow;
 
 export const sampleCases: SampleCase[] = [
   {
@@ -25,6 +17,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'ng',
     claimants: 142,
     status: 'sealed',
+    hasReport: false,
     updatedAt: '2026-10-26T08:41:00Z',
   },
   {
@@ -34,6 +27,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'us',
     claimants: 318,
     status: 'counsel',
+    hasReport: false,
     updatedAt: '2026-10-25T09:12:00Z',
   },
   {
@@ -43,6 +37,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'gb',
     claimants: 57,
     status: 'building',
+    hasReport: false,
     updatedAt: '2026-10-24T10:30:00Z',
   },
   {
@@ -52,6 +47,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'in',
     claimants: 204,
     status: 'collecting',
+    hasReport: false,
     updatedAt: '2026-10-23T11:05:00Z',
   },
   {
@@ -61,6 +57,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'ke',
     claimants: 89,
     status: 'sealed',
+    hasReport: false,
     updatedAt: '2026-10-21T15:20:00Z',
   },
   {
@@ -70,6 +67,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'ng',
     claimants: 61,
     status: 'collecting',
+    hasReport: false,
     updatedAt: '2026-10-20T13:44:00Z',
   },
   {
@@ -79,6 +77,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'de',
     claimants: 23,
     status: 'building',
+    hasReport: false,
     updatedAt: '2026-10-17T09:58:00Z',
   },
   {
@@ -88,6 +87,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'br',
     claimants: 412,
     status: 'counsel',
+    hasReport: false,
     updatedAt: '2026-10-14T16:02:00Z',
   },
   {
@@ -97,6 +97,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'za',
     claimants: 36,
     status: 'collecting',
+    hasReport: false,
     updatedAt: '2026-10-12T10:15:00Z',
   },
   {
@@ -106,6 +107,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'sg',
     claimants: 74,
     status: 'building',
+    hasReport: false,
     updatedAt: '2026-10-10T08:05:00Z',
   },
   {
@@ -115,6 +117,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'au',
     claimants: 128,
     status: 'sealed',
+    hasReport: false,
     updatedAt: '2026-10-08T12:40:00Z',
   },
   {
@@ -124,6 +127,7 @@ export const sampleCases: SampleCase[] = [
     jurisdiction: 'ke',
     claimants: 45,
     status: 'counsel',
+    hasReport: false,
     updatedAt: '2026-10-05T14:22:00Z',
   },
 ];

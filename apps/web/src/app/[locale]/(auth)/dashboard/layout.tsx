@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
+import { NotificationsBell } from '@/components/shell/NotificationsBell';
 import { ReviewNotice } from '@/components/shell/ReviewNotice';
 import { SignOutAction } from '@/components/shell/SignOutAction';
 import { parseAccount } from '@/utils/Account';
@@ -45,6 +46,8 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
   return (
     <AppShell
       accountType={account.accountType}
+      staff={account.staff}
+      notifications={user ? <NotificationsBell userId={user.id} /> : null}
       userMenu={<UserButton />}
       signOut={<SignOutAction />}
       defaultOpen={defaultOpen}

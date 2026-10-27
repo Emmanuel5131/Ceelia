@@ -3,12 +3,14 @@
 import { getJurisdiction } from '@celia/jurisdictions';
 import type { Column } from '@tanstack/react-table';
 import { useFormatter, useTranslations } from 'next-intl';
+import { CasePreviewDialog } from '@/components/cases/CasePreviewDialog';
 import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader';
 import { createSelectColumn } from '@/components/data-table/select-column';
 import { createAppColumnHelper } from '@/components/data-table/table';
 import type { TableFeatures } from '@/components/data-table/table';
 import { StatusBadge } from '@/components/overview/StatusBadge';
-import type { CaseStatus, SampleCase } from '@/libs/OverviewSample';
+import { Link } from '@/libs/I18nNavigation';
+import type { CaseRow, CaseStatus } from '@/utils/Case';
 
 type CaseColumnId = 'case' | 'jurisdiction' | 'claimants' | 'status' | 'updated';
 
@@ -37,7 +39,7 @@ export function useCaseColumnLabels(): Record<CaseColumnId, string> {
 }
 
 function CaseHeader<TValue>(props: {
-  column: Column<TableFeatures, SampleCase, TValue>;
+  column: Column<TableFeatures, CaseRow, TValue>;
   id: CaseColumnId;
   align?: 'start' | 'end';
 }) {
@@ -48,12 +50,23 @@ function CaseHeader<TValue>(props: {
   );
 }
 
-function CaseCell(props: { caseRow: SampleCase }) {
-  return (
+function CaseCell(props: { caseRow: CaseRow; linked: boolean }) {
+  const content = (
     <>
       <p className="font-medium">{props.caseRow.name}</p>
       <p className="font-mono text-xs text-ink-muted">{props.caseRow.number}</p>
     </>
+  );
+
+  return props.linked ? (
+    <Link
+      href={`/dashboard/cases/${props.caseRow.id}`}
+      className="block focus-ring hover:underline hover:underline-offset-4"
+    >
+      {content}
+    </Link>
+  ) : (
+    content
   );
 }
 
@@ -73,39 +86,64 @@ function UpdatedCell(props: { value: string }) {
   );
 }
 
-const helper = createAppColumnHelper<SampleCase>();
+const helper = createAppColumnHelper<CaseRow>();
 
-/** The columns of a case table. Defined once at module scope so the table never rebuilds them. */
-export const caseColumns = helper.columns([
-  helper.accessor((row) => `${row.name} ${row.number}`, {
-    id: 'case',
-    header: ({ column }) => <CaseHeader column={column} id="case" />,
-    cell: ({ row }) => <CaseCell caseRow={row.original} />,
-  }),
-  helper.accessor((row) => getJurisdiction(row.jurisdiction)?.name ?? row.jurisdiction, {
-    id: 'jurisdiction',
-    header: ({ column }) => <CaseHeader column={column} id="jurisdiction" />,
-    filterFn: 'inSet',
-  }),
-  helper.accessor('claimants', {
-    id: 'claimants',
-    header: ({ column }) => <CaseHeader column={column} id="claimants" align="end" />,
-    cell: ({ getValue }) => <ClaimantsCell value={getValue()} />,
-  }),
-  helper.accessor('status', {
-    id: 'status',
-    header: ({ column }) => <CaseHeader column={column} id="status" />,
-    cell: ({ getValue }) => <StatusBadge status={getValue()} />,
-    filterFn: 'inSet',
-    sortFn: (a, b, columnId) =>
-      statusOrder[a.getValue<CaseStatus>(columnId)] - statusOrder[b.getValue<CaseStatus>(columnId)],
-  }),
-  helper.accessor('updatedAt', {
-    id: 'updated',
-    header: ({ column }) => <CaseHeader column={column} id="updated" />,
-    cell: ({ getValue }) => <UpdatedCell value={getValue()} />,
-  }),
-]);
+/**
+ * Builds the columns of a case table. A linked table opens the case page from the case name; the overview's sample rows have
+ * no page, so its table is not linked. Call it at module scope so the table never rebuilds the columns.
+ * @param linked - Whether the case name links to its page.
+ * @returns The columns.
+ */
+function createCaseColumns(linked: boolean) {
+  const columns = helper.columns([
+    helper.accessor((row) => `${row.name} ${row.number}`, {
+      id: 'case',
+      header: ({ column }) => <CaseHeader column={column} id="case" />,
+      cell: ({ row }) => <CaseCell caseRow={row.original} linked={linked} />,
+    }),
+    helper.accessor((row) => getJurisdiction(row.jurisdiction)?.name ?? row.jurisdiction, {
+      id: 'jurisdiction',
+      header: ({ column }) => <CaseHeader column={column} id="jurisdiction" />,
+      filterFn: 'inSet',
+    }),
+    helper.accessor('claimants', {
+      id: 'claimants',
+      header: ({ column }) => <CaseHeader column={column} id="claimants" align="end" />,
+      cell: ({ getValue }) => <ClaimantsCell value={getValue()} />,
+    }),
+    helper.accessor('status', {
+      id: 'status',
+      header: ({ column }) => <CaseHeader column={column} id="status" />,
+      cell: ({ getValue }) => <StatusBadge status={getValue()} />,
+      filterFn: 'inSet',
+      sortFn: (a, b, columnId) =>
+        statusOrder[a.getValue<CaseStatus>(columnId)] -
+        statusOrder[b.getValue<CaseStatus>(columnId)],
+    }),
+    helper.accessor('updatedAt', {
+      id: 'updated',
+      header: ({ column }) => <CaseHeader column={column} id="updated" />,
+      cell: ({ getValue }) => <UpdatedCell value={getValue()} />,
+    }),
+  ]);
 
-/** The same columns with a leading checkbox column, for the full case bank list. */
-export const selectableCaseColumns = [createSelectColumn<SampleCase>(), ...caseColumns];
+  // Only the case bank, where each case has a page, offers the preview.
+  return linked
+    ? [
+        ...columns,
+        helper.display({
+          id: 'preview',
+          header: () => null,
+          cell: ({ row }) => <CasePreviewDialog row={row.original} />,
+          enableSorting: false,
+          enableHiding: false,
+        }),
+      ]
+    : columns;
+}
+
+/** The columns of a case table with no links. */
+export const caseColumns = createCaseColumns(false);
+
+/** The linked columns with a leading checkbox column, for the full case bank list. */
+export const selectableCaseColumns = [createSelectColumn<CaseRow>(), ...createCaseColumns(true)];

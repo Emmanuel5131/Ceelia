@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { usePathname, useRouter } from '@/libs/I18nNavigation';
 import { routing } from '@/libs/I18nRouting';
+import { rememberLocale } from '@/libs/InboxActions';
 
 // The flag shown beside each language, when there is one. A flag stands for a language here, not a country: English uses the British flag.
 const flags: Record<string, typeof GB | undefined> = { en: GB, fr: FR };
@@ -33,6 +34,8 @@ export const LocaleSwitcher = () => {
       return;
     }
 
+    // Emails sent later are written in the language the person last chose. Visitors who are not signed in are ignored.
+    void rememberLocale(newLocale);
     const { search } = window.location;
     router.push(`${pathname}${search}`, { locale: newLocale, scroll: false });
   };

@@ -2,8 +2,10 @@
 
 import {
   BankIcon,
+  FilesIcon,
   GearSixIcon,
   GlobeHemisphereWestIcon,
+  ShieldCheckIcon,
   SquaresFourIcon,
 } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
@@ -28,9 +30,11 @@ import { Link, usePathname } from '@/libs/I18nNavigation';
 
 const icons = {
   overview: SquaresFourIcon,
+  claims: FilesIcon,
   cases: BankIcon,
   jurisdictions: GlobeHemisphereWestIcon,
   settings: GearSixIcon,
+  staff: ShieldCheckIcon,
 } as const;
 
 /**
@@ -46,9 +50,11 @@ export function AppSidebar(props: { items: NavId[]; signOut: React.ReactNode }) 
   const pathname = usePathname();
   const labels: Record<NavId, string> = {
     overview: t('nav_overview'),
+    claims: t('nav_claims'),
     cases: t('nav_cases'),
     jurisdictions: t('nav_jurisdictions'),
     settings: t('nav_settings'),
+    staff: t('nav_staff'),
   };
 
   return (

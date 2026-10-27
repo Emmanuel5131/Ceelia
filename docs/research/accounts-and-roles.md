@@ -58,7 +58,7 @@ Takeaway: **one login with separate, reviewed profiles** is common and well unde
 Notes:
 - **Counsel and the firm.** The firm is the owner of the cases it takes, so if a lawyer leaves, the cases stay. A firm admin invites colleagues.
 - **Staff** is not self-service. Set it from Clerk or a script and require two-factor authentication.
-- **Co-counsel:** start with one firm per case.
+- **Co-counsel:** start with one firm per case. How a firm takes a case, the 5-open-cases limit and conflicts inside a firm are in `taking-a-case.md`.
 
 ---
 

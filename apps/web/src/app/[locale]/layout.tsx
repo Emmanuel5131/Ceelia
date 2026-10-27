@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes';
 import { IBM_Plex_Mono, Mulish } from 'next/font/google';
 import localFont from 'next/font/local';
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 import { IconProvider } from '@/components/IconProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { routing } from '@/libs/I18nRouting';
@@ -51,6 +52,10 @@ export async function generateMetadata(props: {
     ],
   };
 }
+
+// Sets the light or dark class before the first paint. next-themes renders its own copy of this inside a client component,
+// which React 19 warns about, so it is switched off below (`scriptProps`) and this server-rendered copy does the work.
+const themeScript = `(function(){try{var t=localStorage.getItem('theme')||'system';var d=document.documentElement;var r=t==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t;d.classList.remove('light','dark');d.classList.add(r);d.style.colorScheme=r}catch(e){}})()`;
 
 const mulish = Mulish({
   subsets: ['latin'],
@@ -106,11 +111,15 @@ export default async function RootLayout(props: {
       className={`${mulish.variable} ${plexMono.variable} ${aeonik.variable}`}
     >
       <body className="bg-background font-sans text-foreground antialiased">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {themeScript}
+        </Script>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          scriptProps={{ type: 'application/json' }}
         >
           <NextIntlClientProvider>
             <IconProvider>

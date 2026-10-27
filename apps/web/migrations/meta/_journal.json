@@ -22,6 +22,27 @@
       "when": 1793029390053,
       "tag": "0002_lean_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793103474577,
+      "tag": "0003_careless_skullbuster",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793106069156,
+      "tag": "0004_neat_hydra",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793108669936,
+      "tag": "0005_skinny_blacklash",
+      "breakpoints": true
     }
   ]
 }

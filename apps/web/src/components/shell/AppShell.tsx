@@ -3,7 +3,6 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { AppSidebar } from '@/components/shell/AppSidebar';
 import { navByAccount } from '@/components/shell/nav';
-import { NotificationsMenu } from '@/components/shell/NotificationsMenu';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import type { AccountType } from '@/utils/Account';
@@ -13,6 +12,8 @@ import type { AccountType } from '@/utils/Account';
  * a 64px header (menu button, language, account menu) above the page, which sits in `PageContainer`.
  * @param props - The shell props.
  * @param props.accountType - The signed-in person's account type, which decides the navigation.
+ * @param props.staff - Celia staff also get the staff page.
+ * @param props.notifications - The bell, with the person's notifications.
  * @param props.userMenu - The account menu, so the shell does not depend on Clerk.
  * @param props.signOut - The sign-out button for the sidebar footer.
  * @param props.defaultOpen - Whether the sidebar starts expanded; read from its cookie by the layout.
@@ -21,6 +22,8 @@ import type { AccountType } from '@/utils/Account';
  */
 export async function AppShell(props: {
   accountType: AccountType;
+  staff?: boolean;
+  notifications: React.ReactNode;
   userMenu: React.ReactNode;
   signOut: React.ReactNode;
   defaultOpen: boolean;
@@ -36,14 +39,21 @@ export async function AppShell(props: {
       >
         {t('skip_to_content')}
       </a>
-      <AppSidebar items={navByAccount[props.accountType]} signOut={props.signOut} />
+      <AppSidebar
+        items={
+          props.staff
+            ? [...navByAccount[props.accountType], 'staff']
+            : navByAccount[props.accountType]
+        }
+        signOut={props.signOut}
+      />
       <SidebarInset id="main" tabIndex={-1}>
         <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line-soft bg-surface px-4 md:px-6">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-5 data-vertical:self-center" />
           <div className="ml-auto flex items-center gap-4">
             <LocaleSwitcher />
-            <NotificationsMenu />
+            {props.notifications}
             {props.userMenu}
           </div>
         </header>

@@ -4,7 +4,7 @@ import { OnboardingValidation } from './OnboardingValidation';
 const counsel = {
   accountType: 'counsel',
   firmName: 'Adeyemi & Co',
-  registrations: [{ jurisdiction: 'ng', number: 'SCN12345' }],
+  registrations: [{ jurisdiction: 'ng' }],
   acceptTerms: 'on',
   confirmConflicts: 'on',
 };

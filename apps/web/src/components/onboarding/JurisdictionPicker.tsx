@@ -1,9 +1,10 @@
 'use client';
 
-import { searchJurisdictions } from '@celia/jurisdictions';
+import { getJurisdiction, searchJurisdictions } from '@celia/jurisdictions';
 import * as React from 'react';
 import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Label } from '@/components/ui/label';
+import { jurisdictionName } from '@/utils/JurisdictionName';
 
 /**
  * A labelled search box for one jurisdiction, for use inside a form. What the person types is only for finding it: the form
@@ -13,6 +14,7 @@ import { Label } from '@/components/ui/label';
  * @param props.label - The visible label.
  * @param props.placeholder - The hint inside the empty box.
  * @param props.kind - Limit the search to `country` or `subdivision`; by default both.
+ * @param props.defaultId - A jurisdiction id to start with, when editing what the person chose before.
  * @param props.invalid - Marks the box as having an error.
  * @returns The picker.
  */
@@ -21,11 +23,13 @@ export function JurisdictionPicker(props: {
   label: string;
   placeholder: string;
   kind?: 'country' | 'subdivision';
+  defaultId?: string;
   invalid?: boolean;
 }) {
   const id = React.useId();
-  const [query, setQuery] = React.useState('');
-  const [selected, setSelected] = React.useState('');
+  const initial = props.defaultId ? getJurisdiction(props.defaultId) : undefined;
+  const [query, setQuery] = React.useState(initial ? jurisdictionName(initial) : '');
+  const [selected, setSelected] = React.useState(initial?.id ?? '');
   const [open, setOpen] = React.useState(false);
 
   const matches = open ? searchJurisdictions(query, { kind: props.kind }) : [];
@@ -63,7 +67,7 @@ export function JurisdictionPicker(props: {
                 }}
                 onSelect={() => {
                   setSelected(j.id);
-                  setQuery(j.parent ? `${j.name}, ${j.parent.name}` : j.name);
+                  setQuery(jurisdictionName(j));
                   setOpen(false);
                 }}
               >

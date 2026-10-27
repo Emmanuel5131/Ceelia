@@ -1,6 +1,6 @@
 'use client';
 
-import { MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react';
+import { DownloadSimpleIcon, MagnifyingGlassIcon, XIcon } from '@phosphor-icons/react';
 import type { ReactTable, RowData } from '@tanstack/react-table';
 import { useTranslations } from 'next-intl';
 import { DataTableFacetedFilter } from '@/components/data-table/DataTableFacetedFilter';
@@ -20,6 +20,7 @@ export type DataTableFilter = { columnId: string; title: string; options: DataTa
  * @param props.labels - The translated name of each column, by column id.
  * @param props.searchPlaceholder - Placeholder for the search box.
  * @param props.filters - The faceted filters to show.
+ * @param props.onExport - Shows an "Export" button that calls this when pressed.
  * @returns The toolbar.
  */
 export function DataTableToolbar<TData extends RowData>(props: {
@@ -27,6 +28,7 @@ export function DataTableToolbar<TData extends RowData>(props: {
   labels: Record<string, string>;
   searchPlaceholder: string;
   filters: DataTableFilter[];
+  onExport?: () => void;
 }) {
   const t = useTranslations('DataTable');
   const { table } = props;
@@ -76,7 +78,13 @@ export function DataTableToolbar<TData extends RowData>(props: {
           {t('filters_reset')}
         </Button>
       )}
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-3">
+        {props.onExport && (
+          <Button variant="outline" size="sm" onClick={props.onExport}>
+            <DownloadSimpleIcon aria-hidden="true" />
+            {t('export')}
+          </Button>
+        )}
         <DataTableViewOptions table={table} labels={props.labels} />
       </div>
     </div>
