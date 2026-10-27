@@ -2,7 +2,8 @@ import { bech32, bech32m, createBase58check, base58 } from '@scure/base';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
-import type { ChainFamily } from './families';
+import type { ChainId } from './chains';
+import { chainFamily } from './chains';
 
 const base58check = createBase58check(sha256);
 
@@ -53,14 +54,14 @@ function isBitcoinAddress(address: string) {
 /**
  * Checks that an address has the right shape for its chain family, so a typo is caught before a claim is filed. It cannot
  * tell whether the address is in use.
- * @param chain - The chain family.
+ * @param chain - The chain.
  * @param address - The address as the person typed it.
- * @returns True when the format is valid for the family. For `other`, any single word of reasonable length.
+ * @returns True when the format is valid for the chain's family. For the `other` family, any single word of reasonable length.
  */
-export function isValidAddress(chain: ChainFamily, address: string) {
+export function isValidAddress(chain: ChainId, address: string) {
   const value = address.trim();
 
-  switch (chain) {
+  switch (chainFamily(chain)) {
     case 'evm':
       return /^0x[0-9a-fA-F]{40}$/u.test(value) && hasValidEvmChecksum(value);
     case 'solana':
@@ -72,6 +73,28 @@ export function isValidAddress(chain: ChainFamily, address: string) {
     }
     case 'bitcoin':
       return isBitcoinAddress(value);
+    default:
+      return /^\S{10,200}$/u.test(value);
+  }
+}
+
+/**
+ * Checks that a transaction hash has the right shape for its chain, so a mistyped hash is caught before a claim is filed.
+ * @param chain - The chain.
+ * @param hash - The transaction hash as the person pasted it.
+ * @returns True when the format is valid for the chain's family.
+ */
+export function isValidTxHash(chain: ChainId, hash: string) {
+  const value = hash.trim();
+
+  switch (chainFamily(chain)) {
+    case 'evm':
+      return /^0x[0-9a-fA-F]{64}$/u.test(value);
+    case 'tron':
+    case 'bitcoin':
+      return /^[0-9a-fA-F]{64}$/u.test(value);
+    case 'solana':
+      return decodes(() => base58.decode(value))?.length === 64;
     default:
       return /^\S{10,200}$/u.test(value);
   }

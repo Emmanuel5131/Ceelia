@@ -1,4 +1,5 @@
-import { and, countDistinct, desc, eq, ne } from 'drizzle-orm';
+import { and, countDistinct, desc, eq, ne, or } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { claimSchema } from '@/models/Schema';
 
@@ -33,17 +34,28 @@ export async function getClaim(userId: string, id: string) {
 }
 
 /**
- * Counts how many other people have reported the same platform. Only a number leaves here, never who they are.
- * @param claim - The claim whose platform to look at.
+ * Counts how many other people have reported the same operator. Claims match when they share any strong identifier: the
+ * name, the website, or the token contract. Only a number leaves here, never who they are.
+ * @param claim - The claim whose operator to look at.
  * @returns The number of other people.
  */
-export async function countOthersOnPlatform(claim: Pick<Claim, 'platformKey' | 'userId'>) {
+export async function countOthersOnOperator(
+  claim: Pick<Claim, 'platformKey' | 'platformHost' | 'tokenContract' | 'userId'>,
+) {
+  const matches = [
+    claim.platformKey ? eq(claimSchema.platformKey, claim.platformKey) : undefined,
+    claim.platformHost ? eq(claimSchema.platformHost, claim.platformHost) : undefined,
+    claim.tokenContract ? eq(claimSchema.tokenContract, claim.tokenContract) : undefined,
+  ].filter((match): match is SQL => match !== undefined);
+
+  if (matches.length === 0) {
+    return 0;
+  }
+
   const [row] = await db
     .select({ others: countDistinct(claimSchema.userId) })
     .from(claimSchema)
-    .where(
-      and(eq(claimSchema.platformKey, claim.platformKey), ne(claimSchema.userId, claim.userId)),
-    );
+    .where(and(or(...matches), ne(claimSchema.userId, claim.userId)));
 
   return row?.others ?? 0;
 }

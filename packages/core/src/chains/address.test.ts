@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isValidAddress } from './address';
+import { isValidAddress, isValidTxHash } from './address';
 
 describe('isValidAddress', () => {
   describe('evm', () => {
@@ -63,5 +63,29 @@ describe('isValidAddress', () => {
     it('rejects text with spaces', () => {
       expect(isValidAddress('other', 'not an address')).toBe(false);
     });
+  });
+});
+
+describe('isValidTxHash', () => {
+  const hex64 = 'a'.repeat(64);
+
+  it('accepts a 0x-prefixed 32-byte hash on an EVM chain', () => {
+    expect(isValidTxHash('ethereum', `0x${hex64}`)).toBe(true);
+    expect(isValidTxHash('ethereum', hex64)).toBe(false);
+  });
+
+  it('accepts a bare 32-byte hash on Tron and Bitcoin', () => {
+    expect(isValidTxHash('tron', hex64)).toBe(true);
+    expect(isValidTxHash('bitcoin', hex64)).toBe(true);
+    expect(isValidTxHash('tron', `0x${hex64}`)).toBe(false);
+  });
+
+  it('accepts a base58 signature on Solana', () => {
+    expect(isValidTxHash('solana', '5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW')).toBe(true);
+    expect(isValidTxHash('solana', 'short')).toBe(false);
+  });
+
+  it('accepts any single word on chains we cannot check', () => {
+    expect(isValidTxHash('ton', 'abcdefghijklmnop')).toBe(true);
   });
 });

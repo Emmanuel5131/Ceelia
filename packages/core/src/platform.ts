@@ -12,3 +12,16 @@ export function platformKey(name: string) {
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]/gu, '');
 }
+
+/**
+ * Reduces a website address to its host, so `https://www.Quantum.fi/invest` and `quantum.fi` are the same site.
+ * @param url - A web address as typed.
+ * @returns The lowercase host without `www.`, or undefined when it is not a valid address.
+ */
+export function platformHost(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./u, '').toLowerCase();
+  } catch {
+    return undefined;
+  }
+}

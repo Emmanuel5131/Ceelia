@@ -372,6 +372,8 @@ The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a to
 | Page section | `layout/PageSection` | Title, optional description and action, then the content. 48px between sections. |
 | Stat or panel | `ui/Card` (+ `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`, `CardValue`) | `variant="default"` is paper; `variant="outline"` is white with a hairline, for content that must stand out. |
 | Activity or steps | `ui/Timeline`, `TimelineItem` | The marker carries the state by shape: `filled` done or sealed, `dashed` current, `hollow` event, `muted` not yet. |
+| A few big answers | `ui/ChoiceCards` | One question with 2 to 7 answers, each a card with an icon, a title and a line of explanation. Used for "how will you use Celia" and "what happened". |
+| Searchable select | `ui/Combobox` | A select with a search box for long lists (popover plus the command list). Items can carry an icon and a group heading. Used for the chain picker. |
 | Settings | `layout/SettingsList`, `SettingsRow` | One card, a row per setting: name and one sentence on the left, the control (button, select, switch) on the right; the control drops under the text on a phone. Account management opens Clerk's modal. Add a setting by adding a row. |
 | Any table | `data-table/DataTable` on TanStack Table | Sorting, global search, faceted filters, column visibility, row selection and pagination, all from one set of features in `data-table/table.ts`. |
 
@@ -381,7 +383,7 @@ The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a to
 
 **Vendored shadcn code.** `ui/sidebar.tsx` stays close to the registry source so it is easy to update; `oxlint.config.ts` relaxes a few rules for that one file.
 
-**Icons: Phosphor, regular weight** (`@phosphor-icons/react`). One weight and one family across the app, set once in `IconProvider`, so icons never take a `weight` prop. Size follows the control: 16px inside `sm` controls, 20px by default, 24px in `lg` and empty states. Name icons with the `Icon` suffix (`WalletIcon`). Add `aria-label` to an icon-only button. Use `fill` or `bold` only for a selected state, never to decorate. Do not mix in another icon set.
+**Icons: Phosphor, regular weight** (`@phosphor-icons/react`). One weight and one family across the app, set once in `IconProvider`, so icons never take a `weight` prop. Size follows the control: 16px inside `sm` controls, 20px by default, 24px in `lg` and empty states. Name icons with the `Icon` suffix (`WalletIcon`). Add `aria-label` to an icon-only button. Use `fill` or `bold` only for a selected state, never to decorate. Do not mix in another icon set. **One exception:** chain logos (`claims/ChainIcon`, from `@web3icons/react`) are brand marks, not interface icons, so they keep their own colours. Add a chain to `@celia/core` and the type check asks for its logo.
 
 **Why Phosphor:** one consistent drawing grid in six weights (so a selected or emphasised state is the same icon in a heavier weight), a large set that already covers wallet, file, seal and gavel concepts, and a regular weight that sits well beside hairline borders. Font Awesome's free tier has fewer outline icons and a very recognisable default look. Lucide and Tabler are good alternatives with a thinner stroke.
 

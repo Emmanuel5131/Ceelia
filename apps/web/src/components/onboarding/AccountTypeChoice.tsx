@@ -2,8 +2,8 @@
 
 import { BankIcon, UserIcon } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import type { ChoiceOption } from '@/components/ui/choice-cards';
+import { ChoiceCards } from '@/components/ui/choice-cards';
 import type { AccountType } from '@/utils/Account';
 
 /**
@@ -19,49 +19,28 @@ export function AccountTypeChoice(props: {
 }) {
   const t = useTranslations('OnboardingPage');
 
-  const options = [
+  const options: ChoiceOption<AccountType>[] = [
     {
       value: 'person',
-      icon: UserIcon,
+      icon: <UserIcon className="size-5" aria-hidden="true" />,
       title: t('type_person_title'),
       description: t('type_person_description'),
     },
     {
       value: 'counsel',
-      icon: BankIcon,
+      icon: <BankIcon className="size-5" aria-hidden="true" />,
       title: t('type_counsel_title'),
       description: t('type_counsel_description'),
     },
-  ] as const;
+  ];
 
   return (
-    <RadioGroup
-      aria-label={t('title')}
-      value={props.value ?? ''}
-      onValueChange={(value) => {
-        if (value === 'person' || value === 'counsel') {
-          props.onChange(value);
-        }
-      }}
-      className="gap-4"
-    >
-      {options.map((option) => (
-        <label key={option.value} htmlFor={`account-${option.value}`} className="cursor-pointer">
-          <Card
-            variant="outline"
-            className="flex-row items-start gap-4 px-6 py-5 transition-colors hover:bg-paper has-data-[state=checked]:border-ink"
-          >
-            <RadioGroupItem id={`account-${option.value}`} value={option.value} className="mt-1" />
-            <CardHeader className="min-w-0 flex-1 gap-1 px-0">
-              <CardTitle className="flex items-center gap-3 font-sans text-base font-medium">
-                <option.icon className="size-5" aria-hidden="true" />
-                {option.title}
-              </CardTitle>
-              <CardDescription>{option.description}</CardDescription>
-            </CardHeader>
-          </Card>
-        </label>
-      ))}
-    </RadioGroup>
+    <ChoiceCards
+      name="accountTypeChoice"
+      label={t('title')}
+      options={options}
+      value={props.value}
+      onChange={props.onChange}
+    />
   );
 }

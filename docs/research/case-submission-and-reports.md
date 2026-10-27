@@ -29,6 +29,8 @@ From `docs/legal-hack-context.md` and the landing page copy:
 
 ## 2. What a victim submits
 
+> **Updated:** the form is now built around the kind of loss, how it was paid and who took the money, not just a wallet and a platform. See [fraud-types-and-claim-form.md](fraud-types-and-claim-form.md). The table below is the first version.
+
 Principle: the chain is the evidence, so the victim only gives what the chain **cannot** say, plus enough to find them on it. Ask for as little as that.
 
 | What | Required | Why | How it is checked |
@@ -54,7 +56,7 @@ Decision: **all chains**. The sensible reading is that a claim can be **filed fo
 | **Wallet ownership** (the signed message) | A signature check for that chain's scheme | Done per family: **EVM** (EIP-191, plus EIP-1271 for contract wallets), **Solana** (ed25519), **Tron**, **Bitcoin** (message signing). Others are added as we go; until then the claim is accepted with ownership **not confirmed**. |
 | **Address checks on the form** | The address format | Validate by family so a typo is caught before it is filed. |
 
-Start the claim form with the chain as a choice list plus "other", so nothing is turned away, and build signature checks for the families that carry most of these losses first.
+The claim form lists about 55 chains with their logos, popular ones first (`chains` in `@celia/core`), plus "Other EVM network" and "Another chain", so nothing is turned away. Signature checks cover the EVM, Solana and Tron families; the rest are accepted with ownership not confirmed.
 
 ### What Celia works out for each claim (no effort from the victim)
 From the wallet and the platform, Sandworm computes: deposits to the platform, anything received back, **net loss**, dates, and whether the money went on through a mixer to an exchange. This is the per-victim row a lawyer wants: *wallet, signed proof, paid in, taken out, net loss, transactions*. It is **computed from the chain**, so it is "confirmed on chain" and does not depend on the victim's memory.
