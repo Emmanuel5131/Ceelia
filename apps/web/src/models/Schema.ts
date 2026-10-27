@@ -1,14 +1,18 @@
 import type {
+  AccountKind,
   ChainId,
   ContactChannel,
   FraudType,
   NotificationType,
   OptionalCategory,
   PaymentMethod,
+  WalletApp,
+  WalletType,
 } from '@celia/core';
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -59,6 +63,8 @@ export const claimSchema = pgTable(
     userId: text('user_id').notNull(),
     /** What kind of loss this is, in a victim's words. See `fraudTypes` in `@celia/core`. */
     fraudType: text('fraud_type').$type<FraudType>().notNull().default('other'),
+    /** Every kind of loss the person says fits, the first being `fraudType`. A case can fit more than one. */
+    fraudTypes: text('fraud_types').array().$type<FraudType[]>().notNull().default([]),
     /** How the money left: their own wallet, an exchange account, a crypto ATM, or a peer-to-peer purchase. */
     paymentMethod: text('payment_method').$type<PaymentMethod>().notNull().default('wallet'),
     /** The chain, as an id from `@celia/core`: `ethereum`, `tron`, `solana`, and so on. */
@@ -78,6 +84,23 @@ export const claimSchema = pgTable(
     operatorHandle: text('operator_handle'),
     /** The token contract, for a rug pull. Lowercased so spellings match. */
     tokenContract: text('token_contract'),
+    /** The token or NFT's name and symbol, in the person's own words, such as "Moon Inu (MINU)". */
+    tokenName: text('token_name'),
+    /** The kind of wallet the money left from, when it was their own. */
+    walletType: text('wallet_type').$type<WalletType>(),
+    /** What kind of account the wallet is on its chain, read from the chain when the claim was filed. Empty when it could not be. */
+    accountKind: text('account_kind').$type<AccountKind>(),
+    /** The named wallet, such as MetaMask or Phantom, when they said. */
+    walletApp: text('wallet_app').$type<WalletApp>(),
+    /** The transaction that first funded the wallet, when they gave it. It lets us trace where the money came from. */
+    fundingTxHash: text('funding_tx_hash'),
+    /** The address they sent the money to, such as the platform's deposit address, when they have it. It lets us follow the money. */
+    destinationAddress: text('destination_address'),
+    /** When they first and last paid, as `YYYY-MM-DD`. It gives the case a timeline. */
+    firstPaymentOn: date('first_payment_on', { mode: 'string' }),
+    lastPaymentOn: date('last_payment_on', { mode: 'string' }),
+    /** What they sent, in their own words, such as USDT or ETH. */
+    assetSent: text('asset_sent'),
     contactChannel: text('contact_channel').$type<ContactChannel>(),
     /** What they say they lost, in their own words. Not confirmed: the chain works out the real figure. */
     amountLost: text('amount_lost'),
@@ -123,6 +146,8 @@ export const caseSchema = pgTable('case', {
   platformKey: text('platform_key').notNull().unique(),
   /** A jurisdiction id from `@celia/jurisdictions`. */
   jurisdiction: text('jurisdiction').notNull(),
+  /** One line on the case, such as the wallets affected and the estimated loss. Written when a report is saved. */
+  description: text('description'),
   /** `collecting`, `building`, `sealed` or `counsel`. Moves forward only; staff set the first three, taking a case sets the last. */
   status: text('status').$type<CaseStatus>().notNull().default('collecting'),
   updatedAt: timestamp('updated_at', { mode: 'date' })
@@ -282,11 +307,36 @@ export const caseReportSchema = pgTable(
     version: integer('version').notNull(),
     snapshot: jsonb('snapshot').$type<Report>().notNull(),
     hash: text('hash').notNull(),
-    /** A link to the published method notebook on Sandworm, so anyone can re-run the tests. Optional. */
-    notebookUrl: text('notebook_url'),
     /** The staff member who saved it. */
     savedBy: text('saved_by').notNull(),
     createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique('case_report_one_per_version').on(table.caseId, table.version)],
+);
+
+export type CaseEventType =
+  | 'case_opened'
+  | 'claim_added'
+  | 'report_saved'
+  | 'case_sealed'
+  | 'case_taken';
+
+/**
+ * What happened to a case and when: it was opened, claims were added, a report was saved, the evidence was sealed, a firm took
+ * it. The overview's activity feed and its "sealed this month" count read this. It holds no names and no claim detail, only the
+ * case and the kind of event, so it is safe to show to any lawyer who can see the case.
+ */
+export const caseEventSchema = pgTable(
+  'case_event',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    caseId: uuid('case_id')
+      .notNull()
+      .references(() => caseSchema.id),
+    type: text('type').$type<CaseEventType>().notNull(),
+    /** How many things the event covers, such as claims added at once. */
+    count: integer('count').notNull().default(1),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('case_event_recent').on(table.createdAt)],
 );

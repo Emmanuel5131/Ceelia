@@ -1,5 +1,6 @@
 'use server';
 
+import type { AccountKind } from '@celia/core';
 import {
   canVerifyOwnership,
   ownershipMessage,
@@ -8,11 +9,13 @@ import {
   verifyOwnership,
 } from '@celia/core';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type * as z from 'zod';
+import { detectAccountKind } from '@/libs/AccountKind';
+import { recordCaseEvent } from '@/libs/CaseEvents';
 import { getClaim } from '@/libs/Claims';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/Notify';
@@ -53,9 +56,15 @@ async function requirePerson() {
 }
 
 const names = [
-  'fraudType',
   'paymentMethod',
   'chain',
+  'walletType',
+  'walletApp',
+  'fundingTxHash',
+  'destinationAddress',
+  'firstPaymentOn',
+  'lastPaymentOn',
+  'assetSent',
   'walletAddress',
   'txHash',
   'unknownOperator',
@@ -63,6 +72,7 @@ const names = [
   'platformUrl',
   'operatorHandle',
   'tokenContract',
+  'tokenName',
   'contactChannel',
   'amountLost',
 ] as const;
@@ -74,7 +84,10 @@ const names = [
  * @returns The raw input.
  */
 function readClaimForm(formData: FormData) {
-  const input: Record<string, FormDataEntryValue> = {};
+  // Every kind of loss the person ticked, not just the first.
+  const input: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {
+    fraudTypes: formData.getAll('fraudType'),
+  };
 
   for (const name of names) {
     const value = formData.get(name);
@@ -95,9 +108,15 @@ type NewClaim = z.infer<typeof CreateClaimValidation>;
  * @param input.userId - The Clerk user id.
  * @param input.claim - The validated new claim.
  * @param input.key - The operator's pooling key, or an empty string when unnamed.
+ * @param input.exceptId - A claim to leave out, so a claim being edited does not match itself.
  * @returns The earlier claim's id, if there is one.
  */
-async function findDuplicate(input: { userId: string; claim: NewClaim; key: string }) {
+async function findDuplicate(input: {
+  userId: string;
+  claim: NewClaim;
+  key: string;
+  exceptId?: string;
+}) {
   const { userId, claim, key } = input;
   const same =
     claim.paymentMethod === 'wallet'
@@ -110,9 +129,34 @@ async function findDuplicate(input: { userId: string; claim: NewClaim; key: stri
   const [existing] = await db
     .select({ id: claimSchema.id })
     .from(claimSchema)
-    .where(and(eq(claimSchema.userId, userId), same));
+    .where(
+      and(
+        eq(claimSchema.userId, userId),
+        same,
+        input.exceptId ? ne(claimSchema.id, input.exceptId) : undefined,
+      ),
+    );
 
   return existing;
+}
+
+/**
+ * What is kept about the wallet, only when the money left from the person's own wallet. For an exchange, an ATM or a person
+ * there is no wallet to describe.
+ * @param claim - The validated new claim.
+ * @param accountKind - What the chain says the wallet is, if it could be read.
+ * @returns The wallet columns.
+ */
+function walletColumns(claim: NewClaim, accountKind: AccountKind | null) {
+  const own = claim.paymentMethod === 'wallet';
+
+  return {
+    accountKind: own ? accountKind : null,
+    walletAddress: own ? (claim.walletAddress ?? null) : null,
+    walletType: own ? (claim.walletType ?? null) : null,
+    walletApp: own ? (claim.walletApp ?? null) : null,
+    fundingTxHash: own ? (claim.fundingTxHash ?? null) : null,
+  };
 }
 
 /**
@@ -120,23 +164,30 @@ async function findDuplicate(input: { userId: string; claim: NewClaim; key: stri
  * claims about the same operator can be pooled.
  * @param claim - The validated new claim.
  * @param named - The operator's name, if known.
+ * @param accountKind - What the chain says the wallet is, if it could be read.
  * @returns The columns, except the owner and the country.
  */
-function claimColumns(claim: NewClaim, named: string | undefined) {
+function claimColumns(claim: NewClaim, named: string | undefined, accountKind: AccountKind | null) {
   const key = named ? platformKey(named) : '';
 
   return {
-    fraudType: claim.fraudType,
+    fraudType: claim.fraudTypes[0] ?? 'other',
+    fraudTypes: [...new Set(claim.fraudTypes)],
     paymentMethod: claim.paymentMethod,
     chain: claim.chain,
-    walletAddress: claim.paymentMethod === 'wallet' ? (claim.walletAddress ?? null) : null,
+    ...walletColumns(claim, accountKind),
     txHash: claim.txHash ?? null,
+    destinationAddress: claim.destinationAddress ?? null,
+    firstPaymentOn: claim.firstPaymentOn ?? null,
+    lastPaymentOn: claim.lastPaymentOn ?? null,
+    assetSent: claim.assetSent ?? null,
     platformName: named ?? null,
     platformKey: key === '' ? null : key,
     platformUrl: claim.platformUrl ?? null,
     platformHost: claim.platformUrl ? (platformHost(claim.platformUrl) ?? null) : null,
     operatorHandle: claim.operatorHandle ?? null,
     tokenContract: claim.tokenContract?.toLowerCase() ?? null,
+    tokenName: claim.tokenName ?? null,
     contactChannel: claim.contactChannel ?? null,
     amountLost: claim.amountLost ?? null,
     nonce: crypto.randomUUID(),
@@ -166,17 +217,100 @@ export async function createClaim(_state: ClaimState, formData: FormData): Promi
     return failed(['duplicate']);
   }
 
+  // Read from the chain, never asked: whether the wallet is a regular one or a smart contract wallet.
+  const accountKind =
+    claim.paymentMethod === 'wallet' && claim.walletAddress
+      ? await detectAccountKind(claim.chain, claim.walletAddress)
+      : null;
   const country = user?.privateMetadata.country;
   const [created] = await db
     .insert(claimSchema)
     .values({
-      ...claimColumns(claim, named),
+      ...claimColumns(claim, named, accountKind),
       userId,
       country: typeof country === 'string' ? country : null,
     })
     .returning({ id: claimSchema.id });
 
   return redirect(getI18nPath(`/dashboard/claims/${created?.id}`, await getLocale()));
+}
+
+/**
+ * Saves the first page of a claim again, from the same form, while it is still a draft. A different chain, address or way of
+ * paying clears the ownership proof and makes a new nonce, because the signed message names the wallet; every other change keeps
+ * it. A claim that has been sent is part of a case and keeps what it had.
+ * @param claimId - The claim.
+ * @param _state - The previous state (unused).
+ * @param formData - The submitted form.
+ * @returns The failed fields; on success it redirects to the claim.
+ */
+export async function updateClaim(
+  claimId: string,
+  _state: ClaimState,
+  formData: FormData,
+): Promise<ClaimState> {
+  const { userId } = await requirePerson();
+  const existing = await getClaim(userId, claimId);
+
+  if (!existing || existing.status !== 'draft') {
+    return failed(['claim']);
+  }
+
+  const parsed = CreateClaimValidation.safeParse(readClaimForm(formData));
+
+  if (!parsed.success) {
+    return failed([...new Set(parsed.error.issues.map((issue) => String(issue.path[0])))]);
+  }
+
+  const claim = parsed.data;
+  const named = claim.unknownOperator === 'on' ? undefined : claim.platformName;
+
+  if (
+    await findDuplicate({
+      userId,
+      claim,
+      key: named ? platformKey(named) : '',
+      exceptId: existing.id,
+    })
+  ) {
+    return failed(['duplicate']);
+  }
+
+  const moved =
+    claim.paymentMethod !== existing.paymentMethod ||
+    claim.chain !== existing.chain ||
+    (claim.paymentMethod === 'wallet' ? (claim.walletAddress ?? null) : null) !==
+      existing.walletAddress;
+  const walletKind =
+    claim.paymentMethod === 'wallet' && claim.walletAddress
+      ? await detectAccountKind(claim.chain, claim.walletAddress)
+      : null;
+  const { nonce, ...columns } = claimColumns(
+    claim,
+    named,
+    moved ? walletKind : existing.accountKind,
+  );
+
+  await db
+    .update(claimSchema)
+    .set({
+      ...columns,
+      updatedAt: new Date(),
+      // A different wallet needs its own proof; the same wallet keeps the one it has.
+      ...(moved && { nonce, ownership: 'unsigned', signature: null, signedAt: null }),
+    })
+    .where(
+      and(
+        eq(claimSchema.id, existing.id),
+        eq(claimSchema.userId, userId),
+        eq(claimSchema.status, 'draft'),
+      ),
+    );
+
+  const locale = await getLocale();
+  revalidatePath(getI18nPath(`/dashboard/claims/${existing.id}`, locale));
+
+  return redirect(getI18nPath(`/dashboard/claims/${existing.id}`, locale));
 }
 
 /**
@@ -311,6 +445,10 @@ export async function submitClaim(claimId: string): Promise<ClaimState> {
           .where(eq(caseSchema.platformKey, claim.platformKey))
       : [];
 
+    if (existing) {
+      await recordCaseEvent(tx, existing.id, 'claim_added');
+    }
+
     await notify(tx, [
       {
         userId,
@@ -331,6 +469,63 @@ export async function submitClaim(claimId: string): Promise<ClaimState> {
     ]);
   });
   revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, locale));
+
+  return { errors: [], done: true };
+}
+
+/**
+ * Deletes a draft claim. Only the person's own draft can go: a claim that has been sent is part of a case and is never deleted
+ * here. The check is part of the delete itself, so a claim sent a moment ago cannot slip through.
+ * @param claimId - The claim.
+ * @returns The failure when there was no such draft; otherwise it redirects to the list of claims.
+ */
+export async function deleteClaim(claimId: string): Promise<ClaimState> {
+  const { userId } = await requirePerson();
+  const deleted = await db
+    .delete(claimSchema)
+    .where(
+      and(
+        eq(claimSchema.id, claimId),
+        eq(claimSchema.userId, userId),
+        eq(claimSchema.status, 'draft'),
+      ),
+    )
+    .returning({ id: claimSchema.id });
+
+  if (deleted.length === 0) {
+    return failed(['claim']);
+  }
+
+  const locale = await getLocale();
+  revalidatePath(getI18nPath('/dashboard/claims', locale));
+
+  return redirect(getI18nPath('/dashboard/claims', locale));
+}
+
+/**
+ * Deletes several of the person's own drafts at once. Anything that is not their draft is skipped, so a claim sent a moment ago
+ * is never deleted.
+ * @param claimIds - The claims to delete.
+ * @returns The failure when none of them could be deleted.
+ */
+export async function deleteDrafts(claimIds: string[]): Promise<ClaimState> {
+  const { userId } = await requirePerson();
+  const deleted = await db
+    .delete(claimSchema)
+    .where(
+      and(
+        inArray(claimSchema.id, claimIds),
+        eq(claimSchema.userId, userId),
+        eq(claimSchema.status, 'draft'),
+      ),
+    )
+    .returning({ id: claimSchema.id });
+
+  if (deleted.length === 0) {
+    return failed(['claim']);
+  }
+
+  revalidatePath(getI18nPath('/dashboard/claims', await getLocale()));
 
   return { errors: [], done: true };
 }

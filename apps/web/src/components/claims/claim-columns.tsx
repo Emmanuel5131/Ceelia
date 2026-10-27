@@ -2,11 +2,14 @@
 
 import type { Column } from '@tanstack/react-table';
 import { useFormatter, useTranslations } from 'next-intl';
+import { deleteClaim } from '@/app/[locale]/(auth)/dashboard/claims/actions';
 import { ChainLabel } from '@/components/claims/ChainLabel';
 import { useClaimLabels } from '@/components/claims/claim-labels';
 import type { ClaimRow } from '@/components/claims/claim-row';
 import { OperatorName } from '@/components/claims/ClaimMeta';
+import { DeleteClaimDialog } from '@/components/claims/DeleteClaimDialog';
 import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader';
+import { createSelectColumn } from '@/components/data-table/select-column';
 import { createAppColumnHelper } from '@/components/data-table/table';
 import type { TableFeatures } from '@/components/data-table/table';
 import { Badge } from '@/components/ui/badge';
@@ -101,6 +104,7 @@ const helper = createAppColumnHelper<ClaimRow>();
 
 /** The columns of the claims table. Defined once at module scope so the table never rebuilds them. */
 export const claimColumns = helper.columns([
+  createSelectColumn<ClaimRow>(),
   helper.accessor((row) => `${row.operator ?? ''} ${row.reference}`, {
     id: 'claim',
     header: ({ column }) => <ClaimHeader column={column} id="claim" />,
@@ -138,5 +142,16 @@ export const claimColumns = helper.columns([
     id: 'updated',
     header: ({ column }) => <ClaimHeader column={column} id="updated" />,
     cell: ({ getValue }) => <UpdatedCell value={getValue()} />,
+  }),
+  // Only a draft can be deleted: a sent claim is part of a case.
+  helper.display({
+    id: 'actions',
+    header: () => null,
+    cell: ({ row }) =>
+      row.original.status === 'draft' ? (
+        <DeleteClaimDialog compact action={deleteClaim.bind(null, row.original.id)} />
+      ) : null,
+    enableSorting: false,
+    enableHiding: false,
   }),
 ]);

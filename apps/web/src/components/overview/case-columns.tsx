@@ -89,8 +89,8 @@ function UpdatedCell(props: { value: string }) {
 const helper = createAppColumnHelper<CaseRow>();
 
 /**
- * Builds the columns of a case table. A linked table opens the case page from the case name; the overview's sample rows have
- * no page, so its table is not linked. Call it at module scope so the table never rebuilds the columns.
+ * Builds the columns of a case table. A linked table opens the case page from the case name and offers the preview. Call it at
+ * module scope so the table never rebuilds the columns.
  * @param linked - Whether the case name links to its page.
  * @returns The columns.
  */
@@ -127,7 +127,7 @@ function createCaseColumns(linked: boolean) {
     }),
   ]);
 
-  // Only the case bank, where each case has a page, offers the preview.
+  // A linked table offers the preview, since each case has a page.
   return linked
     ? [
         ...columns,
@@ -142,8 +142,8 @@ function createCaseColumns(linked: boolean) {
     : columns;
 }
 
-/** The columns of a case table with no links. */
-export const caseColumns = createCaseColumns(false);
+/** The columns of a read-only case table, linked to each case page. */
+export const caseColumns = createCaseColumns(true);
 
 /** The linked columns with a leading checkbox column, for the full case bank list. */
 export const selectableCaseColumns = [createSelectColumn<CaseRow>(), ...createCaseColumns(true)];

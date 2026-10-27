@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ReportValidation } from '@/validations/ReportValidation';
-import { canonicalJson, hashReport } from './Report';
+import { canonicalJson, describeCase, hashReport } from './Report';
 
 const report = {
   version: 1,
@@ -11,9 +11,22 @@ const report = {
       claim: 'Withdrawals are always available.',
       evidence: 'No withdrawals appear after the 14th of September.',
       result: 'proven',
+      tests: ['funding-trail'],
     },
   ],
-  method: { tests: ['Funding trail', 'Concentration'] },
+  tests: [
+    {
+      id: 'funding-trail',
+      title: 'Funding trail',
+      summary: 'No transfer to a user wallet after 14 September.',
+      columns: ['Day', 'Outgoing transfers'],
+      rows: [
+        ['13 Sep', '41'],
+        ['14 Sep', '0'],
+      ],
+    },
+  ],
+  method: {},
   dataAsOf: '2026-10-27T10:00:00Z',
   sources: ['Solana RPC'],
 };
@@ -93,5 +106,73 @@ describe('Report format', () => {
       ReportValidation.safeParse({ ...report, method: { ...report.method, commitment: '0x12' } })
         .success,
     ).toBeFalsy();
+  });
+
+  it('rejects a check that points at a test the report does not have', () => {
+    expect(
+      ReportValidation.safeParse({
+        ...report,
+        checks: [{ ...report.checks[0], tests: ['no-such-test'] }],
+      }).success,
+    ).toBeFalsy();
+  });
+
+  it('rejects two tests with the same id', () => {
+    expect(
+      ReportValidation.safeParse({ ...report, tests: [report.tests[0], report.tests[0]] }).success,
+    ).toBeFalsy();
+  });
+
+  it('rejects a table row that is not as wide as its headings', () => {
+    expect(
+      ReportValidation.safeParse({
+        ...report,
+        tests: [{ ...report.tests[0], rows: [['only one cell']] }],
+      }).success,
+    ).toBeFalsy();
+  });
+
+  it('accepts a test with a summary and no table', () => {
+    expect(
+      ReportValidation.safeParse({
+        ...report,
+        tests: [{ id: 'funding-trail', title: 'Funding trail', summary: 'A short finding.' }],
+      }).success,
+    ).toBeTruthy();
+  });
+
+  it('accepts a proof link outside Celia over https only', () => {
+    const withLink = (url: string) => ({
+      ...report,
+      checks: [{ ...report.checks[0], proof: [{ label: 'Transaction', url }] }],
+    });
+
+    expect(
+      ReportValidation.safeParse(withLink('https://explorer.example/tx/1')).success,
+    ).toBeTruthy();
+    expect(
+      ReportValidation.safeParse(withLink('http://explorer.example/tx/1')).success,
+    ).toBeFalsy();
+  });
+});
+
+describe(describeCase, () => {
+  const parsed = ReportValidation.parse(report);
+
+  it('writes the estimate then each proven finding', () => {
+    const described = describeCase({
+      ...parsed,
+      estimate: { wallets: '142', losses: '$310,000' },
+    });
+
+    expect(described).toBe(
+      '142 wallets, estimated loss of $310,000 to this platform.\n\nThe platform said: Withdrawals are always available. No withdrawals appear after the 14th of September.',
+    );
+  });
+
+  it('leaves out findings that are not proven', () => {
+    const checks = parsed.checks.map((check) => ({ ...check, result: 'not_checkable' as const }));
+
+    expect(describeCase({ ...parsed, checks })).toBeNull();
   });
 });

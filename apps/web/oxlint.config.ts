@@ -49,6 +49,21 @@ export default defineConfig({
         'typescript/no-confusing-void-expression': 'off',
       },
     },
+    {
+      // A local sample-data script: a seeded random generator and sequential inserts, not app code.
+      files: ['scripts/seed.ts'],
+      rules: {
+        'no-bitwise': 'off',
+        'no-await-in-loop': 'off',
+        'no-nested-ternary': 'off',
+        'unicorn/no-nested-ternary': 'off',
+        'no-plusplus': 'off',
+        'unicorn/numeric-separators-style': 'off',
+        'typescript/no-unsafe-type-assertion': 'off',
+        'jsdoc/require-param': 'off',
+        'jsdoc/require-returns': 'off',
+      },
+    },
   ],
   options: {
     reportUnusedDisableDirectives: 'error',

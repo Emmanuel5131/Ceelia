@@ -11,6 +11,8 @@ export type CaseRow = {
   /** A jurisdiction id from `@celia/jurisdictions`. */
   jurisdiction: string;
   claimants: number;
+  /** One line on the case, or null before it has a report. */
+  description: string | null;
   status: CaseStatus;
   /** Whether an analysis report has been saved for the case. */
   hasReport: boolean;

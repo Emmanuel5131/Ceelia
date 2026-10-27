@@ -6,12 +6,14 @@ Sandworm's existing "Case #00x" notebooks (published-style write-ups of named co
 
 ## How a report gets into the app
 
-1. Run the analysis in Sandworm. End the notebook with one cell that prints the findings below as a single JSON block.
-2. Staff open **Staff, Cases**, press **Add report** on the case, paste the JSON, and optionally the link to the published *method* notebook.
+1. Run the analysis. End it with one step that prints the findings below as a single JSON block, tests and their outputs included.
+2. Staff open **Staff, Cases**, press **Add report** on the case, and paste the JSON.
 3. The app checks the format and the house language, hashes the result (SHA-256 of its canonical JSON) and saves it as a new version. Older versions are kept.
 4. A case can be moved to **Sealed** only once it has a report.
 
-Nothing here calls Sandworm yet. Pulling the JSON through the Sandworm MCP automatically needs the service token described in `case-submission-and-reports.md` §5.
+**The analysis lives inside Celia.** The report carries its own tests and their outputs, so a lawyer goes from a finding to the numbers behind it without leaving the app: the case page shows the summary, and **Open the full analysis** (`/dashboard/cases/<id>/analysis`) shows every test's output in a table, with the version history and each version's hash. There is no link out to another service. (Earlier drafts linked a Sandworm notebook; that field is gone.)
+
+Nothing here calls an analysis service yet: someone pastes the JSON in. Producing it automatically, from analysis run inside Celia, is the next piece.
 
 ## The format (`apps/web/src/validations/ReportValidation.ts`)
 
@@ -19,33 +21,41 @@ Nothing here calls Sandworm yet. Pulling the JSON through the Sandworm MCP autom
 {
   "version": 1,
   "headline": "The chain shows 142 wallets sending funds to one address. It does not show intent.",
-  "figures": [
-    { "label": "Wallets", "value": "142", "note": "that sent funds to the platform" }
-  ],
+  "estimate": { "wallets": "142", "losses": "$310,000" },
+  "figures": [{ "label": "Wallets affected", "value": "142", "note": "that sent funds to the platform" }],
   "checks": [
     {
       "claim": "Withdrawals are always available.",
       "evidence": "No withdrawal leaves the platform's address after 14 September.",
-      "result": "proven"
+      "result": "proven",
+      "tests": ["withdrawals-by-day"],
+      "proof": [{ "label": "Transaction", "url": "https://explorer.example/tx/0x…" }]
     }
   ],
-  "method": {
-    "tests": ["Funding trail", "Concentration"],
-    "commitment": "0x…64 hex characters, if the method was committed before the data was read"
-  },
+  "tests": [
+    {
+      "id": "withdrawals-by-day",
+      "title": "Withdrawals by day",
+      "summary": "Outgoing transfers fall to zero on 14 September and stay there.",
+      "columns": ["Day", "Outgoing to users"],
+      "rows": [["13 Sep", "19"], ["14 Sep", "0"]]
+    }
+  ],
+  "method": { "commitment": "0x…64 hex characters, if the method was committed before the data was read" },
   "dataAsOf": "2026-10-27T10:00:00Z",
-  "sources": ["Solana RPC"]
+  "sources": ["Public chain data"]
 }
 ```
 
 - `result` is one of `proven`, `partly_proven`, `not_proven`, `not_checkable`. Use `not_checkable` for what the chain cannot show (a bank transfer, a card payment, a promise made in chat). Never guess.
-- Up to 4 `figures`, 20 `checks`, 20 `tests`, 10 `sources`.
+- Each check lists the `tests` (by `id`) that back it. The app rejects a check that names a test the report does not have, and two tests with the same `id`.
+- A test may carry a table: up to 8 columns and 50 rows, every row as wide as the headings.
+- `proof` is optional and is for links **outside** Celia, such as one transaction on a block explorer: up to 5 per check, https only.
+- Celia handles no payments, so figures never say "received" or "paid out" as if Celia did: say what was lost to the platform ("Estimated lost to this platform").
+- `estimate` is optional and holds the two numbers the case preview shows: wallets that sent funds to the platform and the total they sent, both read from the chain. It is never a claimant's own figure.
+- Limits: 4 `figures`, 20 `checks`, 20 `tests`, 10 `sources`.
 - The app rejects text with words Celia does not use: scam, scammer, fraud detected, guaranteed, recover your money, exposes. Say what is proven and not proven; a court decides intent.
 
 ## What must never be in it
 
 Public facts only: the platform's addresses, the method, what the tests found, counts. **Never a claimant's name, wallet, statement or loss.** Everything a lawyer sees about a claimant lives only in Celia, after the lawyer takes the case.
-
-## The method notebook link
-
-Optional, and only an https link on `sandwormlab.xyz`. It is shown as **Verify the method**. Attested method notebooks are pinned publicly and permanently, so the notebook it points to must be keyed to the platform, never to victims.

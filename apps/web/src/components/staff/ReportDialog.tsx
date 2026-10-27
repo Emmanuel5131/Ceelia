@@ -13,7 +13,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { CaseRow } from '@/utils/Case';
@@ -31,7 +30,7 @@ export function ReportDialog(props: { row: CaseRow }) {
   const [errors, setErrors] = React.useState<string[]>([]);
   const [pending, startTransition] = React.useTransition();
   const [first] = errors;
-  const problem = first === 'words' || first === 'json' || first === 'url' ? first : 'schema';
+  const problem = first === 'words' || first === 'json' ? first : 'schema';
 
   return (
     <Dialog
@@ -79,16 +78,6 @@ export function ReportDialog(props: { row: CaseRow }) {
               aria-invalid={
                 errors.includes('json') || errors.includes('schema') || errors.includes('words')
               }
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor={`notebook-${props.row.id}`}>{t('report_url_label')}</Label>
-            <Input
-              id={`notebook-${props.row.id}`}
-              name="notebookUrl"
-              type="url"
-              placeholder="https://app.sandwormlab.xyz/…"
-              aria-invalid={errors.includes('url')}
             />
           </div>
           {errors.length > 0 && (

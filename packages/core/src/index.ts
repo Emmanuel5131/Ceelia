@@ -21,6 +21,20 @@ export type {
 export type { TakeCaseInput, TakeCaseRefusal } from './caseTeam';
 export { canTakeCase, maxOpenCasesPerLawyer } from './caseTeam';
 export { platformHost, platformKey } from './platform';
-export type { ContactChannel, FraudType, PaymentMethod } from './claim';
-export { contactChannels, fraudTypes, paymentMethods } from './claim';
+export type {
+  AccountKind,
+  ContactChannel,
+  FraudType,
+  PaymentMethod,
+  WalletApp,
+  WalletType,
+} from './claim';
+export {
+  accountKinds,
+  contactChannels,
+  fraudTypes,
+  paymentMethods,
+  walletApps,
+  walletTypes,
+} from './claim';
 export { dailyLimit } from './warmup';

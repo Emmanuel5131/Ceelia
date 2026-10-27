@@ -5,18 +5,21 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import * as z from 'zod';
 import {
+  deleteClaim,
   saveStatement,
   submitClaim,
   verifyClaimOwnership,
 } from '@/app/[locale]/(auth)/dashboard/claims/actions';
 import { ClaimMeta, OperatorName } from '@/components/claims/ClaimMeta';
 import { ClaimSteps } from '@/components/claims/ClaimSteps';
+import { DeleteClaimDialog } from '@/components/claims/DeleteClaimDialog';
 import { OwnershipCard } from '@/components/claims/OwnershipCard';
 import { StatementCard } from '@/components/claims/StatementCard';
 import { SubmitClaimCard } from '@/components/claims/SubmitClaimCard';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { countOthersOnOperator, getClaim } from '@/libs/Claims';
+import { Link } from '@/libs/I18nNavigation';
 import { claimSteps } from '@/utils/ClaimSteps';
 
 type ClaimPageProps = {
@@ -56,20 +59,17 @@ export default async function ClaimPage(props: ClaimPageProps) {
   return (
     <>
       <PageHeader
+        centered
         title={<OperatorName name={claim.platformName} />}
         description={<ClaimMeta claim={claim} />}
       />
-      <div className="grid max-w-3xl gap-8">
-        <Card>
-          <CardContent className="grid gap-6">
-            <ClaimSteps states={claimSteps(claim)} signed={canSign} />
-            <p className="text-sm text-ink-muted">
-              {claim.platformName
-                ? t('others', { count: others, platform: claim.platformName })
-                : t('others_unnamed', { count: others })}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="mx-auto grid w-full max-w-2xl gap-6">
+        <ClaimSteps states={claimSteps(claim)} signed={canSign} />
+        <p className="text-center text-sm text-ink-muted">
+          {claim.platformName
+            ? t('others', { count: others, platform: claim.platformName })
+            : t('others_unnamed', { count: others })}
+        </p>
         {canSign && (
           <OwnershipCard
             message={message}
@@ -87,6 +87,14 @@ export default async function ClaimPage(props: ClaimPageProps) {
           sent={claim.status === 'submitted'}
           action={submitClaim.bind(null, claim.id)}
         />
+        {claim.status !== 'submitted' && (
+          <div className="flex flex-wrap justify-center gap-4">
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/claims/${claim.id}/edit`}>{t('edit_action')}</Link>
+            </Button>
+            <DeleteClaimDialog action={deleteClaim.bind(null, claim.id)} />
+          </div>
+        )}
       </div>
     </>
   );

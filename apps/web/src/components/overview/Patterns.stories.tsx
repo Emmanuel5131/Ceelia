@@ -5,8 +5,45 @@ import { CaseDataTable } from '@/components/overview/CaseDataTable';
 import { StatCard } from '@/components/overview/StatCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Timeline, TimelineItem } from '@/components/ui/timeline';
-import { sampleCases } from '@/libs/OverviewSample';
 import messages from '@/locales/en.json';
+import type { CaseRow } from '@/utils/Case';
+
+// Fixtures for this design catalogue only. The app never imports them: every screen reads the database.
+const storyCases: CaseRow[] = [
+  {
+    id: 'a',
+    number: 'CB-0001',
+    name: 'Platform A',
+    jurisdiction: 'ng',
+    claimants: 12,
+    description: null,
+    status: 'sealed',
+    hasReport: true,
+    updatedAt: '2026-10-26T08:41:00Z',
+  },
+  {
+    id: 'b',
+    number: 'CB-0002',
+    name: 'Platform B',
+    jurisdiction: 'us',
+    claimants: 31,
+    description: null,
+    status: 'building',
+    hasReport: false,
+    updatedAt: '2026-10-25T09:12:00Z',
+  },
+  {
+    id: 'c',
+    number: 'CB-0003',
+    name: 'Platform C',
+    jurisdiction: 'gb',
+    claimants: 5,
+    description: null,
+    status: 'collecting',
+    hasReport: false,
+    updatedAt: '2026-10-24T10:30:00Z',
+  },
+];
 
 function Patterns() {
   return (
@@ -24,7 +61,7 @@ function Patterns() {
         title="Data table"
         description="Sort, search, filter, column menu, selection and pagination."
       >
-        <CaseDataTable cases={sampleCases} />
+        <CaseDataTable cases={storyCases} />
       </PageSection>
 
       <PageSection title="Timeline" description="The marker carries the state by shape.">

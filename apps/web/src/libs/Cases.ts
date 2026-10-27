@@ -1,6 +1,7 @@
 import { canTakeCase } from '@celia/core';
 import type { TakeCaseInput } from '@celia/core';
 import { and, count, countDistinct, desc, eq, sql } from 'drizzle-orm';
+import { recordCaseEvent } from '@/libs/CaseEvents';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/Notify';
 import { claimantIds } from '@/libs/Recipients';
@@ -19,6 +20,7 @@ const caseSelect = {
   name: caseSchema.name,
   platformKey: caseSchema.platformKey,
   jurisdiction: caseSchema.jurisdiction,
+  description: caseSchema.description,
   status: caseSchema.status,
   updatedAt: caseSchema.updatedAt,
   claimants: countDistinct(claimSchema.userId),
@@ -30,6 +32,7 @@ const toRow = (row: {
   seq: number;
   name: string;
   jurisdiction: string;
+  description: string | null;
   status: CaseRow['status'];
   updatedAt: Date;
   claimants: number;
@@ -39,6 +42,7 @@ const toRow = (row: {
   number: caseNumber(row.seq),
   name: row.name,
   jurisdiction: row.jurisdiction,
+  description: row.description,
   status: row.status,
   claimants: row.claimants,
   hasReport: row.hasReport,
@@ -195,6 +199,8 @@ export async function takeCase(options: { caseId: string; userId: string }) {
       .set({ status: 'counsel' })
       .where(eq(caseSchema.id, options.caseId))
       .returning({ platformKey: caseSchema.platformKey });
+
+    await recordCaseEvent(tx, options.caseId, 'case_taken');
 
     // Claimants are told a firm has taken the case, never which one; the firm's lead lawyer gets a confirmation.
     const claimants = taken ? await claimantIds(tx, taken.platformKey) : [];

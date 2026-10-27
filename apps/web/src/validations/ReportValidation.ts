@@ -18,12 +18,50 @@ const text = (max: number) =>
     .max(max)
     .refine((value) => !forbidden.test(value), { message: 'forbidden_words' });
 
+/** A link outside Celia that backs a check up, such as a transaction or an address on a block explorer. https only. */
+const ProofValidation = z.object({
+  label: text(80),
+  url: z.url({ protocol: /^https$/u }),
+});
+
+const idPattern = /^[a-z\d-]{1,40}$/u;
+
+/**
+ * One test that was run, with its output kept inside the report. A check points at the tests that back it, so a lawyer can go
+ * from a finding to the numbers behind it without leaving Celia.
+ */
+const TestValidation = z
+  .object({
+    /** Lowercase letters, digits and dashes. Checks refer to it. */
+    id: z.string().regex(idPattern),
+    title: text(120),
+    /** What the test found, in words. */
+    summary: text(600),
+    /** The output as a table, when there is one. At most 8 columns and 50 rows. */
+    columns: z.array(text(40)).min(1).max(8).optional(),
+    rows: z
+      .array(z.array(text(120)).max(8))
+      .max(50)
+      .optional(),
+  })
+  .refine(
+    (test) =>
+      !test.rows || (test.columns && test.rows.every((row) => row.length === test.columns?.length)),
+    {
+      message: 'table_shape',
+    },
+  );
+
 const CheckValidation = z.object({
   /** What the platform said, in its own words or close to them. */
   claim: text(500),
   /** What the chain shows about it. */
   evidence: text(1000),
   result: z.enum(checkResults),
+  /** The ids of the tests in this report that back the finding. */
+  tests: z.array(z.string().regex(idPattern)).max(5).optional(),
+  /** Links outside Celia, such as a transaction on a block explorer. Up to five. */
+  proof: z.array(ProofValidation).max(5).optional(),
 });
 
 const FigureValidation = z.object({
@@ -33,34 +71,56 @@ const FigureValidation = z.object({
 });
 
 /**
- * The findings of one analysis, frozen. Sandworm produces it, staff check it and save it, and Celia stores it as the record, so
- * it can be shown the same way forever and its hash checked. It holds public facts only: counts, addresses of the platform,
- * what the tests found. Never a claimant's name, wallet or statement.
+ * The findings of one analysis, frozen. The analysis is run and the findings checked by staff, and Celia keeps them as the
+ * record, tests and their outputs included, so they can be shown the same way forever and their hash checked. It holds public
+ * facts only: counts, addresses of the platform, what the tests found. Never a claimant's name, wallet or statement.
  */
-export const ReportValidation = z.object({
-  version: z.literal(1),
-  /** One sentence in the house language: what the chain shows and does not. */
-  headline: text(300),
-  /** Up to four big numbers, such as wallets involved or total received. */
-  figures: z.array(FigureValidation).max(4),
-  checks: z.array(CheckValidation).min(1).max(20),
-  method: z.object({
-    /** The tests that were run, by name. */
-    tests: z.array(text(120)).min(1).max(20),
-    /** The hash the method was committed under before the data was read, when it was. */
-    commitment: z
-      .string()
-      .regex(/^0x[\da-f]{64}$/iu)
+export const ReportValidation = z
+  .object({
+    version: z.literal(1),
+    /** One sentence in the house language: what the chain shows and does not. */
+    headline: text(300),
+    /** The two numbers the case preview shows. Optional: reports saved before it existed have none. */
+    estimate: z
+      .object({
+        /** How many wallets sent funds to the platform, as read from the chain. */
+        wallets: text(40),
+        /** How much those wallets sent, as read from the chain. Never a claimant's own figure. */
+        losses: text(40),
+      })
       .optional(),
-  }),
-  /** When the chain data was read, as an ISO time. */
-  dataAsOf: z.iso.datetime(),
-  sources: z.array(text(120)).max(10),
-});
+    /** Up to four big numbers, such as wallets involved or total received. */
+    figures: z.array(FigureValidation).max(4),
+    checks: z.array(CheckValidation).min(1).max(20),
+    /** The tests that were run, with their outputs. */
+    tests: z.array(TestValidation).min(1).max(20),
+    method: z.object({
+      /** The hash the method was committed under before the data was read, when it was. */
+      commitment: z
+        .string()
+        .regex(/^0x[\da-f]{64}$/iu)
+        .optional(),
+    }),
+    /** When the chain data was read, as an ISO time. */
+    dataAsOf: z.iso.datetime(),
+    sources: z.array(text(120)).max(10),
+  })
+  .superRefine((report, context) => {
+    const ids = report.tests.map((test) => test.id);
+
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({ code: 'custom', message: 'duplicate_test', path: ['tests'] });
+    }
+
+    for (const [index, check] of report.checks.entries()) {
+      if (check.tests?.some((id) => !ids.includes(id))) {
+        context.addIssue({
+          code: 'custom',
+          message: 'unknown_test',
+          path: ['checks', index, 'tests'],
+        });
+      }
+    }
+  });
 
 export type Report = z.infer<typeof ReportValidation>;
-
-/** A notebook link is only accepted on Sandworm's own domain, over https. */
-export const NotebookUrlValidation = z
-  .url({ protocol: /^https$/u })
-  .refine((value) => new URL(value).hostname.endsWith('sandwormlab.xyz'), { message: 'host' });

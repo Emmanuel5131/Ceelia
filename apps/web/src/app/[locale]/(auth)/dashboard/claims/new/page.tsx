@@ -34,7 +34,7 @@ export default async function NewClaimPage(props: NewClaimPageProps) {
 
   return (
     <>
-      <PageHeader title={t('new_title')} description={t('new_description')} />
+      <PageHeader centered compact title={t('new_title')} description={t('new_description')} />
       <NewClaimForm />
     </>
   );

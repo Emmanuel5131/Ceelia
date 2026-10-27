@@ -5,6 +5,7 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
+import { recordCaseEvent } from '@/libs/CaseEvents';
 import { setCounselReview } from '@/libs/CounselProfile';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/Notify';
@@ -16,7 +17,7 @@ import { caseReportSchema, caseSchema, emailMessageSchema } from '@/models/Schem
 import { parseAccount } from '@/utils/Account';
 import { caseStatuses } from '@/utils/Case';
 import { hashReport } from '@/utils/Report';
-import { NotebookUrlValidation, ReportValidation } from '@/validations/ReportValidation';
+import { ReportValidation } from '@/validations/ReportValidation';
 
 const CreateCaseValidation = z.object({
   name: z.string().trim().min(1).max(200),
@@ -82,6 +83,8 @@ export async function createCase(formData: FormData) {
       return false;
     }
 
+    await recordCaseEvent(tx, row.id, 'case_opened');
+
     // Claims already sent against this platform are part of the case from the start.
     const claimants = await claimantIds(tx, key);
     await notify(
@@ -141,6 +144,10 @@ export async function setCaseStatus(caseId: string, status: string) {
     }
 
     await tx.update(caseSchema).set({ status: next }).where(eq(caseSchema.id, caseId));
+
+    if (next === 'sealed') {
+      await recordCaseEvent(tx, caseId, 'case_sealed');
+    }
 
     // Sealing is the one stage people are told about: claimants hear their evidence is final, and lawyers hear it can be taken.
     if (next === 'sealed') {
@@ -204,14 +211,12 @@ export async function allowMail(email: string) {
  * house language, hashed, and stored as a new version. Staff review it first: this is the last check before it is shown to
  * lawyers.
  * @param caseId - The case id.
- * @param formData - The form with `report` (the JSON) and optionally `notebookUrl`.
- * @returns The problems found, or none when saved: `json`, `schema`, `words` or `url`.
+ * @param formData - The form with `report` (the JSON).
+ * @returns The problems found, or none when saved: `json`, `schema` or `words`.
  */
 export async function saveCaseReport(caseId: string, formData: FormData) {
   const user = await requireStaff();
   const raw = formData.get('report');
-  const notebook = formData.get('notebookUrl');
-  const link = typeof notebook === 'string' ? notebook.trim() : '';
   let json: unknown;
 
   // Pasted text may be anything, so parsing it is the one place a throw is expected.
@@ -229,17 +234,10 @@ export async function saveCaseReport(caseId: string, formData: FormData) {
       : ['schema'];
   }
 
-  const url = link === '' ? null : NotebookUrlValidation.safeParse(link);
-
-  if (url && !url.success) {
-    return ['url'];
-  }
-
   await saveReport({
     caseId,
     snapshot: parsed.data,
     hash: hashReport(parsed.data),
-    notebookUrl: url?.data ?? null,
     savedBy: user.id,
   });
   revalidatePath('/', 'layout');

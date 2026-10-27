@@ -67,17 +67,17 @@ export function CaseDataTable(props: { cases: CaseRow[]; variant?: 'full' | 'com
       pagination={full}
       selectable={full}
       empty={
-        full ? (
-          <Empty className="border border-border bg-surface">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BankIcon aria-hidden="true" />
-              </EmptyMedia>
-              <EmptyTitle>{t('empty_title')}</EmptyTitle>
-              <EmptyDescription>{t('empty_text')}</EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : undefined
+        <Empty className="border border-border bg-surface">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BankIcon aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>{full ? t('empty_title') : t('empty_attention_title')}</EmptyTitle>
+            <EmptyDescription>
+              {full ? t('empty_text') : t('empty_attention_text')}
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       }
       pageSize={full ? 8 : 100}
     />

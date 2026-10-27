@@ -4,7 +4,7 @@ import { GavelIcon, SealCheckIcon } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import type { CaseStatus } from '@/libs/OverviewSample';
+import type { CaseStatus } from '@/utils/Case';
 
 const variants = {
   collecting: 'dashed',

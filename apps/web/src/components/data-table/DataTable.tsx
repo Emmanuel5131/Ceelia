@@ -37,6 +37,8 @@ type DataTableProps<TData extends RowData> = {
   empty?: React.ReactElement;
   /** Adds an "Export" button to the toolbar. It receives the rows left after search and filters, not just the current page. */
   onExport?: (rows: TData[]) => void;
+  /** Actions for the selected rows, such as "Delete selected". Shown in the toolbar while any row is selected. */
+  selectionActions?: (rows: TData[]) => React.ReactNode;
 };
 
 /**
@@ -61,6 +63,7 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
 
   const { rows } = table.getRowModel();
   const exportRows = props.onExport;
+  const selected = table.getSelectedRowModel().rows.map((row) => row.original);
 
   if (props.empty && props.data.length === 0) {
     return props.empty;
@@ -74,6 +77,11 @@ export function DataTable<TData extends RowData>(props: DataTableProps<TData>) {
           labels={labels}
           searchPlaceholder={props.searchPlaceholder ?? ''}
           filters={props.filters ?? []}
+          selectionActions={
+            props.selectionActions && selected.length > 0
+              ? props.selectionActions(selected)
+              : undefined
+          }
           onExport={
             exportRows
               ? () => {

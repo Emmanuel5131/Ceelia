@@ -21,6 +21,7 @@ export type DataTableFilter = { columnId: string; title: string; options: DataTa
  * @param props.searchPlaceholder - Placeholder for the search box.
  * @param props.filters - The faceted filters to show.
  * @param props.onExport - Shows an "Export" button that calls this when pressed.
+ * @param props.selectionActions - Actions for the selected rows, shown while any row is selected.
  * @returns The toolbar.
  */
 export function DataTableToolbar<TData extends RowData>(props: {
@@ -29,6 +30,7 @@ export function DataTableToolbar<TData extends RowData>(props: {
   searchPlaceholder: string;
   filters: DataTableFilter[];
   onExport?: () => void;
+  selectionActions?: React.ReactNode;
 }) {
   const t = useTranslations('DataTable');
   const { table } = props;
@@ -79,6 +81,7 @@ export function DataTableToolbar<TData extends RowData>(props: {
         </Button>
       )}
       <div className="ml-auto flex items-center gap-3">
+        {props.selectionActions}
         {props.onExport && (
           <Button variant="outline" size="sm" onClick={props.onExport}>
             <DownloadSimpleIcon aria-hidden="true" />

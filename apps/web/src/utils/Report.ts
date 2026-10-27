@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { Report } from '@/validations/ReportValidation';
 
 /**
  * Writes JSON with the keys of every object in sorted order, so the same findings always give the same text, however the
@@ -31,4 +32,26 @@ export function canonicalJson(value: unknown): string {
  */
 export function hashReport(report: unknown) {
   return `0x${createHash('sha256').update(canonicalJson(report)).digest('hex')}`;
+}
+
+/**
+ * The description of a case, written from its report and saved on the case: the estimate on the first line, then up to two
+ * findings the chain proves, each beside what the platform said. It states findings only, never a verdict.
+ * @param report - The case's report.
+ * @returns The description, or null when the report has neither an estimate nor a proven finding.
+ */
+export function describeCase(report: Report) {
+  const { estimate, checks } = report;
+  const lines = checks
+    .filter((check) => check.result === 'proven')
+    .slice(0, 2)
+    .map((check) => `The platform said: ${check.claim} ${check.evidence}`);
+
+  if (estimate) {
+    lines.unshift(
+      `${estimate.wallets} wallets, estimated loss of ${estimate.losses} to this platform.`,
+    );
+  }
+
+  return lines.length > 0 ? lines.join('\n\n') : null;
 }

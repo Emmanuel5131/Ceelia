@@ -2,10 +2,12 @@
 
 import { FilesIcon } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
+import { deleteDrafts } from '@/app/[locale]/(auth)/dashboard/claims/actions';
 import { useChainName } from '@/components/claims/ChainLabel';
 import { claimColumns, useClaimColumnLabels } from '@/components/claims/claim-columns';
 import { useClaimLabels } from '@/components/claims/claim-labels';
 import type { ClaimRow } from '@/components/claims/claim-row';
+import { DeleteDraftsDialog } from '@/components/claims/DeleteDraftsDialog';
 import { DataTable } from '@/components/data-table/DataTable';
 import { Button } from '@/components/ui/button';
 import {
@@ -93,6 +95,20 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
         },
       ]}
       onExport={exportClaims}
+      selectable
+      selectionActions={(rows) => {
+        const drafts = rows.filter((row) => row.status === 'draft');
+
+        return drafts.length > 0 ? (
+          <DeleteDraftsDialog
+            count={drafts.length}
+            action={deleteDrafts.bind(
+              null,
+              drafts.map((row) => row.id),
+            )}
+          />
+        ) : null;
+      }}
       empty={
         <Empty className="border border-border bg-surface">
           <EmptyHeader>

@@ -16,7 +16,11 @@ export function ClaimMeta(props: { claim: Claim }) {
 
   return (
     <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
-      <span>{labels.fraudType[props.claim.fraudType]}</span>
+      <span>
+        {(props.claim.fraudTypes.length > 0 ? props.claim.fraudTypes : [props.claim.fraudType])
+          .map((type) => labels.fraudType[type])
+          .join(', ')}
+      </span>
       <ChainLabel chain={props.claim.chain} />
       <span className="font-mono text-sm">
         {reference.slice(0, 8)}…{reference.slice(-6)}
