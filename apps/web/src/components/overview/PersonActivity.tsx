@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { PageSection } from '@/components/layout/PageSection';
+import { NotificationTypeIcon } from '@/components/shell/NotificationTypeIcon';
 import { Card, CardContent } from '@/components/ui/card';
 import { Timeline, TimelineItem } from '@/components/ui/timeline';
 import { Link } from '@/libs/I18nNavigation';
@@ -40,7 +41,11 @@ export async function PersonActivity(props: { userId: string }) {
           <CardContent>
             <Timeline>
               {items.map((item) => (
-                <TimelineItem key={item.id} marker={item.read ? 'hollow' : 'filled'}>
+                <TimelineItem
+                  key={item.id}
+                  marker={item.read ? 'hollow' : 'filled'}
+                  icon={<NotificationTypeIcon type={item.type} />}
+                >
                   <Link
                     href={notificationPath(item.type, item.data)}
                     className="font-medium underline-offset-4 focus-ring hover:underline"

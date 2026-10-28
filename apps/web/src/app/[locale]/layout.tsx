@@ -110,7 +110,11 @@ export default async function RootLayout(props: {
       suppressHydrationWarning
       className={`${mulish.variable} ${plexMono.variable} ${aeonik.variable}`}
     >
-      <body className="bg-background font-sans text-foreground antialiased">
+      {/* Browser extensions such as ColorZilla add attributes to the body before React loads; that is not an error in the page. */}
+      <body
+        suppressHydrationWarning
+        className="bg-background font-sans text-foreground antialiased"
+      >
         <Script id="theme-init" strategy="beforeInteractive">
           {themeScript}
         </Script>

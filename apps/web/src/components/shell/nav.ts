@@ -1,6 +1,17 @@
 import type { AccountType } from '@/utils/accounts/Account';
 
-export type NavId = 'overview' | 'claims' | 'cases' | 'jurisdictions' | 'settings' | 'staff';
+export type NavId =
+  | 'overview'
+  | 'claims'
+  | 'cases'
+  | 'jurisdictions'
+  | 'settings'
+  | 'staffOverview'
+  | 'staffApplications'
+  | 'staffClaims'
+  | 'staffCases'
+  | 'staffMail'
+  | 'staffActivity';
 
 export const navHref: Record<NavId, string> = {
   overview: '/dashboard',
@@ -8,7 +19,12 @@ export const navHref: Record<NavId, string> = {
   cases: '/dashboard/cases',
   jurisdictions: '/dashboard/jurisdictions',
   settings: '/dashboard/settings',
-  staff: '/dashboard/staff',
+  staffOverview: '/dashboard/staff',
+  staffApplications: '/dashboard/staff/applications',
+  staffClaims: '/dashboard/staff/claims',
+  staffCases: '/dashboard/staff/cases',
+  staffMail: '/dashboard/staff/mail',
+  staffActivity: '/dashboard/staff/activity',
 };
 
 /**
@@ -19,3 +35,19 @@ export const navByAccount: Record<AccountType, NavId[]> = {
   person: ['overview', 'claims', 'cases', 'jurisdictions', 'settings'],
   counsel: ['overview', 'cases', 'jurisdictions', 'settings'],
 };
+
+/**
+ * The left navigation for Celia staff. A staff account is not a regular account: it sees only the staff queues, never the
+ * claims, case bank or settings pages the people it serves use.
+ */
+export const staffNav: NavId[] = [
+  'staffOverview',
+  'staffApplications',
+  'staffClaims',
+  'staffCases',
+  'staffMail',
+  'staffActivity',
+];
+
+/** The areas whose item is current only on its own page, because other items live beneath its address. */
+export const exactNav: NavId[] = ['overview', 'staffOverview'];

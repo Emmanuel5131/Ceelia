@@ -2,9 +2,12 @@
 
 import {
   BankIcon,
+  ClockCounterClockwiseIcon,
+  EnvelopeSimpleIcon,
   FilesIcon,
   GearSixIcon,
   GlobeHemisphereWestIcon,
+  IdentificationBadgeIcon,
   ShieldCheckIcon,
   SquaresFourIcon,
 } from '@phosphor-icons/react';
@@ -12,7 +15,7 @@ import { useTranslations } from 'next-intl';
 import { Logo } from '@/components/brand/Logo';
 import { LogoMark } from '@/components/brand/LogoMark';
 import type { NavId } from '@/components/shell/nav';
-import { navHref } from '@/components/shell/nav';
+import { exactNav, navHref } from '@/components/shell/nav';
 import { ThemeToggle } from '@/components/shell/ThemeToggle';
 import {
   Sidebar,
@@ -22,6 +25,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -34,7 +38,12 @@ const icons = {
   cases: BankIcon,
   jurisdictions: GlobeHemisphereWestIcon,
   settings: GearSixIcon,
-  staff: ShieldCheckIcon,
+  staffOverview: ShieldCheckIcon,
+  staffApplications: IdentificationBadgeIcon,
+  staffClaims: FilesIcon,
+  staffCases: BankIcon,
+  staffMail: EnvelopeSimpleIcon,
+  staffActivity: ClockCounterClockwiseIcon,
 } as const;
 
 /**
@@ -42,10 +51,15 @@ const icons = {
  * Ctrl/Cmd+B), keeps its state in a cookie, and becomes a slide-out menu on phones. The current page is marked.
  * @param props - The sidebar props.
  * @param props.items - Which areas to show, in order.
+ * @param props.counts - How many items wait in some areas, shown as a number beside them.
  * @param props.signOut - The sign-out button, so the sidebar does not depend on Clerk.
  * @returns The sidebar.
  */
-export function AppSidebar(props: { items: NavId[]; signOut: React.ReactNode }) {
+export function AppSidebar(props: {
+  items: NavId[];
+  counts?: Partial<Record<NavId, number>>;
+  signOut: React.ReactNode;
+}) {
   const t = useTranslations('AppShell');
   const pathname = usePathname();
   const labels: Record<NavId, string> = {
@@ -54,7 +68,12 @@ export function AppSidebar(props: { items: NavId[]; signOut: React.ReactNode }) 
     cases: t('nav_cases'),
     jurisdictions: t('nav_jurisdictions'),
     settings: t('nav_settings'),
-    staff: t('nav_staff'),
+    staffOverview: t('nav_staff_overview'),
+    staffApplications: t('nav_staff_applications'),
+    staffClaims: t('nav_staff_claims'),
+    staffCases: t('nav_staff_cases'),
+    staffMail: t('nav_staff_mail'),
+    staffActivity: t('nav_staff_activity'),
   };
 
   return (
@@ -83,7 +102,10 @@ export function AppSidebar(props: { items: NavId[]; signOut: React.ReactNode }) 
             <SidebarMenu aria-label={t('main_navigation')}>
               {props.items.map((id) => {
                 const href = navHref[id];
-                const active = id === 'overview' ? pathname === href : pathname.startsWith(href);
+                const active = exactNav.includes(id)
+                  ? pathname === href
+                  : pathname.startsWith(href);
+                const waiting = props.counts?.[id] ?? 0;
                 const Icon = icons[id];
 
                 return (
@@ -94,6 +116,11 @@ export function AppSidebar(props: { items: NavId[]; signOut: React.ReactNode }) 
                         <span>{labels[id]}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {waiting > 0 && (
+                      <SidebarMenuBadge className="peer-data-[size=default]/menu-button:top-1/2 peer-data-[size=default]/menu-button:-translate-y-1/2">
+                        {waiting}
+                      </SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 );
               })}

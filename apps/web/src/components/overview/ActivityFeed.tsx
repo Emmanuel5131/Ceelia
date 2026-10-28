@@ -1,10 +1,26 @@
 'use client';
 
+import {
+  CheckCircleIcon,
+  FileTextIcon,
+  FolderSimplePlusIcon,
+  GavelIcon,
+  UsersThreeIcon,
+} from '@phosphor-icons/react/ssr';
 import { useFormatter, useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Timeline, TimelineItem } from '@/components/ui/timeline';
 import { Link } from '@/libs/I18nNavigation';
 import type { ActivityItem, ActivityKind } from '@/utils/cases/OverviewStats';
+
+// One icon for each kind of event, so the feed can be read down the left edge.
+const icons: Record<ActivityKind, React.ComponentType> = {
+  case_opened: FolderSimplePlusIcon,
+  claims_added: UsersThreeIcon,
+  report_saved: FileTextIcon,
+  evidence_sealed: CheckCircleIcon,
+  case_taken: GavelIcon,
+};
 
 /**
  * The recent activity log: what happened, to which case and when, each line linking to its case. A sealed item gets a filled
@@ -38,23 +54,28 @@ export function ActivityFeed(props: { items: ActivityItem[] }) {
     <Card>
       <CardContent>
         <Timeline>
-          {props.items.map((item) => (
-            <TimelineItem
-              key={item.id}
-              marker={item.kind === 'evidence_sealed' ? 'filled' : 'hollow'}
-            >
-              <Link
-                href={`/dashboard/cases/${item.caseId}`}
-                className="underline-offset-4 focus-ring hover:underline"
+          {props.items.map((item) => {
+            const Icon = icons[item.kind];
+
+            return (
+              <TimelineItem
+                key={item.id}
+                marker={item.kind === 'evidence_sealed' ? 'filled' : 'hollow'}
+                icon={<Icon aria-hidden="true" />}
               >
-                {text(item)}
-              </Link>
-              <p className="text-sm text-ink-muted">
-                {format.dateTime(new Date(item.at), { dateStyle: 'medium', timeStyle: 'short' })}
-                {item.hash && <span className="ml-3 font-mono text-xs">{item.hash}</span>}
-              </p>
-            </TimelineItem>
-          ))}
+                <Link
+                  href={`/dashboard/cases/${item.caseId}`}
+                  className="underline-offset-4 focus-ring hover:underline"
+                >
+                  {text(item)}
+                </Link>
+                <p className="text-sm text-ink-muted">
+                  {format.dateTime(new Date(item.at), { dateStyle: 'medium', timeStyle: 'short' })}
+                  {item.hash && <span className="ml-3 font-mono text-xs">{item.hash}</span>}
+                </p>
+              </TimelineItem>
+            );
+          })}
         </Timeline>
       </CardContent>
     </Card>

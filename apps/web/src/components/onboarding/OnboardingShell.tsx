@@ -7,11 +7,15 @@ import { LocaleSwitcher } from '@/components/LocaleSwitcher';
  * @param props - The shell props.
  * @param props.userMenu - The account menu, so the shell does not depend on Clerk.
  * @param props.children - The form.
+ * @param props.title - The question at the top; how the person will use Celia by default.
+ * @param props.subtitle - The line under it.
  * @returns The page frame.
  */
 export async function OnboardingShell(props: {
   userMenu: React.ReactNode;
   children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
 }) {
   const t = await getTranslations('OnboardingPage');
 
@@ -26,8 +30,8 @@ export async function OnboardingShell(props: {
       </header>
       <main className="mx-auto grid w-full max-w-xl gap-8 px-6 py-12">
         <header className="grid gap-2">
-          <h1 className="text-3xl">{t('title')}</h1>
-          <p className="text-base text-ink-muted">{t('subtitle')}</p>
+          <h1 className="text-3xl">{props.title ?? t('title')}</h1>
+          <p className="text-base text-ink-muted">{props.subtitle ?? t('subtitle')}</p>
         </header>
         {props.children}
       </main>

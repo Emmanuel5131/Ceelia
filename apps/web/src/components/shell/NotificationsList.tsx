@@ -3,6 +3,7 @@
 import { BellIcon } from '@phosphor-icons/react';
 import { useFormatter, useTranslations } from 'next-intl';
 import * as React from 'react';
+import { NotificationTypeIcon } from '@/components/shell/NotificationTypeIcon';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -64,7 +65,11 @@ export function NotificationsList(props: { items: InboxItem[] }) {
       )}
       <Timeline>
         {props.items.map((item) => (
-          <TimelineItem key={item.id} marker={item.read ? 'hollow' : 'filled'}>
+          <TimelineItem
+            key={item.id}
+            marker={item.read ? 'hollow' : 'filled'}
+            icon={<NotificationTypeIcon type={item.type} />}
+          >
             <Link
               href={notificationPath(item.type, item.data)}
               className="font-medium underline-offset-4 focus-ring hover:underline"

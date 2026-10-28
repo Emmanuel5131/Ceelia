@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { ClaimMeta, OperatorName } from '@/components/claims/ClaimMeta';
+import { ClaimStateBadge } from '@/components/claims/ClaimStateBadge';
 import { PageSection } from '@/components/layout/PageSection';
 import { PersonActivity } from '@/components/overview/PersonActivity';
 import { StatCard } from '@/components/overview/StatCard';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { listClaims } from '@/libs/claims/Claims';
 import { Link } from '@/libs/I18nNavigation';
+import { claimState } from '@/utils/claims/ClaimState';
 import { claimSteps } from '@/utils/claims/ClaimSteps';
 
 /**
@@ -38,18 +40,15 @@ export async function PersonOverview(props: { userId: string }) {
     );
   }
 
-  const sent = claims.filter((claim) => claim.status === 'submitted');
+  const states = claims.map((claim) => claimState(claim));
   const stats = [
     { label: t('person_stat_claims'), value: claims.length },
-    { label: t('person_stat_sent'), value: sent.length },
     {
-      label: t('person_stat_signed'),
-      value: claims.filter((claim) => claim.ownership === 'signed').length,
+      label: t('person_stat_waiting'),
+      value: states.filter((state) => state === 'sent' || state === 'in_review').length,
     },
-    {
-      label: list('confirmed'),
-      value: claims.filter((claim) => claim.validatedAt !== null).length,
-    },
+    { label: list('state_accepted'), value: states.filter((state) => state === 'accepted').length },
+    { label: list('state_rejected'), value: states.filter((state) => state === 'rejected').length },
   ];
 
   return (
@@ -78,16 +77,10 @@ export async function PersonOverview(props: { userId: string }) {
                   <CardTitle className="flex items-center justify-between gap-4">
                     <OperatorName name={claim.platformName} />
                     <span className="flex items-center gap-2">
-                      {claim.ownership === 'signed' && (
-                        <Badge variant="solid">{list('confirmed')}</Badge>
-                      )}
-                      {claim.validatedAt ? (
-                        <Badge variant="solid">{list('confirmed')}</Badge>
-                      ) : (
-                        <Badge variant={claim.status === 'submitted' ? 'default' : 'dashed'}>
-                          {claim.status === 'submitted' ? t('claim_sent') : t('claim_draft')}
-                        </Badge>
-                      )}
+                      <Badge variant={claim.ownership === 'signed' ? 'solid' : 'dashed'}>
+                        {list(claim.ownership === 'signed' ? 'wallet_signed' : 'wallet_unsigned')}
+                      </Badge>
+                      <ClaimStateBadge state={claimState(claim)} />
                     </span>
                   </CardTitle>
                   <CardDescription>

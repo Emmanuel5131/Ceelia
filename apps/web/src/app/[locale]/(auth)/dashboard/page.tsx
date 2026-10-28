@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { OverviewContent } from '@/components/overview/OverviewContent';
+import { staffDecision } from '@/libs/accounts/Staff';
 import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
@@ -29,6 +30,11 @@ export default async function OverviewPage(props: OverviewPageProps) {
 
   if (!user || !account) {
     redirect(getI18nPath('/onboarding', locale));
+  }
+
+  // A staff account has no overview of its own: it lands on the staff console.
+  if (['allowed', 'needs_two_factor'].includes(staffDecision(user))) {
+    redirect(getI18nPath('/dashboard/staff', locale));
   }
 
   return (

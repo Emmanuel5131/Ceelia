@@ -6,11 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardValue } from '@/com
  * @param props.label - What is being counted.
  * @param props.value - The number, already formatted.
  * @param props.hint - An optional short line of context under the number.
+ * @param props.size - `sm` for a smaller card, where the numbers are a summary at the top of a page.
  * @returns The stat card.
  */
-export function StatCard(props: { label: string; value: string; hint?: string }) {
+export function StatCard(props: {
+  label: string;
+  value: string;
+  hint?: string;
+  size?: 'default' | 'sm';
+}) {
   return (
-    <Card>
+    <Card size={props.size}>
       <CardHeader>
         <CardDescription>{props.label}</CardDescription>
       </CardHeader>
