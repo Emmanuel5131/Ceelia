@@ -15,9 +15,19 @@ const isProtectedRoute = createRouteMatcher([
   '/:locale/onboarding(.*)',
 ]);
 
+// Where a session that still has to choose an organization finishes signing in. Clerk keeps that session "pending" until the choice is
+// made, and treats a pending session as signed out, so this one page has to let it through or nobody could ever make the choice.
+const isOrganizationStep = createRouteMatcher([
+  '/onboarding/organization(.*)',
+  '/:locale/onboarding/organization(.*)',
+]);
+
 // Clerk's `auth()` only works in a request that went through its middleware. These routes check who is asking themselves and
 // give a stranger a 404, so the middleware runs on them to identify the person but does not protect or translate them.
 const isClaimsApi = createRouteMatcher(['/api/claims(.*)']);
+// The MCP routes are called by the MCP server with an assistant's OAuth token, not by a browser, so Clerk runs on them to read the token
+// and the bot check is skipped: the token is the check.
+const isMcpApi = createRouteMatcher(['/api/mcp(.*)']);
 
 const isAuthPage = createRouteMatcher([
   '/sign-in(.*)',
@@ -43,6 +53,11 @@ const aj = arcjet.withRule(
 );
 
 export default async function proxy(request: NextRequest, event: NextFetchEvent) {
+  if (isMcpApi(request)) {
+    // oxlint-disable-next-line typescript/return-await
+    return clerkMiddleware()(request, event);
+  }
+
   // Verify the request with Arcjet
   // Use `process.env` instead of Env to reduce bundle size in middleware
   if (process.env.ARCJET_KEY) {
@@ -69,9 +84,17 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
 
         const signInUrl = new URL(`${locale}/sign-in`, req.url);
 
-        await auth.protect({
-          unauthenticatedUrl: signInUrl.toString(),
-        });
+        if (isOrganizationStep(req)) {
+          const { userId } = await auth({ treatPendingAsSignedOut: false });
+
+          if (!userId) {
+            return NextResponse.redirect(signInUrl);
+          }
+        } else {
+          await auth.protect({
+            unauthenticatedUrl: signInUrl.toString(),
+          });
+        }
       }
 
       return handleI18nRouting(req);
@@ -83,7 +106,7 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
 
 export const config = {
   // Match all pathnames except for
-  // - … if they start with `/_next`, `/_vercel`, `monitoring` or `api`, except `/api/claims`, which needs Clerk's middleware
+  // - … if they start with `/_next`, `/_vercel`, `monitoring` or `api`, except `/api/claims` and `/api/mcp`, which need Clerk's middleware
   // - … the ones containing a dot (e.g. `favicon.ico`)
-  matcher: '/((?!_next|_vercel|monitoring|api(?!/claims)|.*\\..*).*)',
+  matcher: '/((?!_next|_vercel|monitoring|api(?!/claims|/mcp)|.*\\..*).*)',
 };

@@ -1,0 +1,24 @@
+{
+  "name": "@celia/mcp",
+  "private": true,
+  "type": "module",
+  "description": "The Celia MCP server: lets an AI assistant review cases in the case bank, as the person who signed in.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/index.ts",
+    "start": "node --env-file=.env src/index.ts",
+    "check:types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.5",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}
