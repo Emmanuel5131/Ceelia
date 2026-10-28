@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { ClaimDefaults } from '@/components/claims/claim-defaults';
 import { useClaimLabels } from '@/components/claims/claim-labels';
 import { FieldMessage } from '@/components/claims/FieldMessage';
-import { FormStep } from '@/components/claims/FormStep';
+import { TxCheck } from '@/components/claims/TxCheck';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -17,27 +17,20 @@ import {
 } from '@/components/ui/select';
 
 /**
- * The third question for a wallet payment, all of it optional: which app and what kind of wallet the money left from, and the
- * transaction that first funded it, which lets us trace where the money came from.
- * @param props - The section props.
+ * What is asked about the wallet itself when the money left from the person's own wallet, all of it optional: which app and what
+ * kind of wallet, and the transaction that first funded it, which lets us trace where the money came from.
+ * @param props - The fields props.
  * @param props.errors - The names of the fields the server refused.
  * @param props.defaults - The saved answers, when a draft is being edited.
- * @param props.step - Which step this is.
- * @param props.total - How many steps the form has for this claim.
- * @returns The section.
+ * @returns The fields.
  */
-export function WalletDetailsSection(props: {
-  errors: string[];
-  defaults?: ClaimDefaults;
-  step: number;
-  total: number;
-}) {
+export function WalletFields(props: { errors: string[]; defaults?: ClaimDefaults }) {
   const t = useTranslations('ClaimPage');
   const labels = useClaimLabels();
   const { defaults } = props;
 
   return (
-    <FormStep step={props.step} total={props.total} title={t('q_wallet_more')}>
+    <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid content-start gap-2">
           <Label htmlFor="walletApp">{t('wallet_app_label')}</Label>
@@ -83,7 +76,8 @@ export function WalletDetailsSection(props: {
         />
         <p className="text-sm text-ink-muted">{t('funding_tx_hint')}</p>
         <FieldMessage show={props.errors.includes('fundingTxHash')}>{t('error_tx')}</FieldMessage>
+        <TxCheck field="fundingTxHash" expect="recipient" />
       </div>
-    </FormStep>
+    </>
   );
 }

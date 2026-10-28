@@ -5,6 +5,7 @@
 export const notificationTypes = [
   'claim_submitted',
   'ownership_confirmed',
+  'claim_validated',
   'claim_in_case',
   'case_sealed',
   'case_taken',
@@ -40,6 +41,7 @@ type CatalogEntry = {
 export const notificationCatalog: Record<NotificationType, CatalogEntry> = {
   claim_submitted: { audience: 'claimant', category: 'claims', essential: false, email: true },
   ownership_confirmed: { audience: 'claimant', category: 'claims', essential: false, email: true },
+  claim_validated: { audience: 'claimant', category: 'claims', essential: false, email: true },
   claim_in_case: { audience: 'claimant', category: 'cases', essential: false, email: true },
   case_sealed: { audience: 'claimant', category: 'cases', essential: false, email: true },
   case_taken: { audience: 'claimant', category: 'cases', essential: false, email: true },

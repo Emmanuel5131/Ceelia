@@ -120,6 +120,69 @@
       "when": 1793134820654,
       "tag": "0016_wealthy_hercules",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793135692355,
+      "tag": "0017_hesitant_manta",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793142832259,
+      "tag": "0018_funny_the_executioner",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793143185009,
+      "tag": "0019_wooden_tempest",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793143898114,
+      "tag": "0020_natural_gideon",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793146341790,
+      "tag": "0021_silly_bloodstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793146345017,
+      "tag": "0022_fuzzy_reptil",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793152361052,
+      "tag": "0023_useful_doomsday",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793152781973,
+      "tag": "0024_lying_master_chief",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793153852638,
+      "tag": "0025_far_mercury",
+      "breakpoints": true
     }
   ]
 }

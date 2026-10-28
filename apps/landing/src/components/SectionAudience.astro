@@ -36,6 +36,12 @@ import { audience } from '../data/home';
     -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z'/%3E%3C/svg%3E") center / contain no-repeat;
   }
   .card__cta { margin-top: 12px; }
-  @media (min-width: 900px) { .aud { grid-template-columns: 1fr 1fr; } .card { padding: 56px 48px; } }
+  @media (min-width: 900px) { .aud { grid-template-columns: 1fr 1fr; } .card { padding: 56px 48px; } .card:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+  /* three across: the text row takes the slack, so the points and buttons line up along the bottom */
+  @media (min-width: 1100px) {
+    .aud { grid-template-columns: repeat(3, 1fr); }
+    .card { padding: 48px 32px; grid-template-rows: auto auto 1fr auto auto; }
+    .card:last-child:nth-child(odd) { grid-column: auto; }
+  }
   @media (max-width: 600px) { .card { padding-left: var(--card-x-m); padding-right: var(--card-x-m); } }
 </style>

@@ -38,6 +38,14 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
   const types = [...new Set(props.claims.map((claim) => claim.fraudType))];
   const chains = [...new Set(props.claims.map((claim) => claim.chain))];
 
+  const statusLabel = (row: ClaimRow) => {
+    if (row.validated) {
+      return t('status_validated');
+    }
+
+    return row.status === 'submitted' ? t('status_submitted') : t('status_draft');
+  };
+
   const exportClaims = (rows: ClaimRow[]) => {
     downloadCsv(
       `celia-claims-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -48,6 +56,7 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           labels.chain,
           t('col_reference'),
           labels.amount,
+          labels.confirmed,
           labels.status,
           labels.updated,
         ],
@@ -57,7 +66,8 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           chainName(row.chain),
           row.reference,
           row.amountLost ?? '',
-          row.status === 'submitted' ? t('status_submitted') : t('status_draft'),
+          row.confirmed ? t('confirmed') : t('unconfirmed'),
+          statusLabel(row),
           row.updatedAt.slice(0, 10),
         ]),
       ]),
@@ -78,6 +88,15 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           options: [
             { value: 'draft', label: t('status_draft') },
             { value: 'submitted', label: t('status_submitted') },
+            { value: 'validated', label: t('status_validated') },
+          ],
+        },
+        {
+          columnId: 'confirmed',
+          title: labels.confirmed,
+          options: [
+            { value: 'confirmed', label: t('confirmed') },
+            { value: 'unconfirmed', label: t('unconfirmed') },
           ],
         },
         {

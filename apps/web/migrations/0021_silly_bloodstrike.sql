@@ -1,0 +1,1 @@
+ALTER TABLE "claim" DROP COLUMN "review_kind";

@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { FieldMessage } from '@/components/claims/FieldMessage';
+import { TxCheck } from '@/components/claims/TxCheck';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -30,6 +31,7 @@ export function TxHashField(props: { label: string; defaultValue?: string; inval
       />
       <p className="text-sm text-ink-muted">{t('tx_hint')}</p>
       <FieldMessage show={props.invalid}>{t('error_tx')}</FieldMessage>
+      <TxCheck field="txHash" expect="sender" />
     </div>
   );
 }

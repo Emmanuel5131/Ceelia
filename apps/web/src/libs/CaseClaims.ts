@@ -13,6 +13,8 @@ const listColumns = {
   walletApp: claimSchema.walletApp,
   accountKind: claimSchema.accountKind,
   fundingTxHash: claimSchema.fundingTxHash,
+  fundingTxCheck: claimSchema.fundingTxCheck,
+  txCheck: claimSchema.txCheck,
   destinationAddress: claimSchema.destinationAddress,
   firstPaymentOn: claimSchema.firstPaymentOn,
   lastPaymentOn: claimSchema.lastPaymentOn,
@@ -27,8 +29,11 @@ const listColumns = {
   amountLost: claimSchema.amountLost,
   country: claimSchema.country,
   ownership: claimSchema.ownership,
+  ownershipMethod: claimSchema.ownershipMethod,
+  reviewedAt: claimSchema.reviewedAt,
   contactChannel: claimSchema.contactChannel,
   submittedAt: claimSchema.submittedAt,
+  validatedAt: claimSchema.validatedAt,
 };
 
 /**

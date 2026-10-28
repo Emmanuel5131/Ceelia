@@ -15,6 +15,8 @@ const baseConfig: NextConfig = {
   reactCompiler: process.env.NODE_ENV === 'production', // Keep the development environment fast
   experimental: {
     agentUpgrade: 'security',
+    // Three proof files of up to 4 MB each, with room for the form around them. Every other action sends far less.
+    serverActions: { bodySizeLimit: '13mb' },
     // `turbopackGc` is off on purpose: in Next 16.4 it collects tasks the HMR state still references, and the dev server
     // dies with "task is missing in memory or persistent storage". Turn it back on after upgrading Next.
     // Use the Rust version, instead of the OG Babel one

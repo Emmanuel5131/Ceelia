@@ -124,8 +124,8 @@ describe('Claim input', () => {
       expect(CreateClaimValidation.safeParse({ ...exchange, txHash: 'nope' }).success).toBeFalsy();
     });
 
-    it('accepts a payment by bank, card or cash with no chain details', () => {
-      for (const paymentMethod of ['bank_card', 'cash', 'other']) {
+    it('accepts a payment by bank or card with no chain details', () => {
+      for (const paymentMethod of ['bank_card', 'other']) {
         expect(
           CreateClaimValidation.safeParse({
             fraudTypes: ['romance_scam'],

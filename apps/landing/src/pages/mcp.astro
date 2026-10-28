@@ -1,0 +1,22 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import SectionMcp from '../components/SectionMcp.astro';
+import SectionCta from '../components/SectionCta.astro';
+import Footer from '../components/Footer.astro';
+import { mcp } from '../data/mcp';
+import { site } from '../data/site';
+import { graph, organization, website, webPage } from '../lib/schema';
+
+const title = `MCP · ${site.name}`;
+const description = mcp.lead;
+const jsonLd = graph(organization(), website(), webPage({ path: '/mcp/', title, description }));
+---
+<Layout title={title} description={description} jsonLd={jsonLd}>
+  <Header />
+  <main id="main" tabindex="-1">
+    <SectionMcp />
+    <SectionCta />
+  </main>
+  <Footer />
+</Layout>

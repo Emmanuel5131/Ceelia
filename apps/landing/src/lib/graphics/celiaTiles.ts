@@ -106,12 +106,12 @@ export const evidenceArt: Art = (W, H, c) => {
   s += hook(T(bx0, bottom + 18, '◆ threshold, fixed before the run', SEAL, 9.5, 1, 'start', 500), 'a-f', 3.4);
   s += `<g class="a-loopx" data-dx="${bw}" data-dur="6"><path d="M${bx0} ${top + 6}V${bottom}" stroke="${c}" stroke-opacity=".5" stroke-dasharray="1.5 2"/><path d="M${bx0 - 5} ${top + 3}h10l-5 6z" fill="${c}"/></g>`;
 
-  // order of events: the method is committed, then the data is read, then the report is sealed
+  // order of events: the method is committed, then the data is read, then the report is written
   const ey = 262, px = [70, 300, 560], py = ey + 24;
   s += `<path class="a-x" data-o="4.4" d="M30 ${ey - 6}H610" stroke="${c}" stroke-opacity=".3"/>`;
   s += hook(T(30, ey + 8, 'order of events', c, 9.5, 0.7), 'a-t', 4.4);
   s += `<path class="a-x" data-o="4.8" d="M${px[0]} ${py + 14}H${px[2]}" stroke="${c}" stroke-width="1.5"/>`;
-  ([['method committed', 'T+0', 'solid'], ['data read', 'T+1', 'hollow'], ['report sealed', 'T+6', 'solid']] as const).forEach(([name, t, kind], i) => {
+  ([['method committed', 'T+0', 'solid'], ['data read', 'T+1', 'hollow'], ['report written', 'T+6', 'solid']] as const).forEach(([name, t, kind], i) => {
     const o = 5 + i * 0.4, x = px[i];
     s += `<rect class="a-p" data-o="${f(o)}" x="${x - 6}" y="${py + 8}" width="12" height="12" ${kind === 'solid' ? `fill="${c}"` : `${BG} stroke="${c}"`}/>`;
     s += hook(T(x, py + 40, `${name} · ${t}`, c, 10, 1, i === 0 ? 'start' : i === 2 ? 'end' : 'middle', 500), 'a-t', o);
@@ -144,7 +144,7 @@ export const fileArt: Art = (W, H, c) => {
     s += hook(T(dx + 50, y + 4, label, c, 10.5, 1, 'start', 500), 'a-t', o + 0.1);
   });
   s += `<rect class="a-p" data-o="3.8" x="${dx + 18}" y="${dy + dh - 62}" width="40" height="40" fill="${SEAL}"/>`;
-  s += hook(T(dx + 70, dy + dh - 46, 'sealed', c, 10.5, 1, 'start', 500), 'a-t', 4) + hook(T(dx + 70, dy + dh - 30, 'hash 9f3a…c21e', c, 9.5, 0.7), 'a-t', 4.1);
+  s += hook(T(dx + 70, dy + dh - 46, 'case file', c, 10.5, 1, 'start', 500), 'a-t', 4) + hook(T(dx + 70, dy + dh - 30, 'hash 9f3a…c21e', c, 9.5, 0.7), 'a-t', 4.1);
   // certificates
   s += hook(T(580, 38, 'certificates', c, 9.5, 0.7, 'end'), 'a-t', 4.2);
   s += `<path class="a-d a-flow" data-o="4.4" d="M${dx + dw} 175H468V108H486M468 175V236H486" stroke="${c}" stroke-opacity=".6" stroke-dasharray="2 2"/>`;
@@ -171,7 +171,7 @@ export const accessArt: Art = (W, H, c) => {
     s += `<g class="a-p" data-o="${f(o)}">${tick(54, y, 14, c)}</g>` + hook(T(72, y + 4, wallet, c, 10.5, 1, 'start', 500), 'a-t', o + 0.1);
   });
   s += hook(T(46, 226, 'evidence', c, 9.5, 0.7), 'a-t', 2);
-  ['funding trail', 'sealed hash'].forEach((label, i) => {
+  ['funding trail', 'onchain records'].forEach((label, i) => {
     const y = 250 + i * 28, o = 2.2 + i * 0.3;
     s += `<g class="a-p" data-o="${f(o)}">${tick(54, y, 14, c)}</g>` + hook(T(72, y + 4, label, c, 10.5, 1, 'start', 500), 'a-t', o + 0.1);
   });

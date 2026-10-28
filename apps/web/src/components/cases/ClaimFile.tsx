@@ -1,6 +1,9 @@
 import { useFormatter, useTranslations } from 'next-intl';
+import { ChainCheck } from '@/components/cases/ChainCheck';
 import { ChainLabel } from '@/components/claims/ChainLabel';
 import { useClaimLabels } from '@/components/claims/claim-labels';
+import { ExplorerLink } from '@/components/claims/ExplorerLink';
+import { Markdown } from '@/components/layout/Markdown';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { getCaseClaim } from '@/libs/CaseClaims';
@@ -36,6 +39,7 @@ function PaymentRows(props: { claim: ClaimFileProps['claim'] }) {
       {claim.destinationAddress && (
         <Row label={t('destination')}>
           <span className="font-mono break-all">{claim.destinationAddress}</span>
+          <ExplorerLink chain={claim.chain} kind="address" value={claim.destinationAddress} />
         </Row>
       )}
       {claim.assetSent && <Row label={t('asset_sent')}>{claim.assetSent}</Row>}
@@ -93,16 +97,21 @@ export function ClaimFile(props: ClaimFileProps) {
             {claim.walletAddress && (
               <Row label={t('wallet')}>
                 <span className="font-mono break-all">{claim.walletAddress}</span>
+                <ExplorerLink chain={claim.chain} kind="address" value={claim.walletAddress} />
               </Row>
             )}
             {claim.fundingTxHash && (
               <Row label={t('funding_transaction')}>
                 <span className="font-mono break-all">{claim.fundingTxHash}</span>
+                <ExplorerLink chain={claim.chain} kind="tx" value={claim.fundingTxHash} />
+                <ChainCheck check={claim.fundingTxCheck} expect="recipient" />
               </Row>
             )}
             {claim.txHash && (
               <Row label={t('transaction')}>
                 <span className="font-mono break-all">{claim.txHash}</span>
+                <ExplorerLink chain={claim.chain} kind="tx" value={claim.txHash} />
+                <ChainCheck check={claim.txCheck} expect="sender" />
               </Row>
             )}
             <PaymentRows claim={claim} />
@@ -114,7 +123,16 @@ export function ClaimFile(props: ClaimFileProps) {
             )}
             <Row label={t('ownership')}>
               {claim.ownership === 'signed' ? (
-                <Badge variant="solid">{t('ownership_signed')}</Badge>
+                <>
+                  <Badge variant="solid">
+                    {claim.ownershipMethod === 'staff'
+                      ? t('ownership_staff')
+                      : t('ownership_signed')}
+                  </Badge>
+                  {claim.reviewedAt && claim.ownershipMethod !== 'staff' && (
+                    <Badge variant="solid">{t('ownership_reviewed')}</Badge>
+                  )}
+                </>
               ) : (
                 <Badge variant="dashed">{t('ownership_unsigned')}</Badge>
               )}
@@ -124,6 +142,15 @@ export function ClaimFile(props: ClaimFileProps) {
                 {format.dateTime(claim.submittedAt, { dateStyle: 'medium' })}
               </Row>
             )}
+            <Row label={t('validated')}>
+              {claim.validatedAt ? (
+                <Badge variant="solid">
+                  {format.dateTime(claim.validatedAt, { dateStyle: 'medium' })}
+                </Badge>
+              ) : (
+                <Badge variant="dashed">{t('not_validated')}</Badge>
+              )}
+            </Row>
           </dl>
         </CardContent>
       </Card>
@@ -131,7 +158,7 @@ export function ClaimFile(props: ClaimFileProps) {
       <section className="grid gap-3">
         <h2 className="text-xl">{t('statement_title')}</h2>
         <p className="text-sm text-ink-muted">{t('statement_note')}</p>
-        <p className="whitespace-pre-wrap">{claim.statement ?? t('unknown')}</p>
+        {claim.statement ? <Markdown>{claim.statement}</Markdown> : <p>{t('unknown')}</p>}
       </section>
     </div>
   );

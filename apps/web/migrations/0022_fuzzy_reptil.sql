@@ -1,0 +1,1 @@
+ALTER TABLE "claim" ADD COLUMN "reviewed_at" timestamp;

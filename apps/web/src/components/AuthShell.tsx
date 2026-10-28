@@ -12,7 +12,7 @@ import { Logo } from '@/components/Logo';
  */
 export async function AuthShell(props: { children: React.ReactNode }) {
   const t = await getTranslations('AuthShell');
-  const points = [t('point_1'), t('point_2'), t('point_3')];
+  const points = [t('point_1'), t('point_2')];
 
   return (
     <div className="grid min-h-screen bg-surface lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">

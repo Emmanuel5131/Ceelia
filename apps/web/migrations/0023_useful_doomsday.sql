@@ -1,0 +1,1 @@
+ALTER TABLE "claim" ADD COLUMN "consented_at" timestamp;

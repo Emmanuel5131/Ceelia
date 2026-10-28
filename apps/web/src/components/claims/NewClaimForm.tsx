@@ -13,7 +13,6 @@ import { FieldMessage } from '@/components/claims/FieldMessage';
 import { HowYouPaidSection } from '@/components/claims/HowYouPaidSection';
 import { MoreDetailsSection } from '@/components/claims/MoreDetailsSection';
 import { PaymentDetailsSection } from '@/components/claims/PaymentDetailsSection';
-import { WalletDetailsSection } from '@/components/claims/WalletDetailsSection';
 import { WhatHappenedSection } from '@/components/claims/WhatHappenedSection';
 import { WhoSection } from '@/components/claims/WhoSection';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,7 @@ const fieldSteps: Record<string, ClaimStep> = {
   paymentMethod: 'pay',
   chain: 'pay',
   walletAddress: 'pay',
-  fundingTxHash: 'wallet',
+  fundingTxHash: 'pay',
   destinationAddress: 'payment',
   firstPaymentOn: 'payment',
   lastPaymentOn: 'payment',
@@ -64,7 +63,7 @@ function StepSlot(props: { current: boolean; forward: boolean; children: React.R
     <div
       className={cn(
         !props.current && 'hidden',
-        props.current && 'motion-safe:animate-in motion-safe:duration-300 motion-safe:fade-in',
+        props.current && 'motion-safe:animate-in motion-safe:duration-[240ms] motion-safe:fade-in',
         props.current &&
           (props.forward
             ? 'motion-safe:slide-in-from-right-8'
@@ -101,7 +100,7 @@ export function NewClaimForm(props: { edit?: { id: string; defaults: ClaimDefaul
   const [forward, setForward] = React.useState(true);
   const [seen, setSeen] = React.useState(state);
   const formRef = React.useRef<HTMLFormElement>(null);
-  const steps = claimFormSteps(method);
+  const steps = claimFormSteps;
   const total = steps.length;
   const last = step === total;
   // The number of a step in this claim's list, which skips the wallet step when there is no wallet.
@@ -162,16 +161,6 @@ export function NewClaimForm(props: { edit?: { id: string; defaults: ClaimDefaul
           total={total}
         />
       </StepSlot>
-      {method === 'wallet' && (
-        <StepSlot current={step === numberOf('wallet')} forward={forward}>
-          <WalletDetailsSection
-            errors={state.errors}
-            defaults={props.edit?.defaults}
-            step={numberOf('wallet')}
-            total={total}
-          />
-        </StepSlot>
-      )}
       <StepSlot current={step === numberOf('payment')} forward={forward}>
         <PaymentDetailsSection
           fromWallet={method === 'wallet'}

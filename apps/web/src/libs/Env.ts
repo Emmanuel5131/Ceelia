@@ -5,6 +5,10 @@ export const Env = createEnv({
   server: {
     ARCJET_KEY: z.string().startsWith('ajkey_').optional(),
     CLERK_SECRET_KEY: z.string().min(1),
+    /** The Idswyft key. With it, a person must pass the one-time identity check before reporting a loss; without it there is no check. */
+    IDSWYFT_API_KEY: z.string().min(1).optional(),
+    /** `true` to use Idswyft's sandbox, which accepts test documents. */
+    IDSWYFT_SANDBOX: z.enum(['true', 'false']).optional(),
     DATABASE_URL: z.string().min(1),
     /** The mail server. Optional in development, where mail goes to a local catcher; required in production. */
     SMTP_HOST: z.string().optional(),
@@ -45,6 +49,8 @@ export const Env = createEnv({
   runtimeEnv: {
     ARCJET_KEY: process.env.ARCJET_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+    IDSWYFT_API_KEY: process.env.IDSWYFT_API_KEY,
+    IDSWYFT_SANDBOX: process.env.IDSWYFT_SANDBOX,
     DATABASE_URL: process.env.DATABASE_URL,
     SMTP_HOST: process.env.SMTP_HOST,
     SMTP_PORT: process.env.SMTP_PORT,

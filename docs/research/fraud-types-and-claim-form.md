@@ -65,7 +65,7 @@ The first version asked: *chain, wallet, platform name*. That fits a Ponzi paid 
 | My **wallet was drained** | phishing, drainer, address poisoning, SIM swap |
 | Something else | |
 
-Add one honest line under it: *Celia works best when many people were hurt by the same operator. We can't promise a lawyer takes any case.*
+Add one honest line under it: *Celia works best when many people were affected by the same operator. We can't promise a lawyer takes any case.*
 
 **2. How did you pay?** From **my own wallet** (wallet address and chain, and I can prove it by signing) | from an **exchange account** | at a **crypto ATM** | by **buying from a person** (peer to peer). For all but "my own wallet", ask for the **transaction hash** of the payment instead of the wallet.
 

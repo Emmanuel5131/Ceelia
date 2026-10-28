@@ -28,7 +28,7 @@ const isCurrent = (href: string) => !href.includes('#') && (href === '/' ? path 
   const header = document.querySelector<HTMLElement>('.site-header');
   if (header && location.pathname === '/') {
     const MAP: [string, string | null][] = [
-      ['.hero', null], ['#process', '/#process'], ['#victims', '/#victims'], ['#lawyers', '/#lawyers'], ['#join', '/#join'], ['#method', '/#join'], ['#log', '/#join'], ['#faq', '/#faq'], ['#report', null],
+      ['.hero', null], ['#process', '/#process'], ['#join', '/#join'], ['#method', '/#join'], ['#log', '/#join'], ['#faq', '/#faq'], ['#report', null],
     ];
     const sections = MAP.map(([sel, href]) => ({ el: document.querySelector<HTMLElement>(sel), href })).filter((s) => s.el);
     const links = Array.from(header.querySelectorAll<HTMLAnchorElement>('.nav__list a'));

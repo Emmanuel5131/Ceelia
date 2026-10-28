@@ -42,12 +42,12 @@ describe('ownershipMessage', () => {
 });
 
 describe('canVerifyOwnership', () => {
-  it('is true for EVM, Solana and Tron only', () => {
+  it('is true for EVM, Solana, Tron and Bitcoin, and false for chains we cannot check', () => {
     expect(['evm', 'solana', 'tron', 'bitcoin', 'other'].map((c) => canVerifyOwnership(c as 'evm'))).toEqual([
       true,
       true,
       true,
-      false,
+      true,
       false,
     ]);
   });

@@ -94,7 +94,6 @@ export function useClaimLabels() {
       atm: t('pay_atm'),
       p2p: t('pay_p2p'),
       bank_card: t('pay_bank_card'),
-      cash: t('pay_cash'),
       other: t('pay_other'),
     },
     contactChannel: {

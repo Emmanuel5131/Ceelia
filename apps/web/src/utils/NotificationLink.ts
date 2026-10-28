@@ -10,7 +10,8 @@ import type { NotificationType } from '@celia/core';
 export function notificationPath(type: NotificationType, data: Record<string, string>) {
   switch (type) {
     case 'claim_submitted':
-    case 'ownership_confirmed': {
+    case 'ownership_confirmed':
+    case 'claim_validated': {
       return data.claimId ? `/dashboard/claims/${data.claimId}` : '/dashboard/claims';
     }
     case 'claim_in_case':

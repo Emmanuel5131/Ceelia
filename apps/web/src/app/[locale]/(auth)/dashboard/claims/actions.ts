@@ -3,26 +3,32 @@
 import type { AccountKind } from '@celia/core';
 import {
   canVerifyOwnership,
+  paidOnChain,
   ownershipMessage,
   platformHost,
   platformKey,
   verifyOwnership,
 } from '@celia/core';
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { and, eq, inArray, isNull, ne } from 'drizzle-orm';
+import { and, count, eq, inArray, isNull, ne } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type * as z from 'zod';
 import { detectAccountKind } from '@/libs/AccountKind';
 import { recordCaseEvent } from '@/libs/CaseEvents';
+import { listProofFiles } from '@/libs/ClaimProofs';
 import { getClaim } from '@/libs/Claims';
 import { db } from '@/libs/DB';
+import { mustVerify } from '@/libs/Identity';
 import { notify } from '@/libs/Notify';
+import { checkClaimTransactions } from '@/libs/TxChecks';
 import { saveLocale } from '@/libs/UserSettings';
-import { caseSchema, claimSchema } from '@/models/Schema';
+import { caseSchema, claimProofSchema, claimSchema } from '@/models/Schema';
 import { parseAccount } from '@/utils/Account';
 import { getI18nPath } from '@/utils/Helpers';
+import { cleanFileName, detectProofType, proofFileLimits } from '@/utils/ProofFile';
+import { parseVideoLink } from '@/utils/VideoLink';
 import {
   CreateClaimValidation,
   SignatureValidation,
@@ -215,6 +221,23 @@ function claimColumns(claim: NewClaim, named: string | undefined, accountKind: A
 }
 
 /**
+ * What the chain shows for the transactions in a validated claim, to keep with it. A bank or card payment has no chain, and only
+ * a wallet payment has a wallet or a funding transaction, so nothing else is asked about.
+ * @param claim - The validated claim.
+ * @returns The checks to keep.
+ */
+async function claimChecks(claim: NewClaim) {
+  const own = claim.paymentMethod === 'wallet';
+
+  return await checkClaimTransactions({
+    chain: claim.chain,
+    walletAddress: own ? claim.walletAddress : null,
+    txHash: paidOnChain(claim.paymentMethod) ? claim.txHash : null,
+    fundingTxHash: own ? claim.fundingTxHash : null,
+  });
+}
+
+/**
  * Starts a claim: checks what happened, how it was paid and who took the money, and creates a draft. The one-time nonce for
  * the ownership message is made here, so it cannot be chosen by the person. Filing the same wallet for the same operator, or
  * the same transaction, twice is refused.
@@ -224,6 +247,12 @@ function claimColumns(claim: NewClaim, named: string | undefined, accountKind: A
  */
 export async function createClaim(_state: ClaimState, formData: FormData): Promise<ClaimState> {
   const { userId, user } = await requirePerson();
+
+  // Reporting is for people who have passed the one-time identity check.
+  if (await mustVerify(userId)) {
+    return failed(['identity']);
+  }
+
   const parsed = CreateClaimValidation.safeParse(readClaimForm(formData));
 
   if (!parsed.success) {
@@ -247,6 +276,7 @@ export async function createClaim(_state: ClaimState, formData: FormData): Promi
     .insert(claimSchema)
     .values({
       ...claimColumns(claim, named, accountKind),
+      ...(await claimChecks(claim)),
       userId,
       country: typeof country === 'string' ? country : null,
     })
@@ -315,9 +345,21 @@ export async function updateClaim(
     .update(claimSchema)
     .set({
       ...columns,
+      ...(await claimChecks(claim)),
       updatedAt: new Date(),
       // A different wallet needs its own proof; the same wallet keeps the one it has.
-      ...(moved && { nonce, ownership: 'unsigned', signature: null, signedAt: null }),
+      ...(moved && {
+        nonce,
+        ownership: 'unsigned',
+        ownershipMethod: null,
+        signature: null,
+        signedAt: null,
+        reviewVideoUrl: null,
+        proofNote: null,
+        reviewNote: null,
+        reviewRequestedAt: null,
+        reviewedAt: null,
+      }),
     })
     .where(
       and(
@@ -326,6 +368,11 @@ export async function updateClaim(
         eq(claimSchema.status, 'draft'),
       ),
     );
+
+  // The documents named the old wallet, so they go with it.
+  if (moved) {
+    await db.delete(claimProofSchema).where(eq(claimProofSchema.claimId, existing.id));
+  }
 
   const locale = await getLocale();
   revalidatePath(getI18nPath(`/dashboard/claims/${existing.id}`, locale));
@@ -382,7 +429,13 @@ export async function verifyClaimOwnership(
   await db.transaction(async (tx) => {
     await tx
       .update(claimSchema)
-      .set({ ownership: 'signed', signature: parsed.data.signature, signedAt: new Date() })
+      .set({
+        ownership: 'signed',
+        ownershipMethod: 'signature',
+        signature: parsed.data.signature,
+        signedAt: new Date(),
+        reviewNote: null,
+      })
       .where(eq(claimSchema.id, claim.id));
     await notify(tx, [
       {
@@ -394,6 +447,255 @@ export async function verifyClaimOwnership(
     ]);
   });
   revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, locale));
+
+  return { errors: [], done: true };
+}
+
+// The note to staff: nothing is fine, more than 1000 characters is not.
+function readNote(formData: FormData) {
+  const value = text(formData, 'note');
+  const note = typeof value === 'string' ? value.trim() : '';
+
+  return note.length > 1000 ? null : note;
+}
+
+/**
+ * Finds a wallet claim the person can add evidence to. A claim already confirmed by signature can still take a video and files,
+ * which staff look at as well.
+ * @param userId - The signed-in person.
+ * @param claimId - The claim.
+ * @returns The claim, or undefined.
+ */
+async function openToProof(userId: string, claimId: string) {
+  const claim = await getClaim(userId, claimId);
+
+  return claim?.paymentMethod === 'wallet' ? claim : undefined;
+}
+
+/**
+ * What to save when a video or files are added: the claim goes in the staff queue again, and a wallet not yet confirmed waits for
+ * review. A wallet already confirmed stays confirmed. An earlier decline no longer applies.
+ * @param claim - The claim.
+ * @param note - What the person wrote, if anything. It replaces the earlier note only when there is one.
+ * @returns The columns to set.
+ */
+function forReview(claim: Pick<typeof claimSchema.$inferSelect, 'ownership'>, note: string) {
+  return {
+    ...(claim.ownership === 'signed' ? {} : { ownership: 'review' }),
+    ...(note ? { proofNote: note } : {}),
+    reviewRequestedAt: new Date(),
+    reviewedAt: null,
+    reviewNote: null,
+  };
+}
+
+/**
+ * Sends screenshots or receipts that show the person controls the wallet, for staff to look at. Each file is checked by what it
+ * really is, not what it is called. They add to anything else the person gave: a signature, a video. Counsel never see the files.
+ * @param claimId - The claim.
+ * @param _state - The previous state (unused).
+ * @param formData - The files and an optional note.
+ * @returns `done` when sent; otherwise `files`, `files_type`, `files_size`, `files_count` or `note`.
+ */
+export async function sendOwnershipProof(
+  claimId: string,
+  _state: ClaimState,
+  formData: FormData,
+): Promise<ClaimState> {
+  const { userId } = await requirePerson();
+  const claim = await openToProof(userId, claimId);
+  const files = formData
+    .getAll('files')
+    .filter((file): file is File => file instanceof File && file.size > 0);
+  const note = readNote(formData);
+
+  if (!claim) {
+    return failed(['claim']);
+  }
+
+  if (note === null) {
+    return failed(['note']);
+  }
+
+  if (files.length === 0) {
+    return failed(['files']);
+  }
+
+  if (files.some((file) => file.size > proofFileLimits.bytes)) {
+    return failed(['files_size']);
+  }
+
+  const kept = await listProofFiles(claim.id);
+
+  if (
+    files.length > proofFileLimits.perSend ||
+    kept.length + files.length > proofFileLimits.perClaim
+  ) {
+    return failed(['files_count']);
+  }
+
+  const rows = await Promise.all(
+    files.map(async (file) => {
+      const data = Buffer.from(await file.arrayBuffer());
+
+      return {
+        claimId: claim.id,
+        name: cleanFileName(file.name),
+        data,
+        type: detectProofType(data),
+      };
+    }),
+  );
+
+  if (rows.some((row) => row.type === null)) {
+    return failed(['files_type']);
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.insert(claimProofSchema).values(
+      rows.map((row) => ({
+        claimId: row.claimId,
+        name: row.name,
+        data: row.data,
+        size: row.data.length,
+        contentType: row.type ?? 'application/pdf',
+      })),
+    );
+    await tx.update(claimSchema).set(forReview(claim, note)).where(eq(claimSchema.id, claim.id));
+  });
+  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, await getLocale()));
+
+  return { errors: [], done: true };
+}
+
+/**
+ * Sends a link to a video the person made to explain their case and show their wallet, for staff to watch. The video stays where
+ * the person put it; only the link is kept. Counsel never see it.
+ * @param claimId - The claim.
+ * @param _state - The previous state (unused).
+ * @param formData - The link and an optional note.
+ * @returns `done` when sent; otherwise `link` or `note`.
+ */
+export async function sendOwnershipVideo(
+  claimId: string,
+  _state: ClaimState,
+  formData: FormData,
+): Promise<ClaimState> {
+  const { userId } = await requirePerson();
+  const claim = await openToProof(userId, claimId);
+  const note = readNote(formData);
+  const linkValue = text(formData, 'link');
+  const link = parseVideoLink(typeof linkValue === 'string' ? linkValue : '');
+
+  if (!claim) {
+    return failed(['claim']);
+  }
+
+  if (!link) {
+    return failed(['link']);
+  }
+
+  if (note === null) {
+    return failed(['note']);
+  }
+
+  await db
+    .update(claimSchema)
+    .set({ ...forReview(claim, note), reviewVideoUrl: link })
+    .where(eq(claimSchema.id, claim.id));
+  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, await getLocale()));
+
+  return { errors: [], done: true };
+}
+
+/**
+ * Takes back the video and files that staff have not looked at yet: the files are deleted and the link is forgotten. A wallet
+ * that was waiting only on them goes back to unconfirmed; one confirmed by signature stays confirmed.
+ * @param claimId - The claim.
+ * @returns `done` when withdrawn.
+ */
+export async function withdrawOwnershipReview(claimId: string): Promise<ClaimState> {
+  const { userId } = await requirePerson();
+  const claim = await getClaim(userId, claimId);
+
+  if (!claim?.reviewRequestedAt) {
+    return failed(['claim']);
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(claimProofSchema).where(eq(claimProofSchema.claimId, claim.id));
+    await tx
+      .update(claimSchema)
+      .set({
+        ownership: claim.ownership === 'review' ? 'unsigned' : claim.ownership,
+        reviewVideoUrl: null,
+        proofNote: null,
+        reviewRequestedAt: null,
+        reviewedAt: null,
+      })
+      .where(eq(claimSchema.id, claim.id));
+  });
+  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, await getLocale()));
+
+  return { errors: [], done: true };
+}
+
+/**
+ * Removes one thing the person added to show the wallet is theirs: the video, or one file. When nothing is left, the claim leaves
+ * the staff queue, and a wallet that was waiting only on it goes back to unconfirmed. A wallet confirmed by signature stays confirmed.
+ * @param claimId - The claim.
+ * @param target - `video`, or `file` with the file's id.
+ * @param target.kind - What to remove.
+ * @param target.proofId - The file, when removing a file.
+ * @returns `done` when removed.
+ */
+export async function removeOwnershipEvidence(
+  claimId: string,
+  target: { kind: 'video' | 'file'; proofId?: string },
+): Promise<ClaimState> {
+  const { userId } = await requirePerson();
+  const claim = await openToProof(userId, claimId);
+
+  if (!claim) {
+    return failed(['claim']);
+  }
+
+  await db.transaction(async (tx) => {
+    if (target.kind === 'video') {
+      await tx
+        .update(claimSchema)
+        .set({ reviewVideoUrl: null })
+        .where(eq(claimSchema.id, claim.id));
+    } else if (target.proofId) {
+      await tx
+        .delete(claimProofSchema)
+        .where(
+          and(eq(claimProofSchema.id, target.proofId), eq(claimProofSchema.claimId, claim.id)),
+        );
+    }
+
+    const [left] = await tx
+      .select({ files: count() })
+      .from(claimProofSchema)
+      .where(eq(claimProofSchema.claimId, claim.id));
+    const [now] = await tx
+      .select({ video: claimSchema.reviewVideoUrl })
+      .from(claimSchema)
+      .where(eq(claimSchema.id, claim.id));
+
+    if ((left?.files ?? 0) === 0 && !now?.video) {
+      await tx
+        .update(claimSchema)
+        .set({
+          ownership: claim.ownership === 'review' ? 'unsigned' : claim.ownership,
+          proofNote: null,
+          reviewRequestedAt: null,
+          reviewedAt: null,
+        })
+        .where(eq(claimSchema.id, claim.id));
+    }
+  });
+  revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, await getLocale()));
 
   return { errors: [], done: true };
 }
@@ -435,9 +737,15 @@ export async function saveStatement(
  * Sends the claim. It needs the person's account of what happened. Ownership may still be unconfirmed (an exchange account
  * cannot sign, and some chains cannot be checked yet); the file then shows it as not confirmed.
  * @param claimId - The claim.
- * @returns `done` when sent; otherwise `statement` if the account is missing.
+ * @param _state - The previous state (unused).
+ * @param formData - The submitted form: `consent` must be on.
+ * @returns `done` when sent; otherwise `statement` if the account is missing, or `consent` if the person has not agreed.
  */
-export async function submitClaim(claimId: string): Promise<ClaimState> {
+export async function submitClaim(
+  claimId: string,
+  _state: ClaimState,
+  formData: FormData,
+): Promise<ClaimState> {
   const { userId } = await requirePerson();
   const claim = await getClaim(userId, claimId);
 
@@ -449,12 +757,16 @@ export async function submitClaim(claimId: string): Promise<ClaimState> {
     return failed(['statement']);
   }
 
+  if (formData.get('consent') !== 'on') {
+    return failed(['consent']);
+  }
+
   const locale = await getLocale();
   await saveLocale(userId, locale);
   await db.transaction(async (tx) => {
     await tx
       .update(claimSchema)
-      .set({ status: 'submitted', submittedAt: new Date() })
+      .set({ status: 'submitted', submittedAt: new Date(), consentedAt: new Date() })
       .where(eq(claimSchema.id, claim.id));
 
     // When a case already exists for this platform, the claim joins it the moment it is sent.

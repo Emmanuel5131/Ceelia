@@ -14,11 +14,15 @@ export const site = {
   language: 'en',
   tagline: 'Celia is a case bank for crypto fraud.',
   description:
-    'Celia is an onchain case bank for lawyers and law firms. Victims of the same scheme add their wallet and a few lines of text, Celia is the case bank: it holds the wallets of those defrauded and the sealed evidence from the chain, so nobody has to build the list of those affected. The lawyer or firm runs the case. Celia holds no funds and does not declare fraud.',
-  shortDescription: 'Onchain case bank for lawyers and law firms: the wallets of those defrauded and sealed evidence, ready for counsel.',
+    'Celia is an onchain case bank for law firms and investigative agencies. Victims of the same scheme add their wallet and a few lines of text, Celia is the case bank: it holds the wallets of those defrauded and the evidence from the chain, so nobody has to build the list of those affected. The law firm runs the case. Celia holds no funds and does not declare fraud.',
+  shortDescription: 'Onchain case bank for law firms and investigative agencies: the wallets of those defrauded and the evidence, ready for counsel.',
   email: 'hello@example.com',
   areaServed: 'Worldwide',
   /** Small trust line shown in the footer. */
+  proof: {
+    note: 'We don’t declare fraud. We build every file to hold up in court.',
+    link: { label: 'Find the evidence rule for your jurisdiction', href: '/jurisdictions/' },
+  },
   infrastructure: { label: 'Data infrastructure by', name: 'Sandworm Labs' },
   socials: [] as { name: keyof typeof import('../lib/graphics/icons').socialIcons; href: string }[],
   knowsAbout: [
@@ -32,10 +36,9 @@ export type NavItem = { label: string; href: string };
 export const nav: { links: NavItem[]; cta: NavItem } = {
   links: [
     { label: 'How it works', href: '/#process' },
-    { label: 'For lawyers', href: '/#lawyers' },
-    { label: 'For victims', href: '/#victims' },
     { label: 'Who can join', href: '/#join' },
     { label: 'Jurisdictions', href: '/jurisdictions/' },
+    { label: 'MCP', href: '/mcp/' },
     { label: 'FAQ', href: '/#faq' },
   ],
   cta: { label: 'Report fraud', href: appLogin },
@@ -46,6 +49,7 @@ export const footerNav = {
     { label: 'Home', href: '/' },
     { label: 'Method', href: '/#method' },
     { label: 'Who can join', href: '/#join' },
+    { label: 'MCP', href: '/mcp/' },
     { label: 'FAQ', href: '/#faq' },
   ],
   jurisdictions: [
@@ -55,7 +59,7 @@ export const footerNav = {
   ],
   contact: [
     { label: 'Report fraud', href: appLogin },
-    { label: 'Join as a lawyer or firm', href: appLogin },
+    { label: 'Join as a professional or enterprise', href: appLogin },
     { label: 'Email us', href: `mailto:${site.email}` },
   ],
 };

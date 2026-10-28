@@ -16,7 +16,15 @@ import type { TableFeatures } from '@/components/data-table/table';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/libs/I18nNavigation';
 
-type ClaimColumnId = 'claim' | 'type' | 'chain' | 'amount' | 'progress' | 'status' | 'updated';
+type ClaimColumnId =
+  | 'claim'
+  | 'type'
+  | 'chain'
+  | 'amount'
+  | 'progress'
+  | 'confirmed'
+  | 'status'
+  | 'updated';
 
 /**
  * The translated name of every claim column, by column id. Headings, the columns menu, the filters and the export all read it,
@@ -32,6 +40,7 @@ export function useClaimColumnLabels(): Record<ClaimColumnId, string> {
     chain: t('col_chain'),
     amount: t('col_amount'),
     progress: t('col_progress'),
+    confirmed: t('col_confirmed'),
     status: t('col_status'),
     updated: t('col_updated'),
   };
@@ -81,11 +90,25 @@ function ProgressCell(props: { claim: ClaimRow }) {
   );
 }
 
-function StatusCell(props: { value: ClaimRow['status'] }) {
+function ConfirmedCell(props: { value: boolean }) {
   const t = useTranslations('ClaimList');
 
+  return props.value ? (
+    <Badge variant="solid">{t('confirmed')}</Badge>
+  ) : (
+    <Badge variant="dashed">{t('unconfirmed')}</Badge>
+  );
+}
+
+function StatusCell(props: { value: ClaimRow['status'] | 'validated' }) {
+  const t = useTranslations('ClaimList');
+
+  if (props.value === 'validated') {
+    return <Badge variant="solid">{t('status_validated')}</Badge>;
+  }
+
   return props.value === 'submitted' ? (
-    <Badge variant="solid">{t('status_submitted')}</Badge>
+    <Badge variant="default">{t('status_submitted')}</Badge>
   ) : (
     <Badge variant="dashed">{t('status_draft')}</Badge>
   );
@@ -133,7 +156,13 @@ export const claimColumns = helper.columns([
     header: ({ column }) => <ClaimHeader column={column} id="progress" />,
     cell: ({ row }) => <ProgressCell claim={row.original} />,
   }),
-  helper.accessor('status', {
+  helper.accessor((row) => (row.confirmed ? 'confirmed' : 'unconfirmed'), {
+    id: 'confirmed',
+    header: ({ column }) => <ClaimHeader column={column} id="confirmed" />,
+    cell: ({ row }) => <ConfirmedCell value={row.original.confirmed} />,
+    filterFn: 'inSet',
+  }),
+  helper.accessor((row) => (row.validated ? 'validated' : row.status), {
     id: 'status',
     header: ({ column }) => <ClaimHeader column={column} id="status" />,
     cell: ({ getValue }) => <StatusCell value={getValue()} />,

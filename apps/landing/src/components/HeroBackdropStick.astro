@@ -3,14 +3,15 @@ import HeroCaption from './HeroCaption.astro';
 import HeroFigure from './HeroFigure.astro';
 import HeroTag from './HeroTag.astro';
 /**
- * Hero backdrop, stick-figure version: the whole story in five frames, then rested, faded and replayed. Each frame is its own
+ * Hero backdrop, with people drawn as profile icons: the whole story in five frames, then rested, faded and replayed. Each frame is its own
  * picture: it fades in, and is gone before the next one fades in. A single caption names the step that is playing; name tags say
  * who each actor is, and the speech bubbles and "!" marks carry the rest.
  *   frame 1  1  a hooded operator promises 10% a week      2  victims pay in, then are asked for a fee to withdraw
  *   frame 2  3  the money moves out through a mixer and is cashed out at an exchange
  *   frame 3  4  Celia's case bank holds the wallets of those defrauded      5  and the evidence next to them
- *   frame 4  6  Celia connects the case bank to lawyers and law firms          7  they start with wallets and evidence listed
- *   frame 5  8  a lawyer or firm runs the case in court      9  together, victims hold the platform accountable
+ *   frame 4  6  Celia connects the case bank to law firms, lawyers and investigative agencies          7  they start with wallets and evidence listed
+ *            8  the case is handed over and Celia's part is done
+ *   frame 5  9  a lawyer or firm runs the case in court      10  together, victims hold the platform accountable
  * Words name actions, never people or intent. Seal red is for the seal and the verdict only. The story is an illustration, and
  * says so. A small script restarts the animation (class `on` on the svg) after a pause and fades it out between runs; CSS does
  * the rest: every element animates in with its own delay (--d) and duration (--dur), measured from the start of the run.
@@ -29,7 +30,7 @@ const LINE = 500;
 const SHRINK = 1, PIVOT: P = [1560, 520]; // the whole story is drawn at full size, then scaled down about the right edge to leave room for the copy
 const FADE = 0.3;
 const SLOW = 3.6; // everything below is written in seconds of the base story; the svg stretches it by this factor
-const LENGTHS = [3.8, 2.0, 3.4, 3.4, 6.4];
+const LENGTHS = [3.8, 2.0, 3.4, 5.1, 6.4];
 const TOTAL = LENGTHS.reduce((sum, n) => sum + n, 0);
 const STARTS = LENGTHS.map((_, i) => LENGTHS.slice(0, i).reduce((sum, n) => sum + n, 0));
 /** Seconds from the start of the run to `offset` seconds into `frame`. */
@@ -41,18 +42,19 @@ const captions: [string, number, number][] = [
   ['2 · Victims pay in, then are asked for a fee to withdraw', t(0, 1.8), 2],
   ['3 · The money’s trail is hidden, then it is cashed out', t(1), 2],
   ['4 · Celia’s case bank holds the wallets of those defrauded', t(2), 1.7],
-  ['5 · And the evidence next to them: the sealed chain proofs', t(2, 1.7), 1.7],
-  ['6 · Celia connects the case bank to lawyers and law firms', t(3), 1.7],
+  ['5 · And the evidence next to them: the chain proofs', t(2, 1.7), 1.7],
+  ['6 · Celia connects the case bank to law firms, lawyers and investigative agencies', t(3), 1.7],
   ['7 · They start with the wallets and evidence already listed', t(3, 1.7), 1.7],
-  ['8 · A lawyer or firm runs the case in court', t(4), 1.9],
-  ['9 · Case won: victims hold the platform accountable', t(4, 1.9), 1.9],
-  ['10 · The lawyer pays the listed wallets, or contacts victims', t(4, 3.8), 2.4],
+  ['8 · We hand the case over, and our part is done', t(3, 3.4), 1.7],
+  ['9 · A lawyer or firm runs the case in court', t(4), 1.9],
+  ['10 · Case won: victims hold the platform accountable', t(4, 1.9), 1.9],
+  ['11 · The lawyer pays the listed wallets, or contacts victims', t(4, 3.8), 2.4],
 ];
 
-/** The nearest dot of the background grid: every figure's head is centred on a dot. */
+/** The nearest dot of the background grid: every person's head is centred on a dot. */
 const snap = (n: number) => Math.round((n - 40) / 80) * 80 + 40;
 const victimsAt = (x: number): P[] => [360, 520, 680].map((y): P => [snap(x), y]);
-const hand = (v: P): P => [v[0] + 20, v[1] + 42];
+const hand = (v: P): P => [v[0] + 38, v[1] + 28];
 /** A bank: a triangle roof, a beam, four columns and two steps, centred on `x`. */
 const bankBuilding = (x: number, cy = LINE) => ({ roof: `M${x - 66} ${cy - 22}L${x} ${cy - 72}L${x + 66} ${cy - 22}Z`, beam: { x: x - 66, y: cy - 22, w: 132, h: 9 }, cols: [-46, -16, 16, 46].map((dx) => ({ x: x + dx - 6, y: cy - 13, w: 12, h: 46 })), steps: [{ x: x - 74, y: cy + 33, w: 148, h: 9 }, { x: x - 82, y: cy + 42, w: 164, h: 9 }] });
 /** Scales of justice, drawn inside a roof: a post, a beam and two pans. */
@@ -76,12 +78,12 @@ const claimants = victimsAt(880);
 const bank = { x: 1080, y: 300, w: 460, h: 310 };
 const rows: [string, boolean][] = [['0x7a3f…e91c', true], ['0x19cd…04b2', true], ['0xb6e0…7f35', true], ['0x52a8…c1d9', false], ['0x93de…5a07', false]];
 const rowY = (i: number) => 372 + i * 46;
-const proofs = ['funding trail', 'cohort vs baseline', 'sealed hash', 'certificate'];
+const proofs = ['funding trail', 'cohort vs baseline', 'onchain records', 'certificate'];
 const celia: P = [snap(1310), snap(664)];
 
-// frame 4: the case bank connected to lawyers and law firms
+// frame 4: the case bank connected to law firms, lawyers and investigative agencies
 const hub = { x: 840, y: 400, w: 190, h: 200 };
-const targets: [number, string, 'lawyer' | 'firm'][] = [[320, 'lawyer', 'lawyer'], [520, 'law firm', 'firm'], [700, 'lawyer', 'lawyer']];
+const targets: [number, string, 'lawyer' | 'firm' | 'agent'][] = [[320, 'lawyer', 'lawyer'], [520, 'law firm', 'firm'], [700, 'investigative agency', 'agent']];
 const TX = snap(1360);
 
 // frame 5: a lawyer runs the case, and more victims join
@@ -119,13 +121,10 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
       </g>
 
       {victims.map((v, i) => (
-        <g class="bd__fig" style={sty(t(0, 1.6 + i * 0.1), 0.6)} transform={`translate(${v[0]} ${v[1]}) scale(1.05)`}>
-          <circle class="bd__draw bd__head" r="11" pathLength="1" />
-          <path class="bd__draw" d="M0 11V44M-14 68L0 44L14 68" pathLength="1" />
-          <path class="bd__draw bd__arms-down" style={`--dur:${(t(0, 3.0) - t(0, 1.6 + i * 0.1)).toFixed(2)}s`} d="M-17 38L0 25L17 38" pathLength="1" />
-          <path class="bd__arms-up" style={`--d:${t(0, 3.0 + i * 0.05).toFixed(2)}s`} d="M-17 8L0 25L17 8" />
-          <text class="bd__bang" style={sty(t(0, 3.1 + i * 0.05), 0.3)} x="32" y="2">!</text>
-        </g>
+        <>
+          <HeroFigure kind="victim" x={v[0]} y={v[1]} delay={t(0, 1.6 + i * 0.1)} dur={0.6} />
+          <text class="bd__bang" style={sty(t(0, 3.1 + i * 0.05), 0.3)} x={v[0] + 46} y={v[1] + 4}>!</text>
+        </>
       ))}
       <HeroTag text="victims" x={victims[1][0]} y={victims[2][1] + 118} delay={t(0, 1.9)} anchor="mid" />
       {victims.map((v, i) => <path class="bd__edge bd__edge--thin" style={sty(t(0, 1.8 + i * 0.1), 0.4)} d={d([hand(v), [app[0] - 50, LINE]])} pathLength="1" />)}
@@ -210,7 +209,7 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
       <HeroTag text="Celia" x={celia[0]} y={celia[1] + 118} delay={t(2, 0.9)} anchor="mid" />
     </g>
 
-    <!-- frame 4: the case bank is connected to lawyers and law firms -->
+    <!-- frame 4: the case bank is connected to law firms, lawyers and investigative agencies -->
     <g class="bd__frame" style={frameStyle(3)}>
       <rect class="bd__box" style={sty(t(3, 0.1), 0.4)} x={hub.x} y={hub.y} width={hub.w} height={hub.h} />
       <HeroTag text="Celia · case bank" x={hub.x + hub.w / 2} y={hub.y - 10} delay={t(3, 0.3)} anchor="mid" />
@@ -222,8 +221,8 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
         </g>
       ))}
       {targets.map(([y, , kind], i) => (
-        kind === 'lawyer'
-          ? <HeroFigure kind="lawyer" x={TX} y={snap(y - 20)} delay={t(3, 0.5 + i * 0.2)} dur={0.5} scale={0.85} />
+        kind !== 'firm'
+          ? <HeroFigure kind={kind} x={TX} y={snap(y - 20)} delay={t(3, 0.5 + i * 0.2)} dur={0.5} scale={0.85} />
           : (
             <g class="bd__fade" style={sty(t(3, 0.5 + i * 0.2), 0.4)}>
               <path class="bd__box" d={bankBuilding(TX, y).roof} />
@@ -242,6 +241,12 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
           <rect class="bd__tick" x={TX + 90} y={y - 10} width="20" height="20" /><path class="bd__tickmark" d={`M${TX + 95} ${y}l3.5 4 6.5-8`} />
         </g>
       ))}
+      <!-- everything is handed over: Celia's part is done -->
+      <g class="bd__fade" style={sty(t(3, 3.5), 0.5)}>
+        <rect class="bd__tick" x={hub.x + 22} y={hub.y + hub.h + 26} width="18" height="18" /><path class="bd__tickmark" d={`M${hub.x + 26} ${hub.y + hub.h + 35}l3.2 3.6 6-7`} />
+        <text class="bd__rowtxt" x={hub.x + 52} y={hub.y + hub.h + 40}>handed over</text>
+      </g>
+      <HeroTag text="Celia is done" x={hub.x + hub.w / 2} y={hub.y + hub.h + 84} delay={t(3, 3.7)} anchor="mid" />
     </g>
 
     <!-- frame 5: a lawyer runs the case, more victims join -->
@@ -259,7 +264,7 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
         <rect class="bd__stamp" x={bench.x + 20} y={bench.y + 18} width="130" height="40" />
         <text class="bd__stamp-text" x={bench.x + 85} y={bench.y + 45}>case won</text>
       </g>
-      {crowd.map((v, i) => <HeroFigure kind="victim" x={v[0]} y={v[1]} delay={t(4, 2.1 + i * 0.12)} dur={0.4} arms="up" scale={0.7} />)}
+      {crowd.map((v, i) => <HeroFigure kind="victim" x={v[0]} y={v[1]} delay={t(4, 2.1 + i * 0.12)} dur={0.4} scale={0.7} />)}
       <HeroTag text="victims gathered by Celia" x={crowd[3][0]} y={crowd[3][1] + 120} delay={t(4, 3.0)} anchor="mid" />
 
       <!-- after the win the lawyer chooses: pay the wallets Celia lists, or contact the victims directly -->
@@ -299,11 +304,10 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
   .out .bd__scenes { opacity: 0; }
 
   /* every element animates in with its own delay and duration once the story is on */
-  .on :is(.bd__edge, .bd__box, .bd__packet, .bd__block, .bd__open, .bd__comet, .bd__pulse, .bd__draw, .bd__fade, .bd__tmp, .bd__bang, .bd__arms-up, .bd__mark),
+  .on :is(.bd__edge, .bd__box, .bd__packet, .bd__block, .bd__open, .bd__comet, .bd__pulse, .bd__fade, .bd__tmp, .bd__bang, .bd__mark),
   .on :global(.bd__cap),
   .on :global(.bd__tag) { animation: var(--kf) calc(var(--dur) * var(--slow)) var(--ease) calc(var(--d) * var(--slow)) both; }
   .on .bd__spin { animation: bd-spin calc(4s * var(--slow)) linear calc(var(--d) * var(--slow)) infinite; }
-  .on .bd__arms-down { animation: bd-arms calc(var(--dur) * var(--slow)) linear calc(var(--d) * var(--slow)) both; }
   .on .bd__vanish { animation: bd-vanish calc(.3s * var(--slow)) ease calc(var(--d) * var(--slow)) both; }
   .on .bd__scan { animation: bd-scan calc(var(--dur) * var(--slow)) ease-in-out calc(var(--d) * var(--slow)) both; }
   .on .bd__frame { animation: bd-fade calc(.3s * var(--slow)) ease calc(var(--fdl) * var(--slow)) both, bd-vanish calc(.3s * var(--slow)) ease calc(var(--fout) * var(--slow)) forwards; }
@@ -314,13 +318,6 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
   .bd__frame { opacity: 0; }
   .bd__frame--last { opacity: 1; }
   .bd__glyph--soft { fill-opacity: .6; }
-  .bd__fig { --d: 0s; --dur: .7s; --ease: cubic-bezier(.65, 0, .35, 1); }
-  .bd__draw, .bd__arms-down, .bd__arms-up { fill: none; stroke: var(--brand); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
-  .bd__draw { --kf: bd-draw; --dur: inherit; --ease: cubic-bezier(.65, 0, .35, 1); }
-  .bd__head { fill: var(--white); }
-  .bd__head--solid { fill: var(--brand); }
-  .bd__arms-down { opacity: 0; }
-  .bd__arms-up { --kf: bd-fade; --dur: .3s; --ease: ease; stroke-dasharray: none; }
   .bd__bang { --kf: bd-pop; --dur: .4s; --ease: cubic-bezier(.34, 1.56, .64, 1); font-family: var(--font-mono); font-size: 26px; font-weight: 700; fill: var(--brand); text-anchor: middle; transform-box: fill-box; transform-origin: center; }
   .bd__edge { --kf: bd-draw; --dur: 1.4s; --ease: cubic-bezier(.65, 0, .35, 1); fill: none; stroke: var(--brand); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1; stroke-opacity: .85; }
   .bd__edge--thin { stroke-opacity: .3; stroke-width: 1.4; }
@@ -370,7 +367,6 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
   @keyframes bd-frame { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
   @keyframes bd-scan { from { transform: translateX(0); } to { transform: translateX(160px); } }
   @keyframes bd-vanish { from { opacity: 1; } to { opacity: 0; } }
-  @keyframes bd-arms { 0% { opacity: 1; stroke-dashoffset: 1; } 30% { stroke-dashoffset: 0; } 92% { opacity: 1; } 100% { opacity: 0; stroke-dashoffset: 0; } }
   @keyframes bd-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
   @keyframes bd-packet { 0% { offset-distance: 0%; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
   @keyframes bd-comet { 0% { stroke-dashoffset: .09; opacity: 1; } 90% { opacity: 1; } 100% { stroke-dashoffset: -1; opacity: 0; } }

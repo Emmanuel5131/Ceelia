@@ -15,6 +15,10 @@ const isProtectedRoute = createRouteMatcher([
   '/:locale/onboarding(.*)',
 ]);
 
+// Clerk's `auth()` only works in a request that went through its middleware. These routes check who is asking themselves and
+// give a stranger a 404, so the middleware runs on them to identify the person but does not protect or translate them.
+const isClaimsApi = createRouteMatcher(['/api/claims(.*)']);
+
 const isAuthPage = createRouteMatcher([
   '/sign-in(.*)',
   '/:locale/sign-in(.*)',
@@ -47,6 +51,11 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
     }
   }
 
+  if (isClaimsApi(request)) {
+    // oxlint-disable-next-line typescript/return-await
+    return clerkMiddleware()(request, event);
+  }
+
   // Clerk keyless mode doesn't work with i18n, this is why we need to run the middleware conditionally
   if (isAuthPage(request) || isProtectedRoute(request)) {
     // Match Clerk's documented middleware composition pattern, `return await` is not necessary.
@@ -72,7 +81,7 @@ export default async function proxy(request: NextRequest, event: NextFetchEvent)
 
 export const config = {
   // Match all pathnames except for
-  // - … if they start with `/_next`, `/_vercel` or `monitoring`
+  // - … if they start with `/_next`, `/_vercel`, `monitoring` or `api`, except `/api/claims`, which needs Clerk's middleware
   // - … the ones containing a dot (e.g. `favicon.ico`)
-  matcher: '/((?!_next|_vercel|monitoring|api|.*\\..*).*)',
+  matcher: '/((?!_next|_vercel|monitoring|api(?!/claims)|.*\\..*).*)',
 };

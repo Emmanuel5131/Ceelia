@@ -6,20 +6,22 @@ import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from '@noble/hashes/
 import { base58, base64, createBase58check } from '@scure/base';
 import type { ChainId } from './chains';
 import { chainFamily } from './chains';
+import { getBitcoinParams, verifyBitcoinMessage } from './bitcoinMessage';
 import type { ChainFamily } from './families';
 
 const base58check = createBase58check(sha256);
 
 /** The chain families whose ownership proof we can check. Others are filed with ownership "not confirmed". */
 const verifiable: ChainFamily[] = ['evm', 'solana', 'tron'];
+// Bitcoin, Litecoin and Dogecoin sign alike; see `bitcoinMessage`.
 
 /**
  * Tells whether a signed message from a wallet on this chain can be checked.
  * @param chain - The chain.
- * @returns True for EVM chains, Solana and Tron.
+ * @returns True for EVM chains, Solana, Tron, Bitcoin, Litecoin and Dogecoin.
  */
 export function canVerifyOwnership(chain: ChainId) {
-  return verifiable.includes(chainFamily(chain));
+  return verifiable.includes(chainFamily(chain)) || getBitcoinParams(chain) !== undefined;
 }
 
 /**
@@ -96,6 +98,7 @@ function readSolanaSignature(signature: string) {
  * - EVM: EIP-191 `personal_sign` (externally owned accounts; contract wallets are not covered).
  * - Tron: TIP-191 message signing.
  * - Solana: an ed25519 signature over the message bytes.
+ * - Bitcoin, Litecoin and Dogecoin: a BIP-137 signature in base64 (legacy and segwit addresses; not Taproot).
  * @param input - What to check.
  * @param input.chain - The chain.
  * @param input.address - The wallet address that should have signed.
@@ -112,6 +115,11 @@ export function verifyOwnership(input: {
   const signature = input.signature.trim();
   const address = input.address.trim();
   const family = chainFamily(input.chain);
+  const bitcoin = getBitcoinParams(input.chain);
+
+  if (bitcoin) {
+    return verifyBitcoinMessage({ params: bitcoin, address, message: input.message, signature });
+  }
 
   try {
     if (family === 'evm') {

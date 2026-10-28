@@ -4,12 +4,19 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { PageSection } from '@/components/layout/PageSection';
 import { StatCard } from '@/components/overview/StatCard';
 import { CaseAdmin } from '@/components/staff/CaseAdmin';
+import { ClaimValidationQueue } from '@/components/staff/ClaimValidationQueue';
 import { CounselQueue } from '@/components/staff/CounselQueue';
 import { MailPanel } from '@/components/staff/MailPanel';
+import { OwnershipQueue } from '@/components/staff/OwnershipQueue';
 import { SyncCounselButton } from '@/components/staff/SyncCounselButton';
 import { listCases } from '@/libs/Cases';
 import { mailStatus } from '@/libs/MailStatus';
-import { listPendingCounsel, requireStaff } from '@/libs/Staff';
+import {
+  listClaimsToValidate,
+  listOwnershipQueue,
+  listPendingCounsel,
+  requireStaff,
+} from '@/libs/Staff';
 
 type StaffPageProps = {
   params: Promise<{ locale: string }>;
@@ -30,8 +37,10 @@ export default async function StaffPage(props: StaffPageProps) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'Staff' });
   await requireStaff();
-  const [lawyers, cases, mail] = await Promise.all([
+  const [lawyers, wallets, claims, cases, mail] = await Promise.all([
     listPendingCounsel(),
+    listOwnershipQueue(),
+    listClaimsToValidate(),
     listCases(),
     mailStatus(),
   ]);
@@ -46,6 +55,12 @@ export default async function StaffPage(props: StaffPageProps) {
           action={<SyncCounselButton />}
         >
           <CounselQueue lawyers={lawyers} />
+        </PageSection>
+        <PageSection title={t('wallets_title')} description={t('wallets_description')}>
+          <OwnershipQueue items={wallets} />
+        </PageSection>
+        <PageSection title={t('validate_title')} description={t('validate_description')}>
+          <ClaimValidationQueue items={claims} />
         </PageSection>
         <PageSection title={t('cases_title')} description={t('cases_description')}>
           <CaseAdmin cases={cases} />

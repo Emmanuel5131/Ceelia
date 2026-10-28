@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { NewClaimForm } from '@/components/claims/NewClaimForm';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { mustVerify } from '@/libs/Identity';
 import { parseAccount } from '@/utils/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
@@ -30,6 +31,11 @@ export default async function NewClaimPage(props: NewClaimPageProps) {
   // Only people file claims; counsel take cases.
   if (parseAccount(user?.publicMetadata)?.accountType !== 'person') {
     redirect(getI18nPath('/dashboard', locale));
+  }
+
+  // Reporting is for people who have passed the one-time identity check, which keeps spam out.
+  if (user && (await mustVerify(user.id))) {
+    redirect(getI18nPath('/dashboard/verify', locale));
   }
 
   return (

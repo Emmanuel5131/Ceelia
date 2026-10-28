@@ -14,10 +14,6 @@ import { hero } from '../data/home';
         <Button href={hero.primary.href} variant="solid">{hero.primary.label}</Button>
         <Button href={hero.secondary.href}>{hero.secondary.label}</Button>
       </div>
-      <div class="hero__proof">
-        <p class="hero__note" data-split="load" data-delay=".8"><Lines text={hero.note} /></p>
-        <a class="hero__chip" href="/jurisdictions/" data-reveal="load" data-delay="1.1">Find the evidence rule for your jurisdiction<span aria-hidden="true"> →</span></a>
-      </div>
     </div>
   </div>
 </section>
@@ -31,10 +27,6 @@ import { hero } from '../data/home';
   .hero h1 { line-height: var(--lh-tight); letter-spacing: var(--track-xl); word-spacing: var(--words-xl); }
   .hero .lead { max-width: 37.5rem; font-size: clamp(1.0625rem, 1.4vw, 1.1875rem); }
   .hero__ctas { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
-  .hero__proof { display: grid; gap: 20px; justify-items: start; margin-top: 24px; padding-top: 28px; border-top: 1px solid var(--line-soft); width: 100%; max-width: 44rem; }
-  .hero__note { font-weight: 700; font-size: 1rem; line-height: 1.5; color: var(--brand); }
-  .hero__chip { border: 1px solid var(--brand); color: var(--brand); padding: 4px 10px; font-size: var(--fs-xs); font-weight: 500; transition: background-color .3s, color .3s; }
-  .hero__chip:hover { background: var(--brand); color: var(--white); }
   .hero__ctas :global(.btn) { min-width: 200px; }
   @media (max-width: 899.98px) { .hero__ctas :global(.btn) { min-width: 0; flex: 1 1 180px; } }
 </style>

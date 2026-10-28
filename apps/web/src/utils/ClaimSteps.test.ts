@@ -24,6 +24,17 @@ describe(claimSteps, () => {
     ).toStrictEqual(['done', 'done', 'current']);
   });
 
+  it('counts evidence sent for staff to look at as done', () => {
+    expect(
+      claimSteps({
+        ownership: 'review',
+        paymentMethod: 'wallet',
+        statement: null,
+        status: 'draft',
+      }).slice(0, 3),
+    ).toStrictEqual(['done', 'done', 'current']);
+  });
+
   it('points at the first gap when steps are done out of order', () => {
     expect(
       claimSteps({

@@ -66,12 +66,12 @@ type Fail = (path: string) => void;
 
 /**
  * Checks how the money was paid: the wallet for a wallet payment, and every address or hash that was given, against the chain.
- * A bank or cash payment has no chain, so none of those are checked for it.
+ * A bank or card payment has no chain, so none of those are checked for it.
  * @param claim - The parsed form.
  * @param fail - Reports a failed field.
  */
 function checkPayment(claim: ClaimInput, fail: Fail) {
-  // Only a wallet payment has to name something: the wallet. Anyone else may not have a transaction hash, and a bank or cash
+  // Only a wallet payment has to name something: the wallet. Anyone else may not have a transaction hash, and a bank or card
   // payment has none, so what they give is checked but never required.
   if (
     claim.paymentMethod === 'wallet' &&

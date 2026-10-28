@@ -17,14 +17,14 @@ const sha = (s: string) => createHash('sha1').update(s).digest('hex').slice(0, 7
     </div>
   </div>
   <figure class="log" data-reveal data-delay=".2" data-nav-tone="light">
-    <div class="log__bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="tab">{log.tab}</span><span class="branch">sealed</span></div>
+    <div class="log__bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="tab">{log.tab}</span><span class="branch">case file</span></div>
     <div class="log__body">
       <p class="log__cmd" aria-hidden="true"><span class="prompt">$</span> {log.command}</p>
       <ol class="log__list" role="list" data-stagger data-each=".08">
         {log.entries.map((l, i) => (
           <li class="log__line">
             <span class="hash" aria-hidden="true">{sha(l.time + l.text)}</span>
-            <span class="msg">{i === 0 && <span class="head" aria-hidden="true">(HEAD → sealed) </span>}<span class="type">{l.type}:</span> {l.text}</span>
+            <span class="msg">{i === 0 && <span class="head" aria-hidden="true">(HEAD → case file) </span>}<span class="type">{l.type}:</span> {l.text}</span>
             <span class="year">{l.time}</span>
           </li>
         ))}

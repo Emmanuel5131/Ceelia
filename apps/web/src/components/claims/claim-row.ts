@@ -12,6 +12,10 @@ export type ClaimRow = {
   reference: string;
   amountLost: string | null;
   status: 'draft' | 'submitted';
+  /** Whether the person has proven they own the wallet: by signing, or to the satisfaction of staff. */
+  confirmed: boolean;
+  /** Whether Celia staff have checked the sent claim and its evidence. */
+  validated: boolean;
   stepsDone: number;
   stepsTotal: number;
   updatedAt: string;
@@ -19,7 +23,7 @@ export type ClaimRow = {
 
 /**
  * A wallet address or transaction hash cut to its start and end, or a dash when the claim has neither, as when it was paid by
- * bank, card or cash.
+ * bank or card.
  * @param reference - The full address or hash, or an empty string.
  * @returns The short form.
  */
@@ -43,6 +47,8 @@ export function toClaimRow(claim: Claim): ClaimRow {
     reference: claim.walletAddress ?? claim.txHash ?? '',
     amountLost: claim.amountLost,
     status: claim.status === 'submitted' ? 'submitted' : 'draft',
+    confirmed: claim.ownership === 'signed',
+    validated: claim.validatedAt !== null,
     stepsDone: steps.filter((step) => step === 'done').length,
     stepsTotal: steps.length,
     updatedAt: claim.updatedAt.toISOString(),

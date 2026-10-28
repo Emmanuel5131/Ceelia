@@ -2,7 +2,23 @@ export { isValidAddress, isValidTxHash } from './chains/address';
 export type { ChainId } from './chains/chains';
 export { chainFamily, chainIds, chains, getChain } from './chains/chains';
 export type { ChainFamily } from './chains/families';
+export { explorerLink, signingTool } from './chains/explorers';
 export { canVerifyOwnership, ownershipMessage, verifyOwnership } from './chains/ownership';
+export {
+  canSignInBrowser,
+  evmSigner,
+  signOwnership,
+  solanaSigner,
+  tronSigner,
+} from './chains/walletSigning';
+export type {
+  Eip1193Provider,
+  SignFailure,
+  SignOutcome,
+  SolanaProvider,
+  TronProvider,
+  WalletSigner,
+} from './chains/walletSigning';
 export { classifyFailure, maxMailAttempts, nextAttemptAt, toMailError } from './mailRetry';
 export type { FailureKind, MailError } from './mailRetry';
 export {

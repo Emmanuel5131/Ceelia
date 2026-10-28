@@ -25,28 +25,20 @@ export type FraudType = (typeof fraudTypes)[number];
 
 /**
  * How the money left the victim. Only `wallet` can be proven by signing. The other ways on a chain may be backed by a
- * transaction hash when the person has one; `bank_card` and `cash` never touch a chain, so they ask for no chain or hash.
+ * transaction hash when the person has one; `bank_card` never touches a chain, so it asks for no chain or hash.
  */
-export const paymentMethods = [
-  'wallet',
-  'exchange',
-  'atm',
-  'p2p',
-  'bank_card',
-  'cash',
-  'other',
-] as const;
+export const paymentMethods = ['wallet', 'exchange', 'atm', 'p2p', 'bank_card', 'other'] as const;
 
 export type PaymentMethod = (typeof paymentMethods)[number];
 
 /**
- * Whether the money moved on a chain, so a chain, a transaction and an address mean something. Paying by bank transfer, card or
- * cash does not.
+ * Whether the money moved on a chain, so a chain, a transaction and an address mean something. Paying by bank transfer or
+ * card does not.
  * @param method - How the money was paid.
- * @returns False for a bank, card or cash payment.
+ * @returns False for a bank or card payment.
  */
 export function paidOnChain(method: PaymentMethod) {
-  return method !== 'bank_card' && method !== 'cash';
+  return method !== 'bank_card';
 }
 
 /**

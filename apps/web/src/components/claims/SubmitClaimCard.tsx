@@ -1,21 +1,31 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import * as React from 'react';
 import type { ClaimState } from '@/app/[locale]/(auth)/dashboard/claims/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useFormAction } from '@/hooks/use-form-action';
 
 /**
- * The last step: send the claim. Once sent, it shows a confirmation instead.
+ * The last step: send the claim. The person first agrees that it can be shared with the people working on their case, and the
+ * button stays off until they do. Once sent, it shows a confirmation instead.
  * @param props - The card props.
  * @param props.sent - Whether the claim has already been sent.
+ * @param props.ready - Whether the claim has what it needs to be sent: the person's own account of what happened.
  * @param props.action - The server action that sends it.
  * @returns The card.
  */
-export function SubmitClaimCard(props: { sent: boolean; action: () => Promise<ClaimState> }) {
+export function SubmitClaimCard(props: {
+  sent: boolean;
+  ready: boolean;
+  action: (state: ClaimState, formData: FormData) => Promise<ClaimState>;
+}) {
   const t = useTranslations('ClaimPage');
   const { state, onSubmit, pending } = useFormAction(props.action, { errors: [] });
+  const [agreed, setAgreed] = React.useState(false);
 
   return (
     <Card variant="outline">
@@ -33,7 +43,33 @@ export function SubmitClaimCard(props: { sent: boolean; action: () => Promise<Cl
                 {t('error_statement_first')}
               </p>
             )}
-            <Button type="submit" disabled={pending} className="justify-self-start">
+            {!props.ready && (
+              <p className="text-sm text-ink-muted">{t('submit_needs_statement')}</p>
+            )}
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="claim-consent"
+                name="consent"
+                className="mt-1"
+                checked={agreed}
+                onCheckedChange={(next) => {
+                  setAgreed(next === true);
+                }}
+              />
+              <Label htmlFor="claim-consent" className="leading-relaxed font-normal">
+                {t('consent_label')}
+              </Label>
+            </div>
+            {state.errors.includes('consent') && (
+              <p role="alert" className="text-sm text-seal">
+                {t('error_consent')}
+              </p>
+            )}
+            <Button
+              type="submit"
+              disabled={pending || !props.ready || !agreed}
+              className="justify-self-start"
+            >
               {t('submit')}
             </Button>
           </form>

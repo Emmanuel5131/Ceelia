@@ -37,7 +37,7 @@ Principle: the chain is the evidence, so the victim only gives what the chain **
 |---|---|---|---|
 | **Wallet address** and which chain | Yes | Where the money left from; the starting point of every test | On chain |
 | **Signed message from that wallet** | Strongly yes | Proves the person controls the wallet | The signature is verified; no data from the victim needed |
-| **The platform**: its name and site, plus any address, contract or token they know | Yes (name); address optional | Pools the claim with others hurt by the same platform | We match it to the platform's addresses; if unknown, the trace from the victim's wallet finds where the money went |
+| **The platform**: its name and site, plus any address, contract or token they know | Yes (name); address optional | Pools the claim with others affected by the same platform | We match it to the platform's addresses; if unknown, the trace from the victim's wallet finds where the money went |
 | **A transaction hash** of a payment to the platform | Optional, helps | A pointer when the victim does not know the platform's address | On chain |
 | **What you were promised, who told you, where you saw it, and what happened** (a few lines of text) | Yes | The **reliance** element, which the chain cannot show: the promise, the ad, the blocked withdrawal, a fee demanded | **Not confirmed** by design. Shown as "victim report, not on chain", as in the landing's sample file |
 | **Screenshots, chat exports, links** | Optional | Supports the statement; "most victims kept only a wallet address and a few screenshots" | Stored privately; never treated as proven |

@@ -15,7 +15,7 @@ import { site } from '../data/site';
 
 const now = new Date();
 const build = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}`;
-const log = ['Committing method', 'Running tests', 'Checking thresholds', 'Sealing report'];
+const log = ['Committing method', 'Running tests', 'Checking thresholds', 'Building case file'];
 const digits = (n: number) => Array.from({ length: n }, (_, i) => i);
 ---
 <div class="zl" id="zl" aria-hidden="true" data-accent={MARK_ACCENT}>
@@ -23,7 +23,7 @@ const digits = (n: number) => Array.from({ length: n }, (_, i) => i);
   <div class="zl__ui">
     <div class="zl__grid"></div>
     <p class="zl__c zl__c--tl"><span>{site.name}</span><span>Build {build}</span></p>
-    <p class="zl__c zl__c--tr"><span>Sealed onchain</span><span data-zl-clock>UTC</span></p>
+    <p class="zl__c zl__c--tr"><span>Onchain case bank</span><span data-zl-clock>UTC</span></p>
 
     <div class="zl__mark">
       <svg viewBox="0 0 100 100" width="100" height="100">

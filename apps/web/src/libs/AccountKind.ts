@@ -1,17 +1,7 @@
 import type { AccountKind, ChainId } from '@celia/core';
 import * as z from 'zod';
+import { evmEndpoints, rpcCall, solanaEndpoint } from '@/libs/ChainRpc';
 
-// Public read-only endpoints for the chains where a wallet's kind can be read. A chain not listed is not looked up.
-const evmEndpoints: Partial<Record<ChainId, string>> = {
-  ethereum: 'https://ethereum-rpc.publicnode.com',
-  bsc: 'https://bsc-rpc.publicnode.com',
-  polygon: 'https://polygon-bor-rpc.publicnode.com',
-  arbitrum: 'https://arbitrum-one-rpc.publicnode.com',
-  base: 'https://base-rpc.publicnode.com',
-  optimism: 'https://optimism-rpc.publicnode.com',
-  avalanche: 'https://avalanche-c-chain-rpc.publicnode.com',
-};
-const solanaEndpoint = 'https://api.mainnet-beta.solana.com';
 const solanaSystemProgram = '11111111111111111111111111111111';
 
 /**
@@ -34,33 +24,21 @@ export function accountKindOfOwner(owner: string): AccountKind {
   return owner === solanaSystemProgram ? 'eoa' : 'contract';
 }
 
-const resultValidation = z.object({ result: z.unknown() });
 const codeValidation = z.string();
 const accountValidation = z.object({ value: z.object({ owner: z.string() }).nullable() });
-
-async function call(url: string, method: string, params: unknown[]) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-    signal: AbortSignal.timeout(3000),
-  });
-
-  return resultValidation.parse(await response.json()).result;
-}
 
 async function lookUp(chain: ChainId, address: string): Promise<AccountKind | null> {
   const evm = evmEndpoints[chain];
 
   if (evm) {
     return accountKindOfCode(
-      codeValidation.parse(await call(evm, 'eth_getCode', [address, 'latest'])),
+      codeValidation.parse(await rpcCall(evm, 'eth_getCode', [address, 'latest'])),
     );
   }
 
   if (chain === 'solana') {
     const account = accountValidation.parse(
-      await call(solanaEndpoint, 'getAccountInfo', [address, { encoding: 'base64' }]),
+      await rpcCall(solanaEndpoint, 'getAccountInfo', [address, { encoding: 'base64' }]),
     );
 
     return account.value ? accountKindOfOwner(account.value.owner) : null;

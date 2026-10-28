@@ -1,0 +1,1 @@
+ALTER TABLE "claim" ADD COLUMN "validated_at" timestamp;

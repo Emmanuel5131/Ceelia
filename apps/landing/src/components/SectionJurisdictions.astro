@@ -1,5 +1,4 @@
 ---
-import Breadcrumbs from './ui/Breadcrumbs.astro';
 import SectionHeader from './ui/SectionHeader.astro';
 import { ruleKinds } from '@celia/jurisdictions';
 import { jurisdictionsIntro } from '../data/home';
@@ -7,26 +6,27 @@ export interface Props { page?: boolean }
 const { page = false } = Astro.props;
 ---
 <section id="jurisdictions" class:list={['section container', page && 'is-page']} aria-labelledby="jurisdictions-title">
-  {page && <Breadcrumbs back={{ label: 'Back to home', href: '/' }} items={[{ name: 'Home', href: '/' }, { name: 'Jurisdictions' }]} />}
   <SectionHeader id="jurisdictions-title" level={page ? 'h1' : 'h2'} eyebrow={page ? 'Jurisdictions' : undefined} intro={page} align="left" title={jurisdictionsIntro.title} lead={jurisdictionsIntro.lead} />
 
   <div class="jf" data-finder>
-    <label class="jf__label" for="jf-input">Country, state or province</label>
+    <label class="jf__label visually-hidden" for="jf-input">Country, state or province</label>
     <div class="jf__box">
       <svg class="jf__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
       <input id="jf-input" class="jf__input" type="text" role="combobox" aria-expanded="false" aria-controls="jf-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder={jurisdictionsIntro.placeholder} />
       <ul id="jf-list" class="jf__list" role="listbox" aria-label="Matching jurisdictions" hidden></ul>
     </div>
-    <p class="jf__try">{jurisdictionsIntro.tryLabel}: {jurisdictionsIntro.tries.map((t) => <button type="button" class="jf__chip" data-pick={t}>{t}</button>)}</p>
-    <div class="jf__result" data-result aria-live="polite"></div>
-  </div>
+    <p class="jf__try"><span class="jf__trylabel">{jurisdictionsIntro.tryLabel}</span>{jurisdictionsIntro.tries.map((t) => <button type="button" class="jf__chip" data-pick={t}>{t}</button>)}</p>
+    <h2 class="kinds__title">{jurisdictionsIntro.kindsTitle}</h2>
+    <dl class="kinds">
+      {ruleKinds.map((m, i) => (
+        <div class="kind" data-kind={m.id}><dt><span class="kind__n">0{i + 1}</span>{m.title}</dt><dd>{m.text}</dd></div>
+      ))}
+    </dl>
 
-  <dl class="kinds">
-    {ruleKinds.map((m, i) => (
-      <div class="kind"><dt><span class="kind__n">0{i + 1}</span>{m.title}</dt><dd>{m.text}</dd></div>
-    ))}
-  </dl>
-  <p class="foot">{jurisdictionsIntro.note}</p>
+    <div class="jf__result" data-result aria-live="polite"></div>
+
+    <p class="foot">{jurisdictionsIntro.note}</p>
+  </div>
 </section>
 <script>
   import { getRuleKind, searchJurisdictions } from '@celia/jurisdictions';
@@ -66,24 +66,36 @@ const { page = false } = Astro.props;
       if (j.status === 'inherited' && j.parent) return `Uses the national rule of ${j.parent.name}.`;
       return '';
     };
+    const statusLabel = (j: Jurisdiction) => (j.status === 'built' ? 'Built' : j.status === 'mapped' ? 'Mapped' : j.status === 'inherited' ? 'National rule' : '');
+
+    // the kind of rule that applies is lit up in the list below the finder
+    const light = (id?: string) => document.querySelectorAll<HTMLElement>('.kind').forEach((k) => k.classList.toggle('is-on', k.dataset.kind === id));
 
     const show = (j: Jurisdiction) => {
       result.replaceChildren();
       const card = el('article', 'jf__card');
-      const head = el('header', 'jf__head'); head.append(el('h2', 'jf__name', j.name)); if (j.parent) head.append(el('p', 'jf__parent', j.parent.name)); card.append(head);
+      const main = el('div', 'jf__main');
+      const head = el('header', 'jf__head');
+      const title = el('div'); title.append(el('h2', 'jf__name', j.name)); if (j.parent) title.append(el('p', 'jf__parent', j.parent.name)); head.append(title);
+      const label = statusLabel(j); if (label) { const b = el('span', 'jf__badge', label); b.dataset.status = j.status; head.append(b); }
+      main.append(head);
+      card.append(main);
       const m = j.mode ? getRuleKind(j.mode) : null;
+      light(m?.id);
       if (m) {
-        const kind = el('div', 'jf__kind'); kind.append(el('span', 'jf__sq')); const t = el('div'); t.append(el('p', 'jf__kindtitle', m.title), el('p', 'jf__kindtext', m.text)); kind.append(t); card.append(kind);
+        const kind = el('div', 'jf__kind'); kind.append(el('span', 'jf__sq')); const t = el('div'); t.append(el('p', 'jf__kindtitle', m.title), el('p', 'jf__kindtext', m.text)); kind.append(t); main.append(kind);
+        const side = el('div', 'jf__side');
         const dl = el('dl', 'jf__rows');
         if (j.law) dl.append(row('The law', j.law));
         dl.append(row('What Celia does', m.answer));
-        card.append(dl);
-        card.append(el('p', 'jf__status', statusText(j)));
+        side.append(dl, el('p', 'jf__status', statusText(j)));
+        card.append(side);
       } else {
-        card.append(el('p', 'jf__none', `We haven’t mapped ${j.name} yet. Tell us which court and we will add it.`));
-        const a = el<HTMLAnchorElement>('a', 'jf__ask btn btn--solid', 'Ask us to map it'); a.href = `mailto:${site.email}?subject=${encodeURIComponent(`Map ${j.name}`)}`; card.append(a);
+        main.append(el('p', 'jf__none', `We haven’t mapped ${j.name} yet. Tell us which court and we will add it.`));
+        const a = el<HTMLAnchorElement>('a', 'jf__ask btn btn--solid', 'Ask us to map it'); a.href = `mailto:${site.email}?subject=${encodeURIComponent(`Map ${j.name}`)}`; main.append(a);
       }
       result.append(card);
+      result.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     };
 
     const pick = (j: Jurisdiction) => { input.value = j.parent ? `${j.name}, ${j.parent.name}` : j.name; close(); show(j); };
@@ -102,9 +114,9 @@ const { page = false } = Astro.props;
   }
 </script>
 <style is:global>
-  .jf { margin-top: 48px; max-width: 46rem; }
-  .jf__label { display: block; margin-bottom: 12px; font-size: var(--fs-small); font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--brand-ink); }
-  .jf__box { position: relative; }
+  /* the finder is one panel: the search, a few shortcuts, and the answer below them */
+  .jf { margin-top: 48px; padding: clamp(24px, 4vw, 48px); background: var(--cream); }
+  .jf__box { position: relative; max-width: 46rem; }
   .jf__icon { position: absolute; left: 20px; top: 50%; translate: 0 -50%; color: var(--brand-ink); pointer-events: none; }
   .jf__input { width: 100%; height: 64px; padding: 0 20px 0 56px; border: 1.5px solid var(--brand); background: var(--white); color: var(--brand); font: inherit; font-size: 1.125rem; border-radius: 0; }
   .jf__input::placeholder { color: var(--brand-ink); opacity: .8; }
@@ -116,37 +128,60 @@ const { page = false } = Astro.props;
   .jf__opt[aria-selected='true'] { background: var(--cream); }
   .jf__optname { font-weight: 500; }
   .jf__optparent { font-size: var(--fs-small); color: var(--brand-ink); }
-  .jf__try { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: var(--fs-small); color: var(--brand-ink); }
-  .jf__chip { appearance: none; background: none; border: 1px solid var(--line); padding: 4px 12px; font: inherit; font-size: var(--fs-small); color: var(--brand); cursor: pointer; transition: background-color .2s, color .2s; }
-  .jf__chip:hover { background: var(--brand); color: var(--white); }
-  .jf__result { margin-top: 32px; min-height: 0; }
-  .jf__card { background: var(--cream); padding: 32px; display: grid; gap: 24px; }
-  .jf__head { display: grid; gap: 4px; }
+  .jf__try { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: var(--fs-small); color: var(--brand-ink); }
+  .jf__trylabel { margin-right: 4px; font-size: var(--fs-xs); font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+  .jf__chip { appearance: none; background: var(--white); border: 1px solid var(--line); padding: 6px 14px; font: inherit; font-size: var(--fs-small); color: var(--brand); cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; }
+  .jf__chip:hover { background: var(--brand); border-color: var(--brand); color: var(--white); }
+  .jf__result:not(:empty) { margin-top: 32px; }
+  .jf__card { background: var(--white); border: 1px solid var(--line); padding: clamp(24px, 3vw, 40px); display: grid; gap: 32px; }
+  .jf__main, .jf__side { display: grid; gap: 24px; align-content: start; }
+  .jf__head { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-start; justify-content: space-between; }
   .jf__name { font-size: var(--fs-h3); line-height: var(--lh-tight); letter-spacing: var(--track-l); }
-  .jf__parent { font-size: var(--fs-small); color: var(--brand-ink); }
-  .jf__kind { display: flex; gap: 16px; align-items: flex-start; padding: 20px; background: var(--white); border: 1.5px solid var(--brand); }
+  .jf__parent { margin-top: 4px; font-size: var(--fs-small); color: var(--brand-ink); }
+  .jf__badge { padding: 4px 10px; border: 1px solid var(--brand); font-size: var(--fs-xs); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--brand); }
+  .jf__badge[data-status='built'] { background: var(--brand); color: var(--white); }
+  .jf__kind { display: flex; gap: 16px; align-items: flex-start; padding: 20px; background: var(--cream); }
   .jf__sq { flex: none; width: 14px; height: 14px; margin-top: 7px; background: var(--brand); }
   .jf__kindtitle { font-family: var(--font-display); font-size: var(--fs-h4); line-height: 1.2; }
   .jf__kindtext { margin-top: 4px; color: var(--brand-ink); }
   .jf__rows { display: grid; gap: 0; }
-  .jf__row { display: grid; gap: 4px; padding: 14px 0; border-top: 1px solid var(--line-soft); }
+  .jf__row { display: grid; gap: 4px; padding: 16px 0; border-top: 1px solid var(--line-soft); }
+  .jf__row:first-child { padding-top: 0; border-top: 0; }
   .jf__row dt { font-size: var(--fs-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--brand-ink); }
   .jf__row dd { margin: 0; }
   .jf__status { font-size: var(--fs-small); color: var(--brand-ink); }
   .jf__status:empty { display: none; }
   .jf__none { max-width: 36rem; }
   .jf__ask { justify-self: start; }
-  @media (min-width: 700px) { .jf__row { grid-template-columns: 11rem 1fr; gap: 24px; align-items: baseline; } }
+  @media (min-width: 900px) { .jf__card { grid-template-columns: 1fr 1fr; gap: 48px; } }
 </style>
 <style>
   .section { border-top: 1px solid var(--line); }
   .is-page { display: grid; gap: 0; border-top: 0; padding-top: clamp(40px, 6vw, 96px); }
-  .is-page > :global(.crumbs) { margin-bottom: 40px; }
+  .kinds__title { margin-top: 40px; font-family: var(--font-body); font-weight: 500; font-size: var(--fs-small); letter-spacing: .08em; text-transform: uppercase; color: var(--brand-ink); }
+  .kinds { margin-top: 24px; display: grid; gap: 0; border-top: 1px solid var(--line); }
+  .kind { padding: 20px 0; border-bottom: 1px solid var(--line-soft); display: grid; gap: 6px; align-content: start; transition: background-color .3s, box-shadow .3s; }
+  .kind dt { display: flex; gap: 12px; align-items: baseline; font-weight: 700; }
+  .kind__n { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 400; color: var(--brand-ink); }
+  .kind dd { margin: 0; color: var(--brand-ink); font-size: .95rem; max-width: 40rem; }
+  .kind.is-on { background: var(--white); box-shadow: inset 3px 0 0 var(--brand); padding-left: 20px; }
+  @media (min-width: 900px) {
+    .kinds { grid-template-columns: repeat(4, 1fr); }
+    .kind { padding: 32px 24px 36px; border-bottom: 0; border-left: 1px solid var(--line); }
+    .kind:first-child { padding-left: 0; border-left: 0; }
+    .kind.is-on { box-shadow: inset 0 3px 0 var(--brand); padding-left: 24px; }
+    .kind:first-child.is-on { padding-left: 24px; }
+  }
+  .foot { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); font-size: var(--fs-small); color: var(--brand-ink); max-width: 46rem; }
+</style>
+<style>
+  .section { border-top: 1px solid var(--line); }
+  .is-page { display: grid; gap: 0; border-top: 0; padding-top: clamp(40px, 6vw, 96px); }
   .kinds { margin-top: 64px; display: grid; gap: 0; border-top: 1px solid var(--line); }
   .kind { padding: 20px 0; border-bottom: 1px solid var(--line-soft); display: grid; gap: 6px; }
   .kind dt { display: flex; gap: 12px; align-items: baseline; font-weight: 700; }
   .kind__n { font-family: var(--font-mono); font-size: var(--fs-xs); font-weight: 400; color: var(--brand-ink); }
   .kind dd { margin: 0; color: var(--brand-ink); font-size: .95rem; max-width: 40rem; }
   @media (min-width: 900px) { .kinds { grid-template-columns: repeat(4, 1fr); } .kind { padding: 24px 24px 28px; border-bottom: 0; border-left: 1px solid var(--line); } .kind:first-child { padding-left: 0; border-left: 0; } }
-  .foot { margin-top: 32px; font-size: var(--fs-small); color: var(--brand-ink); max-width: 46rem; }
+  .foot { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); font-size: var(--fs-small); color: var(--brand-ink); max-width: 46rem; }
 </style>

@@ -2,7 +2,7 @@
 
 import { platformKey } from '@celia/core';
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
 import { recordCaseEvent } from '@/libs/CaseEvents';
@@ -13,7 +13,13 @@ import { claimantIds, counselIdsFor } from '@/libs/Recipients';
 import { saveReport } from '@/libs/Reports';
 import { requireStaff, syncCounselProfiles } from '@/libs/Staff';
 import { unsuppress } from '@/libs/Suppression';
-import { caseReportSchema, caseSchema, emailMessageSchema } from '@/models/Schema';
+import {
+  caseReportSchema,
+  caseSchema,
+  claimProofSchema,
+  claimSchema,
+  emailMessageSchema,
+} from '@/models/Schema';
 import { parseAccount } from '@/utils/Account';
 import { caseStatuses } from '@/utils/Case';
 import { hashReport } from '@/utils/Report';
@@ -48,6 +54,137 @@ export async function verifyCounsel(userId: string) {
         type: 'counsel_verified',
         // A lawyer can be verified more than once (after a review reset), so the key carries the minute.
         dedupeKey: `counsel_verified:${new Date().toISOString().slice(0, 16)}`,
+      },
+    ]);
+  });
+  revalidatePath('/', 'layout');
+}
+
+const OwnershipReviewValidation = z.object({
+  claimId: z.uuid(),
+  decision: z.enum(['confirm', 'decline']),
+  note: z.string().trim().max(500),
+});
+
+/**
+ * Settles what a person sent to show a wallet is theirs, a video, files or both. Confirming marks the evidence as reviewed and, if
+ * the wallet was not already confirmed by a signature, confirms it as checked by staff and tells the person. Declining needs a
+ * short reason, which the person sees; it deletes their files and forgets their link so they are not kept, and a wallet confirmed
+ * by signature stays confirmed.
+ * @param input - The claim, the decision and, for a decline, the reason.
+ * @param input.claimId - The claim.
+ * @param input.decision - `confirm` or `decline`.
+ * @param input.note - Why it was declined.
+ * @returns The names of the fields that failed.
+ */
+export async function reviewOwnership(input: { claimId: string; decision: string; note: string }) {
+  await requireStaff();
+  const parsed = OwnershipReviewValidation.safeParse(input);
+
+  if (!parsed.success) {
+    return ['decision'];
+  }
+
+  const { claimId, decision, note } = parsed.data;
+
+  if (decision === 'decline' && !note) {
+    return ['note'];
+  }
+
+  await db.transaction(async (tx) => {
+    const [claim] = await tx
+      .select({ userId: claimSchema.userId, ownership: claimSchema.ownership })
+      .from(claimSchema)
+      .where(
+        and(
+          eq(claimSchema.id, claimId),
+          isNotNull(claimSchema.reviewRequestedAt),
+          isNull(claimSchema.reviewedAt),
+        ),
+      );
+
+    if (!claim) {
+      return;
+    }
+
+    if (decision === 'decline') {
+      await tx.delete(claimProofSchema).where(eq(claimProofSchema.claimId, claimId));
+      await tx
+        .update(claimSchema)
+        .set({
+          ownership: claim.ownership === 'review' ? 'unsigned' : claim.ownership,
+          reviewNote: note,
+          reviewVideoUrl: null,
+          proofNote: null,
+          reviewRequestedAt: null,
+        })
+        .where(eq(claimSchema.id, claimId));
+
+      return;
+    }
+
+    const confirming = claim.ownership !== 'signed';
+
+    await tx
+      .update(claimSchema)
+      .set({
+        reviewedAt: new Date(),
+        reviewNote: null,
+        ...(confirming && { ownership: 'signed', ownershipMethod: 'staff', signedAt: new Date() }),
+      })
+      .where(eq(claimSchema.id, claimId));
+
+    if (confirming) {
+      await notify(tx, [
+        {
+          userId: claim.userId,
+          type: 'ownership_confirmed',
+          dedupeKey: `ownership_confirmed:${claimId}`,
+          data: { claimId },
+        },
+      ]);
+    }
+  });
+  revalidatePath('/', 'layout');
+
+  return [];
+}
+
+/**
+ * Validates a sent claim: staff have checked it and the evidence the person added. It only works on a claim that was sent and not
+ * validated yet, and it tells the person.
+ * @param claimId - The claim.
+ */
+export async function validateClaim(claimId: string) {
+  await requireStaff();
+
+  if (!z.uuid().safeParse(claimId).success) {
+    return;
+  }
+
+  await db.transaction(async (tx) => {
+    const [claim] = await tx
+      .update(claimSchema)
+      .set({ validatedAt: new Date() })
+      .where(
+        and(
+          eq(claimSchema.id, claimId),
+          eq(claimSchema.status, 'submitted'),
+          isNull(claimSchema.validatedAt),
+        ),
+      )
+      .returning({ userId: claimSchema.userId });
+
+    if (!claim) {
+      return;
+    }
+
+    await notify(tx, [
+      {
+        userId: claim.userId,
+        type: 'claim_validated',
+        dedupeKey: `claim_validated:${claimId}`,
+        data: { claimId },
       },
     ]);
   });

@@ -1,10 +1,11 @@
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { listOwnershipReviews } from '@/libs/ClaimProofs';
 import { saveCounselProfile } from '@/libs/CounselProfile';
 import { db } from '@/libs/DB';
-import { counselProfileSchema } from '@/models/Schema';
+import { claimSchema, counselProfileSchema } from '@/models/Schema';
 import { parseAccount } from '@/utils/Account';
 import { getI18nPath } from '@/utils/Helpers';
 import { parseProfile } from '@/utils/Profile';
@@ -104,3 +105,87 @@ export async function syncCounselProfiles() {
 
   return copied;
 }
+
+/**
+ * Lists the wallets waiting for staff to confirm, with who to write to about each one. The name and email come from Clerk and are
+ * only for staff.
+ * @returns The claims waiting, oldest request first.
+ */
+export async function listOwnershipQueue() {
+  const reviews = await listOwnershipReviews();
+
+  if (reviews.length === 0) {
+    return [];
+  }
+
+  const client = await clerkClient();
+  const { data } = await client.users.getUserList({
+    userId: reviews.map((review) => review.userId),
+    limit: 500,
+  });
+  const users = new Map(data.map((user) => [user.id, user]));
+
+  return reviews.map((review) => {
+    const user = users.get(review.userId);
+
+    return {
+      ...review,
+      requestedAt: review.requestedAt?.toISOString() ?? null,
+      name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || null,
+      email: user?.primaryEmailAddress?.emailAddress ?? null,
+    };
+  });
+}
+
+export type OwnershipQueueItem = Awaited<ReturnType<typeof listOwnershipQueue>>[number];
+
+/**
+ * Lists the sent claims waiting for staff to validate, oldest first, with who to write to about each one. The name and email come
+ * from Clerk and are only for staff.
+ * @returns The claims waiting.
+ */
+export async function listClaimsToValidate() {
+  const rows = await db
+    .select({
+      id: claimSchema.id,
+      userId: claimSchema.userId,
+      platformName: claimSchema.platformName,
+      fraudType: claimSchema.fraudType,
+      chain: claimSchema.chain,
+      amountLost: claimSchema.amountLost,
+      ownership: claimSchema.ownership,
+      submittedAt: claimSchema.submittedAt,
+    })
+    .from(claimSchema)
+    .where(and(eq(claimSchema.status, 'submitted'), isNull(claimSchema.validatedAt)))
+    .orderBy(asc(claimSchema.submittedAt));
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const client = await clerkClient();
+  const { data } = await client.users.getUserList({
+    userId: [...new Set(rows.map((row) => row.userId))],
+    limit: 500,
+  });
+  const users = new Map(data.map((user) => [user.id, user]));
+
+  return rows.map((row) => {
+    const user = users.get(row.userId);
+
+    return {
+      id: row.id,
+      platformName: row.platformName,
+      fraudType: row.fraudType,
+      chain: row.chain,
+      amountLost: row.amountLost,
+      confirmed: row.ownership === 'signed',
+      submittedAt: row.submittedAt?.toISOString() ?? null,
+      name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || null,
+      email: user?.primaryEmailAddress?.emailAddress ?? null,
+    };
+  });
+}
+
+export type ClaimToValidate = Awaited<ReturnType<typeof listClaimsToValidate>>[number];

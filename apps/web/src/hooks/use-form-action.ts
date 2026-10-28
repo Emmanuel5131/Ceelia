@@ -11,7 +11,7 @@ export type FormState = {
  * action when it finishes, which would wipe what the person typed after a failed check.
  * @param action - The server action.
  * @param initial - The state before anything is sent.
- * @returns The latest state, the submit handler for the form, and whether a send is in progress.
+ * @returns The latest state, the submit handler for the form, a way to send data without a form, and whether a send is in progress.
  */
 export function useFormAction(
   action: (state: FormState, formData: FormData) => Promise<FormState>,
@@ -20,14 +20,16 @@ export function useFormAction(
   const [state, run, pending] = React.useActionState(action, initial);
   const [, startTransition] = React.useTransition();
 
-  const onSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-
+  const submit = (data: FormData) => {
     startTransition(() => {
       run(data);
     });
   };
 
-  return { state, onSubmit, pending };
+  const onSubmit = (event: React.SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    submit(new FormData(event.currentTarget));
+  };
+
+  return { state, onSubmit, submit, pending };
 }

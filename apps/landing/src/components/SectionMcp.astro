@@ -1,0 +1,49 @@
+---
+import SectionHeader from './ui/SectionHeader.astro';
+import Button from './ui/Button.astro';
+import { mcp } from '../data/mcp';
+import { site } from '../data/site';
+const mailto = `mailto:${site.email}?subject=${encodeURIComponent(mcp.cta.subject)}`;
+---
+<section id="mcp" class="section container" aria-labelledby="mcp-title">
+  <SectionHeader id="mcp-title" level="h1" eyebrow={mcp.eyebrow} intro align="left" title={mcp.title} lead={mcp.lead} />
+  <div class="mcp__cta"><Button href={mailto} variant="solid">{mcp.cta.label}</Button></div>
+
+  <ul class="feats" role="list" data-stagger data-each=".1">
+    {mcp.features.map((f, i) => (
+      <li class="feat">
+        <span class="feat__n">0{i + 1}</span>
+        <h2 class="feat__title">{f.title}</h2>
+        <p class="feat__text">{f.text}</p>
+      </li>
+    ))}
+  </ul>
+
+  <div class="asks">
+    <h2 class="asks__label">{mcp.asksLabel}</h2>
+    <ul class="asks__list" role="list">{mcp.asks.map((a) => <li>{a}</li>)}</ul>
+  </div>
+  <p class="foot">{mcp.note}</p>
+</section>
+<style>
+  .mcp__cta { margin-top: 32px; }
+  .feats { margin-top: 64px; display: grid; border-top: 1px solid var(--line); }
+  .feat { padding: 36px 0 40px; border-bottom: 1px solid var(--line); display: grid; gap: 12px; align-content: start; }
+  .feat__n { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--brand-ink); }
+  .feat__title { font-size: var(--fs-h3); line-height: var(--lh-tight); letter-spacing: var(--track-l); }
+  .feat__text { font-size: .95rem; line-height: 1.55; color: var(--brand-ink); max-width: 34ch; }
+  .asks { margin-top: 64px; padding: 40px 32px; background: var(--cream); display: grid; gap: 24px; }
+  .asks__label { font-family: var(--font-body); font-weight: 500; font-size: var(--fs-small); letter-spacing: .08em; text-transform: uppercase; color: var(--brand-ink); }
+  .asks__list { display: grid; gap: 12px; }
+  .asks__list li { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--brand); }
+  .asks__list li::before { content: '› '; color: var(--brand-ink); }
+  .foot { margin-top: 32px; font-size: var(--fs-small); color: var(--brand-ink); max-width: 44rem; }
+  @media (min-width: 900px) {
+    .feats { grid-template-columns: repeat(4, 1fr); }
+    .feat { padding: 48px 32px 56px; border-left: 1px solid var(--line); }
+    .feat:first-child { padding-left: 0; border-left: 0; }
+    .asks { padding: 48px; }
+    .asks__list { grid-template-columns: 1fr 1fr; gap: 16px 32px; }
+  }
+  @media (max-width: 600px) { .asks { padding-left: var(--card-x-m); padding-right: var(--card-x-m); } }
+</style>

@@ -12,6 +12,7 @@ import type {
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  customType,
   date,
   index,
   integer,
@@ -25,6 +26,8 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import type { CaseStatus } from '@/utils/Case';
+import type { OwnershipMethod } from '@/utils/Ownership';
+import type { StoredCheck } from '@/utils/Transaction';
 import type { Report } from '@/validations/ReportValidation';
 
 // This file defines the structure of your database tables using the Drizzle ORM.
@@ -96,6 +99,10 @@ export const claimSchema = pgTable(
     walletApp: text('wallet_app').$type<WalletApp>(),
     /** The transaction that first funded the wallet, when they gave it. It lets us trace where the money came from. */
     fundingTxHash: text('funding_tx_hash'),
+    /** What the chain showed for the funding transaction when the claim was saved. Empty when it could not be asked. */
+    fundingTxCheck: jsonb('funding_tx_check').$type<StoredCheck>(),
+    /** What the chain showed for the transaction that sent the money when the claim was saved. */
+    txCheck: jsonb('tx_check').$type<StoredCheck>(),
     /** The address they sent the money to, such as the platform's deposit address, when they have it. It lets us follow the money. */
     destinationAddress: text('destination_address'),
     /** When they first and last paid, as `YYYY-MM-DD`. It gives the case a timeline. */
@@ -109,8 +116,20 @@ export const claimSchema = pgTable(
     /** What they were promised, by whom and where, and what happened, in their own words. Not confirmed by the chain. */
     statement: text('statement'),
     country: text('country'),
-    /** `unsigned` until a signed message from the wallet has been checked. */
+    /** `unsigned` until the wallet is confirmed; `review` while staff look at the documents the person sent; `signed` once confirmed. */
     ownership: text('ownership').notNull().default('unsigned'),
+    /** How a confirmed wallet was confirmed: `signature` from the wallet itself, or `staff` from documents. */
+    ownershipMethod: text('ownership_method').$type<OwnershipMethod>(),
+    /** The link to the video they made to explain their case and show the wallet, when that is what they sent. */
+    reviewVideoUrl: text('review_video_url'),
+    /** What the person told staff about what they sent. */
+    proofNote: text('proof_note'),
+    /** When the person last added a video or files, which puts the claim in the staff queue in order. Empty when they added none. */
+    reviewRequestedAt: timestamp('review_requested_at', { mode: 'date' }),
+    /** When staff last looked at the video and files and found them good. A new video or file clears it, so they look again. */
+    reviewedAt: timestamp('reviewed_at', { mode: 'date' }),
+    /** Why staff could not confirm the wallet from the documents. Shown to the person, who can try again. */
+    reviewNote: text('review_note'),
     /** The one-time value in the message to sign, so a signature cannot be reused for another claim. */
     nonce: text('nonce').notNull(),
     signature: text('signature'),
@@ -118,6 +137,10 @@ export const claimSchema = pgTable(
     /** `draft` while the person is still filling it in, `submitted` once they send it. */
     status: text('status').notNull().default('draft'),
     submittedAt: timestamp('submitted_at', { mode: 'date' }),
+    /** When the person agreed that the claim can be shared with the people working on their case; set when they send it. */
+    consentedAt: timestamp('consented_at', { mode: 'date' }),
+    /** When Celia staff checked the sent claim and its evidence; null until they have. */
+    validatedAt: timestamp('validated_at', { mode: 'date' }),
     updatedAt: timestamp('updated_at', { mode: 'date' })
       .defaultNow()
       .$onUpdate(() => new Date())
@@ -132,6 +155,30 @@ export const claimSchema = pgTable(
       table.platformKey,
     ),
   ],
+);
+
+const bytea = customType<{ data: Buffer }>({
+  dataType: () => 'bytea',
+});
+
+/**
+ * A screenshot or receipt a person sent to show they control a wallet, kept as bytes so no other service holds it. Only the
+ * person and staff can open it; it is never shown to counsel. It is deleted with the claim, and when staff decline it.
+ */
+export const claimProofSchema = pgTable(
+  'claim_proof',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    claimId: uuid('claim_id')
+      .notNull()
+      .references(() => claimSchema.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    contentType: text('content_type').notNull(),
+    size: integer('size').notNull(),
+    data: bytea('data').notNull(),
+    createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  },
+  (table) => [index('claim_proof_claim_idx').on(table.claimId)],
 );
 
 /**
@@ -257,6 +304,23 @@ export const userSettingSchema = pgTable('user_setting', {
   userId: text('user_id').primaryKey(),
   locale: text('locale').notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date', withTimezone: true })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+/**
+ * The one-time identity check that stops spam: a person must pass it before they can report a loss. Only the result is kept, never
+ * the document or the selfie. `attempts` caps how often someone can try.
+ */
+export const identityCheckSchema = pgTable('identity_check', {
+  userId: text('user_id').primaryKey(),
+  /** `verified` once Idswyft says so; anything else it returns, including a manual review, is `failed`. */
+  status: text('status').$type<'verified' | 'failed'>().notNull(),
+  verificationId: text('verification_id'),
+  attempts: integer('attempts').default(1).notNull(),
+  verifiedAt: timestamp('verified_at', { mode: 'date' }),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),

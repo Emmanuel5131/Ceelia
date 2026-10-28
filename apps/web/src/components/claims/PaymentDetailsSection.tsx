@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
  * wallet payment also asks for the transaction that sent it, which the other ways of paying already gave on the step before.
  * @param props - The section props.
  * @param props.fromWallet - Whether the money left from the person's own wallet.
- * @param props.onChain - Whether the money moved on a chain; a bank, card or cash payment did not.
+ * @param props.onChain - Whether the money moved on a chain; a bank or card payment did not.
  * @param props.errors - The names of the fields the server refused.
  * @param props.defaults - The saved answers, when a draft is being edited.
  * @param props.step - Which step this is.

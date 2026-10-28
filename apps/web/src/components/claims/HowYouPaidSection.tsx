@@ -9,6 +9,7 @@ import { useClaimLabels } from '@/components/claims/claim-labels';
 import { FieldMessage } from '@/components/claims/FieldMessage';
 import { FormStep } from '@/components/claims/FormStep';
 import { TxHashField } from '@/components/claims/TxHashField';
+import { WalletFields } from '@/components/claims/WalletFields';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -79,7 +80,7 @@ export function HowYouPaidSection(props: {
             <ChainSelect id="chain" name="chain" defaultValue={defaults?.chain} />
           </div>
         ) : (
-          // A bank, card or cash payment is on no chain; "another chain" is what the claim is filed under.
+          // A bank or card payment is on no chain; "another chain" is what the claim is filed under.
           <input type="hidden" name="chain" value="other" />
         )}
       </div>
@@ -102,6 +103,7 @@ export function HowYouPaidSection(props: {
           </FieldMessage>
         </div>
       ) : null}
+      {fromWallet && <WalletFields errors={props.errors} defaults={defaults} />}
       {!fromWallet && onChain && (
         <TxHashField
           label={t('tx_label_optional')}

@@ -1,4 +1,4 @@
-import { canVerifyOwnership, ownershipMessage } from '@celia/core';
+import { canSignInBrowser, canVerifyOwnership, ownershipMessage, signingTool } from '@celia/core';
 import { auth } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -6,24 +6,32 @@ import { notFound } from 'next/navigation';
 import * as z from 'zod';
 import {
   deleteClaim,
+  removeOwnershipEvidence,
   saveStatement,
+  sendOwnershipProof,
+  sendOwnershipVideo,
   submitClaim,
   verifyClaimOwnership,
+  withdrawOwnershipReview,
 } from '@/app/[locale]/(auth)/dashboard/claims/actions';
-import { ClaimMeta, OperatorName } from '@/components/claims/ClaimMeta';
-import { ClaimSteps } from '@/components/claims/ClaimSteps';
+import { OperatorName } from '@/components/claims/ClaimMeta';
+import { ClaimSummary } from '@/components/claims/ClaimSummary';
+import { ClaimWizard } from '@/components/claims/ClaimWizard';
+import type { WizardKey } from '@/components/claims/ClaimWizard';
 import { DeleteClaimDialog } from '@/components/claims/DeleteClaimDialog';
 import { OwnershipCard } from '@/components/claims/OwnershipCard';
 import { StatementCard } from '@/components/claims/StatementCard';
 import { SubmitClaimCard } from '@/components/claims/SubmitClaimCard';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import { listProofFiles } from '@/libs/ClaimProofs';
 import { countOthersOnOperator, getClaim } from '@/libs/Claims';
 import { Link } from '@/libs/I18nNavigation';
 import { claimSteps } from '@/utils/ClaimSteps';
 
 type ClaimPageProps = {
   params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ edit?: string }>;
 };
 
 export async function generateMetadata(props: ClaimPageProps): Promise<Metadata> {
@@ -41,6 +49,7 @@ export default async function ClaimPage(props: ClaimPageProps) {
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'ClaimPage' });
   const { userId } = await auth();
+  const { edit } = await props.searchParams;
 
   // A claim that is not yours looks the same as one that does not exist.
   const claim = z.uuid().safeParse(id).success && userId ? await getClaim(userId, id) : undefined;
@@ -56,46 +65,99 @@ export default async function ClaimPage(props: ClaimPageProps) {
     ? ownershipMessage({ chain, address: claim.walletAddress ?? '', nonce: claim.nonce })
     : '';
 
-  return (
-    <>
-      <PageHeader
-        centered
-        title={<OperatorName name={claim.platformName} />}
-        description={<ClaimMeta claim={claim} />}
-      />
-      <div className="mx-auto grid w-full max-w-2xl gap-6">
-        <ClaimSteps states={claimSteps(claim)} signed={canSign} />
-        <p className="text-center text-sm text-ink-muted">
-          {claim.platformName
-            ? t('others', { count: others, platform: claim.platformName })
-            : t('others_unnamed', { count: others })}
-        </p>
-        {canSign && (
-          <OwnershipCard
-            message={message}
-            signed={claim.ownership === 'signed'}
-            canVerify={canVerifyOwnership(chain)}
-            action={verifyClaimOwnership.bind(null, claim.id)}
-          />
-        )}
+  const draft = claim.status !== 'submitted';
+  const files = canSign ? await listProofFiles(claim.id) : [];
+  const panels: { key: WizardKey; panel: React.ReactNode; action?: React.ReactNode }[] = [
+    ...(canSign
+      ? [
+          {
+            key: 'ownership' as const,
+            panel: (
+              <OwnershipCard
+                claimId={claim.id}
+                chain={chain}
+                address={claim.walletAddress ?? ''}
+                message={message}
+                method={claim.ownershipMethod}
+                signed={claim.signature !== null}
+                waiting={claim.reviewRequestedAt !== null && claim.reviewedAt === null}
+                reviewNote={claim.reviewNote}
+                videoUrl={claim.reviewVideoUrl}
+                files={files}
+                canVerify={canVerifyOwnership(chain)}
+                inBrowser={canSignInBrowser(chain)}
+                tool={signingTool(chain)}
+                verify={verifyClaimOwnership.bind(null, claim.id)}
+                sendProof={sendOwnershipProof.bind(null, claim.id)}
+                sendVideo={sendOwnershipVideo.bind(null, claim.id)}
+                withdraw={withdrawOwnershipReview.bind(null, claim.id)}
+                remove={removeOwnershipEvidence.bind(null, claim.id)}
+              />
+            ),
+          },
+        ]
+      : []),
+    {
+      key: 'statement',
+      panel: (
         <StatementCard
           statement={claim.statement}
           fraudType={claim.fraudType}
           action={saveStatement.bind(null, claim.id)}
         />
+      ),
+    },
+    {
+      key: 'send',
+      panel: (
         <SubmitClaimCard
-          sent={claim.status === 'submitted'}
+          sent={!draft}
+          ready={Boolean(claim.statement)}
           action={submitClaim.bind(null, claim.id)}
         />
-        {claim.status !== 'submitted' && (
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button asChild variant="outline">
-              <Link href={`/dashboard/claims/${claim.id}/edit`}>{t('edit_action')}</Link>
-            </Button>
-            <DeleteClaimDialog action={deleteClaim.bind(null, claim.id)} />
-          </div>
-        )}
-      </div>
-    </>
+      ),
+    },
+  ];
+
+  return (
+    <ClaimWizard
+      // A new key reopens the wizard on the account when Edit account is pressed on a page that is already open.
+      key={edit ?? 'steps'}
+      start={edit === 'account' ? 'statement' : undefined}
+      header={
+        <PageHeader
+          title={<OperatorName name={claim.platformName} />}
+          description={
+            claim.platformName
+              ? t('others', { count: others, platform: claim.platformName })
+              : t('others_unnamed', { count: others })
+          }
+        />
+      }
+      panels={panels}
+      states={claimSteps(claim)}
+      aside={
+        <ClaimSummary
+          claim={claim}
+          footer={
+            draft ? (
+              <>
+                <Button asChild variant="outline">
+                  <Link href={`/dashboard/claims/${claim.id}/edit`}>{t('edit_action')}</Link>
+                </Button>
+                <DeleteClaimDialog action={deleteClaim.bind(null, claim.id)} />
+              </>
+            ) : (
+              // A sent claim is part of a case, so only the person's own account can still be changed.
+              <Button asChild variant="outline">
+                <Link href={`/dashboard/claims/${claim.id}?edit=account`}>
+                  {t('edit_account_action')}
+                </Link>
+              </Button>
+            )
+          }
+        />
+      }
+    />
   );
 }
