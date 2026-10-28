@@ -1,13 +1,13 @@
 ---
-import { appLogin } from '../data/app';
+import { appJoin, appLogin } from '../data/app';
 import Button from './ui/Button.astro';
 import Lines from './ui/Lines.astro';
-const { title = 'Lost money to a\ncrypto scheme?', lead = 'Add your case. If you’re a lawyer or run a law firm, join the case bank and take it forward.' } = Astro.props as { title?: string; lead?: string };
+const { title = 'Lost money to a\ncrypto scheme?', lead = 'Add your case. If you work in law, investigation or research, get professional access to the case bank.' } = Astro.props as { title?: string; lead?: string };
 ---
 <section id="report" class="section container cta" aria-labelledby="cta-title">
   <h2 id="cta-title" class="h2" data-split><Lines text={title} /></h2>
   <p class="lead" data-reveal data-delay=".15">{lead}</p>
-  <div class="cta__btns" data-stagger><Button href={appLogin} variant="solid">Report fraud</Button><Button href={appLogin}>Join as a professional or enterprise</Button></div>
+  <div class="cta__btns" data-stagger><Button href={appLogin} variant="solid">Report fraud</Button><Button href={appJoin}>Get professional access</Button></div>
 </section>
 <style>
   .cta { display: grid; justify-items: center; text-align: center; gap: 24px; }

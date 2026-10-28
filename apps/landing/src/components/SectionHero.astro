@@ -24,7 +24,8 @@ import { hero } from '../data/home';
   /* the copy is indented from the logo and sits a little below the middle, with room above it, like a landing hero rather than a page header */
   .hero__inner { position: relative; z-index: 1; padding-block: clamp(56px, 9svh, 120px) clamp(56px, 8svh, 104px); padding-inline: max(24px, 2.5vw); }
   .hero__copy { display: grid; gap: 32px; max-width: 44rem; justify-items: start; }
-  .hero h1 { line-height: var(--lh-tight); letter-spacing: var(--track-xl); word-spacing: var(--words-xl); }
+  /* Aeonik ships 300, 400 and 700 only, so a thin stroke gives the title a weight between regular and bold */
+  .hero h1 { line-height: var(--lh-tight); letter-spacing: var(--track-xl); word-spacing: var(--words-xl); -webkit-text-stroke: .02em currentColor; }
   .hero .lead { max-width: 37.5rem; font-size: clamp(1.0625rem, 1.4vw, 1.1875rem); }
   .hero__ctas { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; }
   .hero__ctas :global(.btn) { min-width: 200px; }

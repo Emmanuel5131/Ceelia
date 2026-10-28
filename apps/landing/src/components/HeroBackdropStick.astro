@@ -9,7 +9,8 @@ import HeroTag from './HeroTag.astro';
  *   frame 1  1  a hooded operator promises 10% a week      2  victims pay in, then are asked for a fee to withdraw
  *   frame 2  3  the money moves out through a mixer and is cashed out at an exchange
  *   frame 3  4  Celia's case bank holds the wallets of those defrauded      5  and the evidence next to them
- *   frame 4  6  Celia connects the case bank to law firms, lawyers and investigative agencies          7  they start with wallets and evidence listed
+ *   frame 4  6  Celia connects the case bank to everyone who needs it: lawyers, law firms, investigators, law enforcement,
+ *               regulators, researchers and analysts          7  they start with wallets and evidence listed
  *            8  the case is handed over and Celia's part is done
  *   frame 5  9  a lawyer or firm runs the case in court      10  together, victims hold the platform accountable
  * Words name actions, never people or intent. Seal red is for the seal and the verdict only. The story is an illustration, and
@@ -43,7 +44,7 @@ const captions: [string, number, number][] = [
   ['3 · The money’s trail is hidden, then it is cashed out', t(1), 2],
   ['4 · Celia’s case bank holds the wallets of those defrauded', t(2), 1.7],
   ['5 · And the evidence next to them: the chain proofs', t(2, 1.7), 1.7],
-  ['6 · Celia connects the case bank to law firms, lawyers and investigative agencies', t(3), 1.7],
+  ['6 · Celia connects the case bank to everyone who needs it', t(3), 1.7],
   ['7 · They start with the wallets and evidence already listed', t(3, 1.7), 1.7],
   ['8 · We hand the case over, and our part is done', t(3, 3.4), 1.7],
   ['9 · A lawyer or firm runs the case in court', t(4), 1.9],
@@ -81,10 +82,26 @@ const rowY = (i: number) => 372 + i * 46;
 const proofs = ['funding trail', 'cohort vs baseline', 'onchain records', 'certificate'];
 const celia: P = [snap(1310), snap(664)];
 
-// frame 4: the case bank connected to law firms, lawyers and investigative agencies
+// frame 4: the case bank connected to everyone who needs the case, one row each on the dot grid with its name beside it
 const hub = { x: 840, y: 400, w: 190, h: 200 };
-const targets: [number, string, 'lawyer' | 'firm' | 'agent'][] = [[320, 'lawyer', 'lawyer'], [520, 'law firm', 'firm'], [700, 'investigative agency', 'agent']];
-const TX = snap(1360);
+const players = [
+  { label: 'lawyer', kind: 'lawyer' },
+  { label: 'law firm', kind: 'firm' },
+  { label: 'investigative agency', kind: 'agent' },
+  { label: 'law enforcement', kind: 'officer' },
+  { label: 'regulator', kind: 'regulator' },
+  { label: 'researcher', kind: 'researcher' },
+  { label: 'analyst', kind: 'analyst' },
+] as const;
+const TX = snap(1240);
+const PLAYER = { first: 280, gap: 80, scale: 0.6 };
+const playerY = (i: number) => PLAYER.first + i * PLAYER.gap;
+/** Where a row's figure is centred, which is where its tag, its line and its tick line up. */
+const playerMid = (i: number) => playerY(i) + 28 * PLAYER.scale;
+const TAG_X = TX + 40;
+/** The ticks line up in one column, after the longest name. */
+const TICK_X = TAG_X + Math.max(...players.map((p) => p.label.length)) * 8.4 + 20 + 16;
+const edge = (i: number): P[] => [[hub.x + hub.w, hub.y + hub.h / 2], [TX - 40, playerMid(i)]];
 
 // frame 5: a lawyer runs the case, and more victims join
 const UP = 160; // the last frame sits two dot rows higher, closer to its caption
@@ -209,7 +226,7 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
       <HeroTag text="Celia" x={celia[0]} y={celia[1] + 118} delay={t(2, 0.9)} anchor="mid" />
     </g>
 
-    <!-- frame 4: the case bank is connected to law firms, lawyers and investigative agencies -->
+    <!-- frame 4: the case bank is connected to everyone who needs the case -->
     <g class="bd__frame" style={frameStyle(3)}>
       <rect class="bd__box" style={sty(t(3, 0.1), 0.4)} x={hub.x} y={hub.y} width={hub.w} height={hub.h} />
       <HeroTag text="Celia · case bank" x={hub.x + hub.w / 2} y={hub.y - 10} delay={t(3, 0.3)} anchor="mid" />
@@ -220,25 +237,27 @@ const crowd: P[] = [0, 1, 2, 3, 4, 5, 6].map((i): P => [snap(840 + i * 80), snap
           <text class="bd__rowtxt" x={hub.x + 52} y={hub.y + 56 + i * 56 + 5}>{label}</text>
         </g>
       ))}
-      {targets.map(([y, , kind], i) => (
-        kind !== 'firm'
-          ? <HeroFigure kind={kind} x={TX} y={snap(y - 20)} delay={t(3, 0.5 + i * 0.2)} dur={0.5} scale={0.85} />
+      {players.map((p, i) => (
+        p.kind !== 'firm'
+          ? <HeroFigure kind={p.kind} x={TX} y={playerY(i)} delay={t(3, 0.5 + i * 0.12)} dur={0.5} scale={PLAYER.scale} />
           : (
-            <g class="bd__fade" style={sty(t(3, 0.5 + i * 0.2), 0.4)}>
-              <path class="bd__box" d={bankBuilding(TX, y).roof} />
-              <rect class="bd__box" x={bankBuilding(TX, y).beam.x} y={bankBuilding(TX, y).beam.y} width={bankBuilding(TX, y).beam.w} height={bankBuilding(TX, y).beam.h} />
-              {bankBuilding(TX, y).cols.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
-              {bankBuilding(TX, y).steps.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
-              <path class="bd__scales" d={scales(TX, y)} />
+            <g transform={`translate(${TX} ${playerMid(i)}) scale(.42) translate(${-TX} ${-(playerMid(i) - 10)})`}>
+              <g class="bd__fade" style={sty(t(3, 0.5 + i * 0.12), 0.4)}>
+                <path class="bd__box" d={bankBuilding(TX, playerMid(i)).roof} />
+                <rect class="bd__box" x={bankBuilding(TX, playerMid(i)).beam.x} y={bankBuilding(TX, playerMid(i)).beam.y} width={bankBuilding(TX, playerMid(i)).beam.w} height={bankBuilding(TX, playerMid(i)).beam.h} />
+                {bankBuilding(TX, playerMid(i)).cols.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
+                {bankBuilding(TX, playerMid(i)).steps.map((c) => <rect class="bd__box" x={c.x} y={c.y} width={c.w} height={c.h} />)}
+                <path class="bd__scales" d={scales(TX, playerMid(i))} />
+              </g>
             </g>
           )
       ))}
-      {targets.map(([y, label], i) => <HeroTag text={label} x={TX} y={y + (label === 'law firm' ? 66 : 72)} delay={t(3, 0.7 + i * 0.2)} anchor="mid" />)}
-      {targets.map(([y], i) => <path class="bd__edge bd__edge--thin" style={sty(t(3, 0.9 + i * 0.15), 0.5)} d={d([[hub.x + hub.w, hub.y + hub.h / 2], [TX - 80, y]])} pathLength="1" />)}
-      {targets.map(([y], i) => <path class="bd__comet" style={sty(t(3, 1.1 + i * 0.2), 0.8)} d={d([[hub.x + hub.w, hub.y + hub.h / 2], [TX - 80, y]])} pathLength="1" />)}
-      {targets.map(([y], i) => (
-        <g class="bd__mark" style={sty(t(3, 2.0 + i * 0.25), 0.4)}>
-          <rect class="bd__tick" x={TX + 90} y={y - 10} width="20" height="20" /><path class="bd__tickmark" d={`M${TX + 95} ${y}l3.5 4 6.5-8`} />
+      {players.map((p, i) => <HeroTag text={p.label} x={TAG_X} y={playerMid(i) + 6} delay={t(3, 0.7 + i * 0.12)} />)}
+      {players.map((_, i) => <path class="bd__edge bd__edge--thin" style={sty(t(3, 0.9 + i * 0.1), 0.5)} d={d(edge(i))} pathLength="1" />)}
+      {players.map((_, i) => <path class="bd__comet" style={sty(t(3, 1.1 + i * 0.12), 0.8)} d={d(edge(i))} pathLength="1" />)}
+      {players.map((_, i) => (
+        <g class="bd__mark" style={sty(t(3, 2.0 + i * 0.15), 0.4)}>
+          <rect class="bd__tick" x={TICK_X} y={playerMid(i) - 10} width="20" height="20" /><path class="bd__tickmark" d={`M${TICK_X + 5} ${playerMid(i)}l3.5 4 6.5-8`} />
         </g>
       ))}
       <!-- everything is handed over: Celia's part is done -->

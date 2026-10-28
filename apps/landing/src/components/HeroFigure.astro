@@ -3,12 +3,20 @@
  * A person for the hero story, drawn as a round profile icon around its centre and then moved and scaled: a head and shoulders
  * inside a ring, the way a product draws a user. A small badge in the corner says the role, never a costume: the operator has a
  * solid head under a hood, Celia a halo and a magnifying glass, the lawyer a tie and a briefcase, the investigator a hat and a
- * magnifying glass, the judge a collar and a gavel. The icon draws itself in once the story is on, starting at `delay`. `x` and
+ * magnifying glass, the judge a collar and a gavel, the officer a peaked cap and a shield, the regulator a document, the researcher
+ * glasses and a flask, the analyst a chart. The icon draws itself in once the story is on, starting at `delay`. `x` and
  * `y` are where the head sits, so the tags and speech bubbles around it keep their places.
  */
-const props = Astro.props as { kind: 'victim' | 'operator' | 'celia' | 'lawyer' | 'agent' | 'judge'; x: number; y: number; delay: number; dur?: number; scale?: number };
+const props = Astro.props as {
+  kind: 'victim' | 'operator' | 'celia' | 'lawyer' | 'agent' | 'judge' | 'officer' | 'regulator' | 'researcher' | 'analyst';
+  x: number;
+  y: number;
+  delay: number;
+  dur?: number;
+  scale?: number;
+};
 const scale = props.scale ?? 1.05;
-const badge = { celia: 'search', agent: 'search', lawyer: 'case', judge: 'gavel' } as const;
+const badge = { celia: 'search', agent: 'search', lawyer: 'case', judge: 'gavel', officer: 'shield', regulator: 'doc', researcher: 'flask', analyst: 'chart' } as const;
 const role = props.kind === 'victim' || props.kind === 'operator' ? undefined : badge[props.kind];
 ---
 <g class="bd__f" style={`--d:${props.delay.toFixed(2)}s;--dur:${props.dur ?? 0.6}s`} transform={`translate(${props.x} ${props.y}) scale(${scale})`}>
@@ -21,6 +29,10 @@ const role = props.kind === 'victim' || props.kind === 'operator' ? undefined : 
     {props.kind === 'lawyer' && <path class="bd__fp bd__fp--fill" d="M0 10L-3.5 15L0 27L3.5 15Z" />}
     {props.kind === 'agent' && <path class="bd__fp" d="M-17 -16H17M-10 -16V-27H10V-16" pathLength="1" />}
     {props.kind === 'judge' && <path class="bd__fp" d="M-9 9L0 23L9 9" pathLength="1" />}
+    {props.kind === 'officer' && <path class="bd__fp" d="M-16 -15H16M-11 -15C-11 -27 11 -27 11 -15" pathLength="1" />}
+    {props.kind === 'researcher' && <circle class="bd__fp" cx="-5" cy="-8" r="3.6" pathLength="1" />}
+    {props.kind === 'researcher' && <circle class="bd__fp" cx="5" cy="-8" r="3.6" pathLength="1" />}
+    {props.kind === 'researcher' && <path class="bd__fp" d="M-1.4 -8H1.4" pathLength="1" />}
     {role && (
       <g transform="translate(25 25)">
         <circle class="bd__fp bd__fp--head" r="13" pathLength="1" />
@@ -29,6 +41,11 @@ const role = props.kind === 'victim' || props.kind === 'operator' ? undefined : 
         {role === 'case' && <rect class="bd__fp" x="-7" y="-3" width="14" height="10" rx="1.5" pathLength="1" />}
         {role === 'case' && <path class="bd__fp" d="M-3 -3V-6H3V-3" pathLength="1" />}
         {role === 'gavel' && <rect class="bd__fp" x="-2" y="-8" width="11" height="5" rx="1" transform="rotate(45 3.5 -5.5)" pathLength="1" />}
+        {role === 'shield' && <path class="bd__fp" d="M0 -8L7 -5V1C7 5 3.5 8 0 9C-3.5 8 -7 5 -7 1V-5Z" pathLength="1" />}
+        {role === 'doc' && <rect class="bd__fp" x="-6" y="-8" width="12" height="16" rx="1.5" pathLength="1" />}
+        {role === 'doc' && <path class="bd__fp" d="M-3 -3H3M-3 1H3" pathLength="1" />}
+        {role === 'flask' && <path class="bd__fp" d="M-2.5 -8H2.5M-2 -8V-2L-7 7H7L2 -2V-8" pathLength="1" />}
+        {role === 'chart' && <path class="bd__fp" d="M-6 7V1M0 7V-5M6 7V-1" pathLength="1" />}
         {role === 'gavel' && <path class="bd__fp" d="M-6 6.5L1 -0.5" pathLength="1" />}
       </g>
     )}

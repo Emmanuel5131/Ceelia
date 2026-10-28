@@ -1,4 +1,4 @@
-import { appLogin } from './app';
+import { appJoin, appLogin } from './app';
 /**
  * Single source of truth for brand facts.
  * Used by the UI, JSON-LD structured data, llms.txt and robots.txt so every
@@ -58,7 +58,7 @@ export const footerNav = {
   ],
   contact: [
     { label: 'Report fraud', href: appLogin },
-    { label: 'Join as a professional or enterprise', href: appLogin },
+    { label: 'Get professional access', href: appJoin },
     { label: 'Email us', href: `mailto:${site.email}` },
   ],
 };

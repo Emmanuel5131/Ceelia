@@ -1,4 +1,4 @@
-import { appLogin } from './app';
+import { appJoin, appLogin } from './app';
 /**
  * Homepage content. Celia is a case bank: victims of the same scheme add their wallet and tell what happened in their own words, the evidence is
  * gathered from the chain, and the case is open to lawyers and law firms with the list of affected victims already built. Celia is only
@@ -9,10 +9,10 @@ import { appLogin } from './app';
  * or any promise of an outcome or a fee.
  */
 export const hero = {
-  eyebrow: 'Legal tech · onchain case bank for law firms and investigators',
+  eyebrow: 'Legal tech · onchain case bank for law firms, investigators and law enforcement',
   title: 'An open case bank\nfor crypto fraud.',
-  lead: 'We verify victims’ claims using onchain evidence and offchain records, bringing researchers, law firms, and investigators together to build credible crypto fraud cases.',
-  primary: { label: 'Join as a professional or enterprise', href: appLogin },
+  lead: 'We verify victims’ claims using onchain evidence and offchain records, bringing researchers, law firms, investigators, and law enforcement together to build credible crypto fraud cases.',
+  primary: { label: 'Get professional access', href: appJoin },
   secondary: { label: 'Report fraud', href: appLogin },
 };
 
@@ -109,7 +109,7 @@ export const process = {
   lead: 'You are not the only one. Celia pools the victims of the same platform into one case that lawyers and researchers can find and build on. The method is committed first, so the case stands on what the chain shows.',
   cta: {
     victim: { label: 'Report fraud', href: appLogin },
-    lawyer: { label: 'Join as a professional or enterprise', href: appLogin },
+    lawyer: { label: 'Get professional access', href: appJoin },
   },
   steps: [
     { title: 'Don’t be a lone victim', text: 'Join the others affected by the same platform. One claim is easy to ignore. Many together show a pattern.' },
@@ -144,7 +144,7 @@ export const audience = [
     title: 'The file is built. What you do with it is yours to decide.',
     text: 'Celia holds the wallets of those defrauded and the evidence, so you start with the list already built. Whether you are a solo lawyer or a firm, you decide whether to take the case and how to run it. Celia does not tell you what to do, and does not promise a result.',
     points: ['Pooled claimants by jurisdiction, with ownership proven', 'Gathered evidence and a certificate for your court', 'Evidence you can verify yourself'],
-    cta: { label: 'Join as a professional or enterprise', href: appLogin },
+    cta: { label: 'Get professional access', href: appJoin },
   },
   {
     id: 'investigators',
@@ -152,7 +152,15 @@ export const audience = [
     title: 'Bring your findings to a file that is already built.',
     text: 'Celia holds the wallets of those defrauded and the evidence gathered from the chain, so you start from verified claims instead of a blank page. Add what the chain cannot show, such as the entities, the promises and the offchain records, and hand it to counsel in one file. Celia does not direct your work, and does not promise a result.',
     points: ['Verified claims and wallets, pooled by platform', 'Onchain evidence open to your own checks', 'Your offchain findings added to the same file'],
-    cta: { label: 'Join as an investigator', href: appLogin },
+    cta: { label: 'Join as an investigator', href: appJoin },
+  },
+  {
+    id: 'law-enforcement',
+    label: 'For law enforcement',
+    title: 'Receive a case that is already documented.',
+    text: 'When a case has enough evidence, Celia can refer it to law enforcement, so you start from the wallets, the chain evidence and the method instead of separate complaints. Claimants’ details are shared only where they agreed. Celia does not direct your work, and does not promise that an investigation or a result follows.',
+    points: ['Claims pooled by platform, with wallets listed', 'Onchain evidence open to your own checks', 'Claimant details only where the claimant agreed'],
+    cta: { label: 'Join as law enforcement', href: appJoin },
   },
 ];
 
@@ -162,10 +170,10 @@ export const welcome = {
   lead: 'Celia is open to the people a case needs. Pick the part that fits you. Each one adds to the same file.',
   people: [
     { who: 'Victims', text: 'Add your wallet and a few lines of text. Your claim sits alongside others affected by the same platform, and what you share stays private.', cta: { label: 'Report fraud', href: appLogin } },
-    { who: 'Lawyers and law firms', text: 'Open a case from the case bank, with the wallets of those defrauded and the evidence already listed, and take it forward in your own court.', cta: { label: 'Join as a professional or enterprise', href: appLogin } },
-    { who: 'Investigative firms', text: 'Bring offchain records and field findings to the case, so the file shows what the chain cannot: who ran the platform and what they promised.', cta: { label: 'Join as an investigator', href: appLogin } },
-    { who: 'Researchers', text: 'Review the evidence, challenge the method, and add what the chain cannot show: the promises, the ads, the entities.', cta: { label: 'Join as a researcher', href: appLogin } },
-    { who: 'Analysts', text: 'Trace the funds and run the fixed tests on the chain, with the thresholds set before the run.', cta: { label: 'Join as an analyst', href: appLogin } },
+    { who: 'Lawyers and law firms', text: 'Open a case from the case bank, with the wallets of those defrauded and the evidence already listed, and take it forward in your own court.', cta: { label: 'Get professional access', href: appJoin } },
+    { who: 'Investigative firms', text: 'Bring offchain records and field findings to the case, so the file shows what the chain cannot: who ran the platform and what they promised.', cta: { label: 'Join as an investigator', href: appJoin } },
+    { who: 'Researchers', text: 'Review the evidence, challenge the method, and add what the chain cannot show: the promises, the ads, the entities.', cta: { label: 'Join as a researcher', href: appJoin } },
+    { who: 'Analysts', text: 'Trace the funds and run the fixed tests on the chain, with the thresholds set before the run.', cta: { label: 'Join as an analyst', href: appJoin } },
   ],
 };
 
