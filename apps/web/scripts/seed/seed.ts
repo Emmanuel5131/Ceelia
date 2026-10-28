@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { platformKey } from '@celia/core';
 import { getJurisdiction } from '@celia/jurisdictions';
 import { createClerkClient } from '@clerk/nextjs/server';
-import { inArray, like, or } from 'drizzle-orm';
+import { count as countRows, inArray, like, or, sql } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { Env } from '@/libs/Env';
 import {
@@ -78,7 +78,7 @@ function buildReport(options: { wallets: number; opened: number }) {
   return ReportValidation.parse({
     version: 1,
     headline: `The chain shows ${options.wallets} wallets sending funds to the same address. It does not show intent.`,
-    estimate: { wallets: String(options.wallets), losses: money(received) },
+    estimate: { wallets: String(options.wallets), losses: money(received), lossUsd: received },
     figures: [
       {
         label: 'Wallets affected',
@@ -324,8 +324,9 @@ for (const [index, plan] of plans.entries()) {
 
   let updated = lastClaim;
   let description: string | null = null;
+  let lossUsd: number | null = null;
   const reportCount =
-    status === 'sealed' ? (random() < 0.2 ? 2 : 1) : status === 'building' ? int(0, 1) : 0;
+    status === 'sealed' ? (random() < 0.2 ? 2 : 1) : status === 'building' ? 1 : 0;
 
   for (let version = 1; version <= reportCount; version++) {
     const savedAt = Math.min(now, lastClaim + version * int(2, 10) * DAY);
@@ -333,6 +334,7 @@ for (const [index, plan] of plans.entries()) {
     const snapshot = buildReport({ wallets: size * int(8, 30), opened: savedAt });
 
     description = describeCase(snapshot);
+    lossUsd = snapshot.estimate?.lossUsd ?? null;
     reports.push({
       caseId: id,
       version,
@@ -355,6 +357,7 @@ for (const [index, plan] of plans.entries()) {
     name,
     platformKey: key,
     description,
+    estimatedLossUsd: lossUsd,
     status,
     createdAt: new Date(opened),
     updatedAt: new Date(Math.min(updated, now)),
@@ -476,9 +479,30 @@ for (const rows of chunks(events)) {
   await db.insert(caseEventSchema).values(rows);
 }
 
-const sealed = cases.filter((row) => row.status === 'sealed').length;
+// What the people on a case actually did decides its stage: a case with enough confirmed claims and a big enough estimated loss is
+// building evidence, whatever the plan above said.
+await db.execute(sql`
+  update "case" set status = 'building'
+  where status = 'collecting'
+    and estimated_loss_usd >= 1000
+    and (select count(*) from claim where claim.platform_key = "case".platform_key
+         and claim.status = 'submitted' and claim.validated_at is not null) >= 5
+`);
+await db.execute(sql`
+  update "case" set status = 'collecting'
+  where status = 'building'
+    and (estimated_loss_usd is null or estimated_loss_usd < 1000 or (select count(*) from claim
+         where claim.platform_key = "case".platform_key and claim.status = 'submitted'
+         and claim.validated_at is not null) < 5)
+`);
+
+const stages = await db
+  .select({ status: caseSchema.status, total: countRows() })
+  .from(caseSchema)
+  .groupBy(caseSchema.status);
+const stageText = stages.map((stage) => `${stage.total} ${stage.status}`).join(', ');
 
 console.log(
-  `Seeded ${cases.length} cases (${cases.length - sealed} building, ${sealed} with enough evidence), ${claimTotal} claims from ${claimants.length} claimants, ${reports.length} reports, ${events.length} events.`,
+  `Seeded ${cases.length} cases (now: ${stageText}), ${claimTotal} claims from ${claimants.length} claimants, ${reports.length} reports, ${events.length} events.`,
 );
 process.exit(0);

@@ -3,14 +3,19 @@ import { useTranslations } from 'next-intl';
 import type { ReportedPattern as Pattern } from '@/libs/cases/CaseClaims';
 
 /**
- * What may have happened, in the claimants' own terms: the kind of loss most of them report. It is their account, counted, and
+ * The kind of loss most claimants report, in their own terms and counted, with how many staff have confirmed. It is their account,
  * not a finding of fraud.
  * @param props - The pattern props.
  * @param props.pattern - The most reported kind of loss, or nothing when there is none to show.
  * @param props.note - Whether to show the note that this is not a finding. On by default; off where the page has its own.
- * @returns The line and its note, or nothing.
+ * @param props.bare - Just the two lines, with no heading or note, for a page that tells it as part of a longer story.
+ * @returns The section, or nothing.
  */
-export function ReportedPattern(props: { pattern: Pattern | null; note?: boolean }) {
+export function ReportedPattern(props: {
+  pattern: Pattern | null;
+  note?: boolean;
+  bare?: boolean;
+}) {
   const t = useTranslations('ReportedPattern');
 
   if (!props.pattern) {
@@ -35,22 +40,30 @@ export function ReportedPattern(props: { pattern: Pattern | null; note?: boolean
     other: t('other'),
   };
 
+  const line = t('line', {
+    count: props.pattern.count,
+    total: props.pattern.total,
+    what: what[props.pattern.type],
+  });
+  const confirmation = t('confirmation', {
+    confirmed: props.pattern.confirmed,
+    unconfirmed: props.pattern.total - props.pattern.confirmed,
+  });
+
+  if (props.bare) {
+    return (
+      <>
+        <p>{line}</p>
+        <p className="text-sm text-ink-muted">{confirmation}</p>
+      </>
+    );
+  }
+
   return (
     <section className="grid gap-2">
       <h3 className="text-lg">{t('title')}</h3>
-      <p>
-        {t('line', {
-          count: props.pattern.count,
-          total: props.pattern.total,
-          what: what[props.pattern.type],
-        })}
-      </p>
-      <p>
-        {t('confirmation', {
-          confirmed: props.pattern.confirmed,
-          unconfirmed: props.pattern.total - props.pattern.confirmed,
-        })}
-      </p>
+      <p>{line}</p>
+      <p>{confirmation}</p>
       {props.note !== false && <p className="text-sm text-ink-muted">{t('note')}</p>}
     </section>
   );

@@ -7,11 +7,14 @@ import { Markdown } from '@/components/layout/Markdown';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { getCaseClaim } from '@/libs/cases/CaseClaims';
+import type { ClaimExtrasView } from '@/libs/claims/ClaimExtras';
 
 type ClaimFileProps = {
   claim: NonNullable<Awaited<ReturnType<typeof getCaseClaim>>>;
   /** The person's name, or a label when we have none. */
   name: string;
+  /** The claim's extra wallets and transactions, each on its own chain. */
+  extras?: ClaimExtrasView;
 };
 
 function Row(props: { label: string; children: React.ReactNode }) {
@@ -51,6 +54,79 @@ function PaymentRows(props: { claim: ClaimFileProps['claim'] }) {
       )}
       {claim.firstPaymentOn && <Row label={t('first_payment')}>{claim.firstPaymentOn}</Row>}
       {claim.lastPaymentOn && <Row label={t('last_payment')}>{claim.lastPaymentOn}</Row>}
+    </>
+  );
+}
+
+/**
+ * The extra wallets and transactions on the claim, each with its own chain and a link to check it on the explorer. A list shows
+ * only when it has something in it.
+ * @param props - The rows props.
+ * @param props.extras - The extra wallets and transactions.
+ * @returns The rows.
+ */
+function MoreRows(props: { extras?: ClaimExtrasView }) {
+  const t = useTranslations('CaseClaim');
+  const { extras } = props;
+
+  if (!extras) {
+    return null;
+  }
+
+  const lists = [
+    {
+      key: 'affected',
+      label: t('more_affected'),
+      kind: 'address' as const,
+      rows: extras.affected.map((row) => ({
+        id: row.id,
+        chain: row.chain,
+        value: row.address,
+        check: null,
+      })),
+    },
+    {
+      key: 'transactions',
+      label: t('more_transactions'),
+      kind: 'tx' as const,
+      rows: extras.transactions.map((row) => ({
+        id: row.id,
+        chain: row.chain,
+        value: row.hash,
+        check: row.check,
+      })),
+    },
+    {
+      key: 'receiving',
+      label: t('more_receiving'),
+      kind: 'address' as const,
+      rows: extras.receiving.map((row) => ({
+        id: row.id,
+        chain: row.chain,
+        value: row.address,
+        check: null,
+      })),
+    },
+  ];
+
+  return (
+    <>
+      {lists
+        .filter((list) => list.rows.length > 0)
+        .map((list) => (
+          <Row key={list.key} label={list.label}>
+            <ul className="grid gap-2">
+              {list.rows.map((row) => (
+                <li key={row.id} className="flex flex-wrap items-center gap-2">
+                  <ChainLabel chain={row.chain} />
+                  <span className="font-mono break-all">{row.value}</span>
+                  <ExplorerLink chain={row.chain} kind={list.kind} value={row.value} />
+                  {row.check && <ChainCheck check={row.check} expect="sender" />}
+                </li>
+              ))}
+            </ul>
+          </Row>
+        ))}
     </>
   );
 }
@@ -115,6 +191,7 @@ export function ClaimFile(props: ClaimFileProps) {
               </Row>
             )}
             <PaymentRows claim={claim} />
+            <MoreRows extras={props.extras} />
             <Row label={t('operator')}>{claim.platformName ?? t('unknown')}</Row>
             <Row label={t('amount')}>{claim.amountLost ?? t('unknown')}</Row>
             <Row label={t('country')}>{claim.country?.toUpperCase() ?? t('unknown')}</Row>

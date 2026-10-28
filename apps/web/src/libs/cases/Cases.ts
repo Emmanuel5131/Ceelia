@@ -1,6 +1,6 @@
 import { canTakeCase } from '@celia/core';
 import type { TakeCaseInput } from '@celia/core';
-import { and, count, desc, eq, max, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, max, sql } from 'drizzle-orm';
 import { recordCaseEvent } from '@/libs/cases/CaseEvents';
 import type { Claim } from '@/libs/claims/Claims';
 import { db } from '@/libs/DB';
@@ -32,7 +32,9 @@ const sealedEvents = db
 // Filters a count to the claims in the file: sent before the case was sealed, or the case is not sealed.
 const sentInFile = sql`(${sealedEvents.at} is null or ${claimSchema.submittedAt} <= ${sealedEvents.at})`;
 
+// A rejected claim never belongs to a case.
 const inCase = and(
+  isNull(claimSchema.rejectedAt),
   eq(claimSchema.platformKey, caseSchema.platformKey),
   eq(claimSchema.status, 'submitted'),
 );
@@ -58,7 +60,7 @@ const caseSelect = {
       Number,
     ),
   jurisdictions:
-    sql<number>`count(distinct lower(${claimSchema.country})) filter (where ${sentInFile})`.mapWith(
+    sql<number>`count(distinct lower(${claimSchema.country})) filter (where ${sentInFile} and ${claimSchema.validatedAt} is not null)`.mapWith(
       Number,
     ),
   hasReport: sql<boolean>`exists (select 1 from ${caseReportSchema} where ${caseReportSchema.caseId} = ${caseSchema.id})`,
@@ -132,17 +134,25 @@ export async function getCase(id: string) {
 }
 
 /**
- * Where a case's claimants are, as counts only: each country with how many claims, most first. It names nobody, and a country with
- * one claim is left out of the list and counted in `others`, so a single claim cannot point at one person.
+ * Where a case's confirmed victims are, as counts only: each country with how many claims staff have confirmed, most first. Claims
+ * nobody has confirmed are not counted. It names nobody, and a country with one confirmed claim is left out of the list and counted
+ * in `others`, so a single claim cannot point at one person.
  * @param caseId - The case id.
- * @returns The countries with two or more claims, and how many claims sit in the rest.
+ * @returns The countries with two or more confirmed claims, and how many confirmed claims sit in the rest.
  */
 export async function listAffectedCountries(caseId: string) {
   const rows = await db
     .select({ country: sql<string | null>`lower(${claimSchema.country})`, total: count() })
     .from(claimSchema)
     .innerJoin(caseSchema, eq(caseSchema.platformKey, claimSchema.platformKey))
-    .where(and(eq(caseSchema.id, caseId), eq(claimSchema.status, 'submitted')))
+    .where(
+      and(
+        eq(caseSchema.id, caseId),
+        eq(claimSchema.status, 'submitted'),
+        isNull(claimSchema.rejectedAt),
+        sql`${claimSchema.validatedAt} is not null`,
+      ),
+    )
     .groupBy(sql`lower(${claimSchema.country})`)
     .orderBy(desc(count()));
   const named = rows.flatMap((row) =>
@@ -185,6 +195,7 @@ export async function advanceCase(executor: Executor, caseId: string) {
       and(
         eq(claimSchema.platformKey, found.platformKey),
         eq(claimSchema.status, 'submitted'),
+        isNull(claimSchema.rejectedAt),
         sql`${claimSchema.validatedAt} is not null`,
       ),
     );
@@ -235,41 +246,6 @@ export async function addConfirmedClaim(
   await advanceCase(executor, found.id);
 
   return found.id;
-}
-
-/**
- * Whether any firm leads a case.
- * @param caseId - The case id.
- * @returns True when a firm has taken it.
- */
-export async function hasLead(caseId: string) {
-  const [row] = await db
-    .select({ id: caseTeamSchema.id })
-    .from(caseTeamSchema)
-    .where(and(eq(caseTeamSchema.caseId, caseId), eq(caseTeamSchema.role, 'lead')));
-
-  return row !== undefined;
-}
-
-/**
- * Whether a lawyer leads a case.
- * @param caseId - The case id.
- * @param userId - The Clerk user id of the lawyer.
- * @returns True when they lead it.
- */
-export async function leadsCase(caseId: string, userId: string) {
-  const [row] = await db
-    .select({ id: caseTeamSchema.id })
-    .from(caseTeamSchema)
-    .where(
-      and(
-        eq(caseTeamSchema.caseId, caseId),
-        eq(caseTeamSchema.userId, userId),
-        eq(caseTeamSchema.role, 'lead'),
-      ),
-    );
-
-  return row !== undefined;
 }
 
 /**

@@ -250,6 +250,9 @@ export function buildClaim(
   const asked = own && !signed && random() < 0.2;
   const checked = asked && random() < 0.4;
   const age = facts.now - at;
+  const validated = age > 7 * DAY && random() < 0.6;
+  const rejected = !validated && age > 7 * DAY && random() < 0.15;
+  const started = !validated && !rejected && age > 2 * DAY && random() < 0.3;
 
   facts.deposit.set(chain, deposit);
   facts.contract.set(chain, contract);
@@ -292,7 +295,11 @@ export function buildClaim(
     signedAt: signed ? new Date(at) : null,
     status: 'submitted',
     consentedAt: new Date(at),
-    validatedAt: age > 7 * DAY && random() < 0.6 ? new Date(at + int(1, 6) * DAY) : null,
+    validatedAt: validated ? new Date(at + int(1, 6) * DAY) : null,
+    // A few unconfirmed claims have been started on by staff, and a few were rejected, so every state exists to look at.
+    staffReviewStartedAt: validated || rejected || started ? new Date(at + int(1, 3) * DAY) : null,
+    rejectedAt: rejected ? new Date(at + int(2, 8) * DAY) : null,
+    rejectionNote: rejected ? 'We could not match this claim to the payment you described.' : null,
     submittedAt: new Date(at),
     createdAt: new Date(at),
     updatedAt: new Date(at),

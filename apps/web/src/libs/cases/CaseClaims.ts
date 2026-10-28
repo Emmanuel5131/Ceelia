@@ -1,5 +1,5 @@
 import type { FraudType } from '@celia/core';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { caseSchema, caseTeamSchema, claimSchema } from '@/models/Schema';
 
@@ -68,7 +68,7 @@ export async function canViewCaseClaims(
 }
 
 /**
- * The submitted claims in a case: those against the same platform, oldest first.
+ * The submitted claims in a case: those against the same platform that staff have not rejected, oldest first.
  * @param caseId - The case id.
  * @returns The claims, with the columns a list needs.
  */
@@ -77,13 +77,19 @@ export function listCaseClaims(caseId: string) {
     .select(listColumns)
     .from(claimSchema)
     .innerJoin(caseSchema, eq(caseSchema.platformKey, claimSchema.platformKey))
-    .where(and(eq(caseSchema.id, caseId), eq(claimSchema.status, 'submitted')))
+    .where(
+      and(
+        eq(caseSchema.id, caseId),
+        eq(claimSchema.status, 'submitted'),
+        isNull(claimSchema.rejectedAt),
+      ),
+    )
     .orderBy(asc(claimSchema.submittedAt));
 }
 
 /**
- * One submitted claim in a case, with the person's statement. A claim that is not in this case looks like one that does not
- * exist.
+ * One submitted claim in a case, with the person's statement. A claim that is not in this case, or that staff rejected, looks like
+ * one that does not exist.
  * @param caseId - The case id.
  * @param claimId - The claim id.
  * @returns The claim, or undefined.
@@ -98,6 +104,7 @@ export async function getCaseClaim(caseId: string, claimId: string) {
         eq(caseSchema.id, caseId),
         eq(claimSchema.id, claimId),
         eq(claimSchema.status, 'submitted'),
+        isNull(claimSchema.rejectedAt),
       ),
     );
 
@@ -121,7 +128,13 @@ export async function reportedPattern(caseId: string): Promise<ReportedPattern |
     .select({ fraudTypes: claimSchema.fraudTypes, validatedAt: claimSchema.validatedAt })
     .from(claimSchema)
     .innerJoin(caseSchema, eq(caseSchema.platformKey, claimSchema.platformKey))
-    .where(and(eq(caseSchema.id, caseId), eq(claimSchema.status, 'submitted')));
+    .where(
+      and(
+        eq(caseSchema.id, caseId),
+        eq(claimSchema.status, 'submitted'),
+        isNull(claimSchema.rejectedAt),
+      ),
+    );
   const total = rows.length;
   const confirmed = rows.filter((row) => row.validatedAt !== null).length;
   const perType = new Map<FraudType, number>();

@@ -30,7 +30,10 @@ export function ReportDialog(props: { row: CaseRow }) {
   const [errors, setErrors] = React.useState<string[]>([]);
   const [pending, startTransition] = React.useTransition();
   const [first] = errors;
-  const problem = first === 'words' || first === 'json' ? first : 'schema';
+  const problem =
+    first === 'words' || first === 'json' || first === 'table' || first === 'loss'
+      ? first
+      : 'schema';
 
   return (
     <Dialog
@@ -75,9 +78,7 @@ export function ReportDialog(props: { row: CaseRow }) {
               rows={12}
               className="font-mono text-xs"
               spellCheck={false}
-              aria-invalid={
-                errors.includes('json') || errors.includes('schema') || errors.includes('words')
-              }
+              aria-invalid={errors.length > 0}
             />
           </div>
           {errors.length > 0 && (

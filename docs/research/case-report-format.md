@@ -41,7 +41,10 @@ Nothing here calls an analysis service yet: someone pastes the JSON in. Producin
       "rows": [["13 Sep", "19"], ["14 Sep", "0"]]
     }
   ],
-  "method": { "commitment": "0x…64 hex characters, if the method was committed before the data was read" },
+  "method": {
+    "commitment": "0x…64 hex characters, if the method was committed before the data was read",
+    "notebookUrl": "https://… the published notebook the analysis was run in, if there is one"
+  },
   "dataAsOf": "2026-10-27T10:00:00Z",
   "sources": ["Public chain data"]
 }
@@ -49,9 +52,10 @@ Nothing here calls an analysis service yet: someone pastes the JSON in. Producin
 
 - `result` is one of `proven`, `partly_proven`, `not_proven`, `not_checkable`. Use `not_checkable` for what the chain cannot show (a bank transfer, a card payment, a promise made in chat). Never guess.
 - Each check lists the `tests` (by `id`) that back it. The app rejects a check that names a test the report does not have, and two tests with the same `id`.
-- A test may carry a table: up to 8 columns and 50 rows, every row as wide as the headings.
+- **Every test carries a table**: 1 to 8 columns and 1 to 50 rows, every row as wide as the headings. The app refuses to save a report with a test that has none. Reports saved earlier still open, with a note where a test has no table.
 - `proof` is optional and is for links **outside** Celia, such as one transaction on a block explorer: up to 5 per check, https only.
 - Celia handles no payments, so figures never say "received" or "paid out" as if Celia did: say what was lost to the platform ("Estimated lost to this platform").
+- `method.notebookUrl` is optional: the published notebook, https only. The full analysis page shows it as "Open the notebook" so a lawyer can check the method. It is a link, not the record: a published notebook can change when it re-runs, so the frozen findings stay the record. The notebook must be keyed to the platform and hold no claimant data.
 - `estimate` is optional and holds the two numbers the case preview shows: wallets that sent funds to the platform and the total they sent, both read from the chain. It is never a claimant's own figure.
 - Limits: 4 `figures`, 20 `checks`, 20 `tests`, 10 `sources`.
 - The app rejects text with words Celia does not use: scam, scammer, fraud detected, guaranteed, recover your money, exposes. Say what is proven and not proven; a court decides intent.

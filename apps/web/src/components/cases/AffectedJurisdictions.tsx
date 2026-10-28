@@ -4,8 +4,9 @@ import { PageSection } from '@/components/layout/PageSection';
 import { listAffectedCountries } from '@/libs/cases/Cases';
 
 /**
- * Where the victims in a case are: each country with how many claims, as counts only. A case is not in one place, so this takes
- * the place of a single jurisdiction. Countries with a single claim are counted together, so one claim cannot point at one person.
+ * Where the confirmed victims in a case are: each country with how many confirmed claims, as counts only. A case is not in one place,
+ * so this takes the place of a single jurisdiction. Countries with a single confirmed claim are counted together, so one claim cannot
+ * point at one person.
  * @param props - The section props.
  * @param props.caseId - The case id.
  * @returns The section, or nothing when no claim names a country.

@@ -1,4 +1,3 @@
-import { maxOpenCasesPerLawyer } from '@celia/core';
 import { currentUser } from '@clerk/nextjs/server';
 import { ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
@@ -8,19 +7,16 @@ import * as z from 'zod';
 import { AffectedJurisdictions } from '@/components/cases/AffectedJurisdictions';
 import { CaseClaimantsTable } from '@/components/cases/CaseClaimantsTable';
 import type { ClaimantRow } from '@/components/cases/CaseClaimantsTable';
-import { CaseDescription } from '@/components/cases/CaseDescription';
 import { CaseOperators } from '@/components/cases/CaseOperators';
-import { ReportedPattern } from '@/components/cases/ReportedPattern';
-import { ReportSummary } from '@/components/cases/ReportSummary';
+import { CaseStory } from '@/components/cases/CaseStory';
+import { ReportFigures, ReportSummary } from '@/components/cases/ReportSummary';
 import { TakeCaseDialog } from '@/components/cases/TakeCaseDialog';
-import { JurisdictionFinder } from '@/components/jurisdictions/JurisdictionFinder';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageSection } from '@/components/layout/PageSection';
 import { StatCard } from '@/components/overview/StatCard';
-import { StatusBadge } from '@/components/overview/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { canViewCaseClaims, listCaseClaims, reportedPattern } from '@/libs/cases/CaseClaims';
-import { evaluateTake, getCase, hasLead, leadsCase } from '@/libs/cases/Cases';
+import { evaluateTake, getCase } from '@/libs/cases/Cases';
 import type { CaseDetail } from '@/libs/cases/Cases';
 import { getReport } from '@/libs/cases/Reports';
 import { claimantNames } from '@/libs/claims/ClaimantNames';
@@ -71,7 +67,7 @@ async function loadClaimants(caseId: string, label: (number: number) => string) 
  * whether they may read its claims. Claimants are shown to Celia staff and the firm that leads the case, never to anyone else.
  * @param found - The case.
  * @param user - The signed-in person.
- * @returns The decision for a lawyer, whether they lead the case, and whether claims are visible.
+ * @returns The decision for a lawyer, and whether claims are visible.
  */
 async function loadViewer(found: CaseDetail, user: Awaited<ReturnType<typeof currentUser>>) {
   const account = parseAccount(user?.publicMetadata);
@@ -90,13 +86,11 @@ async function loadViewer(found: CaseDetail, user: Awaited<ReturnType<typeof cur
         conflictsConfirmed: true,
       })
     : undefined;
-  const yours = counsel ? await leadsCase(found.id, counsel.id) : false;
-  const taken = await hasLead(found.id);
   const canSeeClaims = user
     ? await canViewCaseClaims({ userId: user.id, staff: account?.staff === true }, found.id)
     : false;
 
-  return { decision, yours, taken, canSeeClaims };
+  return { decision, canSeeClaims };
 }
 
 export default async function CasePage(props: CasePageProps) {
@@ -111,19 +105,13 @@ export default async function CasePage(props: CasePageProps) {
   }
 
   const user = await currentUser();
-  const { decision, yours, taken, canSeeClaims } = await loadViewer(found, user);
+  const { decision, canSeeClaims } = await loadViewer(found, user);
   const report = found.hasReport ? await getReport(found.id) : null;
   const reported = await reportedPattern(found.id);
 
   const claimants = canSeeClaims
     ? await loadClaimants(found.id, (number) => t('claimant_number', { number }))
     : [];
-
-  let team = t('team_open');
-
-  if (taken) {
-    team = yours ? t('team_yours') : t('team_taken');
-  }
 
   return (
     <>
@@ -134,33 +122,57 @@ export default async function CasePage(props: CasePageProps) {
         </Link>
       </Button>
       <PageHeader
-        title={found.name}
-        description={<span className="font-mono text-base">{found.number}</span>}
+        title={
+          <>
+            <span className="[-webkit-text-stroke:0.04em_currentColor]">{found.name}</span>{' '}
+            <span className="text-ink-muted">({found.number})</span>
+          </>
+        }
         actions={decision?.ok ? <TakeCaseDialog caseId={found.id} /> : null}
       />
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-12">
-        <CaseDescription description={found.description} headline={report?.snapshot.headline} />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label={t('stat_jurisdictions')} value={format.number(found.jurisdictions)} />
-          {canSeeClaims ? (
-            <a href="#claimants" className="focus-ring hover:opacity-80">
-              <StatCard label={t('stat_claimants')} value={format.number(found.claimants)} />
-            </a>
-          ) : (
-            <StatCard label={t('stat_claimants')} value={format.number(found.claimants)} />
-          )}
-          <StatCard label={t('stat_confirmed')} value={format.number(found.confirmed)} />
-          <StatCard
-            label={t('stat_updated')}
-            value={format.dateTime(new Date(found.updatedAt), { dateStyle: 'medium' })}
-          />
+      {/* Aeonik has only regular and bold, so a thin outline gives the section titles a weight in between. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-12 [&_h2]:[-webkit-text-stroke:0.035em_currentColor] [&>*+*]:border-t [&>*+*]:border-border [&>*+*]:pt-12">
+        <div className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              size="sm"
+              label={t('stat_jurisdictions')}
+              value={format.number(found.jurisdictions)}
+            />
+            {canSeeClaims ? (
+              <a href="#claimants" className="focus-ring hover:opacity-80">
+                <StatCard
+                  size="sm"
+                  label={t('stat_claimants')}
+                  value={format.number(found.claimants)}
+                />
+              </a>
+            ) : (
+              <StatCard
+                size="sm"
+                label={t('stat_claimants')}
+                value={format.number(found.claimants)}
+              />
+            )}
+            <StatCard
+              size="sm"
+              label={t('stat_confirmed')}
+              value={format.number(found.confirmed)}
+            />
+            <StatCard
+              size="sm"
+              label={t('stat_updated')}
+              value={format.dateTime(new Date(found.updatedAt), { dateStyle: 'medium' })}
+            />
+          </div>
+          {report && <ReportFigures figures={report.snapshot.figures} />}
         </div>
         <AffectedJurisdictions caseId={found.id} />
-        <ReportedPattern pattern={reported} />
+        <CaseStory pattern={reported} report={report?.snapshot ?? null} />
         <CaseOperators operators={found.operators} jurisdictions={found.operatorJurisdictions} />
-        <PageSection title={t('report_title')} description={t('report_description')}>
+        <PageSection title={t('report_title')}>
           {report ? (
-            <ReportSummary report={report} caseId={found.id} />
+            <ReportSummary report={report} caseId={found.id} hideFigures />
           ) : (
             <p className="text-ink-muted">{t('report_none')}</p>
           )}
@@ -171,24 +183,6 @@ export default async function CasePage(props: CasePageProps) {
               <CaseClaimantsTable claims={claimants} />
             </PageSection>
           </div>
-        )}
-        {decision && (
-          <PageSection title={t('rule_title')} description={t('rule_description')}>
-            <JurisdictionFinder />
-          </PageSection>
-        )}
-        {decision && (
-          <PageSection title={t('team_title')} description={t('team_description')}>
-            <div className="flex flex-wrap items-center gap-4">
-              <StatusBadge status={found.status} />
-              <p className="text-sm text-ink-muted">{team}</p>
-            </div>
-            {!decision.ok && (
-              <p className="text-sm text-ink-muted">
-                {t(`refusal_${decision.reason}`, { max: maxOpenCasesPerLawyer })}
-              </p>
-            )}
-          </PageSection>
         )}
       </div>
     </>

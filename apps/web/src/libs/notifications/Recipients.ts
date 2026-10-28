@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { Executor } from '@/libs/notifications/Notify';
 import { counselProfileSchema, claimSchema } from '@/models/Schema';
 
@@ -12,7 +12,13 @@ export async function claimantIds(executor: Executor, platformKey: string) {
   const rows = await executor
     .selectDistinct({ userId: claimSchema.userId })
     .from(claimSchema)
-    .where(and(eq(claimSchema.platformKey, platformKey), eq(claimSchema.status, 'submitted')));
+    .where(
+      and(
+        eq(claimSchema.platformKey, platformKey),
+        eq(claimSchema.status, 'submitted'),
+        isNull(claimSchema.rejectedAt),
+      ),
+    );
 
   return rows.map((row) => row.userId);
 }

@@ -7,6 +7,7 @@ import { DataTable } from '@/components/data-table/DataTable';
 import { createAppColumnHelper } from '@/components/data-table/table';
 import { OperatorsDialog } from '@/components/staff/OperatorsDialog';
 import { ReportDialog } from '@/components/staff/ReportDialog';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -14,11 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Link } from '@/libs/I18nNavigation';
 import { caseStatuses } from '@/utils/cases/Case';
-import type { CaseRow } from '@/utils/cases/Case';
+import type { CaseRow, CaseStatus } from '@/utils/cases/Case';
 
 function Heading(props: {
-  id: 'case' | 'jurisdictions' | 'operators' | 'victims' | 'status' | 'updated' | 'report';
+  id:
+    | 'case'
+    | 'jurisdictions'
+    | 'operators'
+    | 'victims'
+    | 'status'
+    | 'updated'
+    | 'report'
+    | 'analysis';
 }) {
   const t = useTranslations('Staff');
 
@@ -60,6 +70,20 @@ function StageSelect(props: { row: CaseRow }) {
   );
 }
 
+function AnalysisLink(props: { row: CaseRow }) {
+  const t = useTranslations('Staff');
+
+  if (!props.row.hasReport) {
+    return <span className="text-ink-muted">—</span>;
+  }
+
+  return (
+    <Button asChild variant="outline" size="sm">
+      <Link href={`/dashboard/staff/cases/${props.row.id}`}>{t('analysis_view')}</Link>
+    </Button>
+  );
+}
+
 function UpdatedText(props: { value: string }) {
   const format = useFormatter();
 
@@ -88,6 +112,11 @@ const columns = helper.columns([
     id: 'status',
     header: () => <Heading id="status" />,
     cell: ({ row }) => <StageSelect row={row.original} />,
+    // The filter picks one or more stages; sorting follows the order a case moves through them.
+    filterFn: 'inSet',
+    sortFn: (a, b, columnId) =>
+      caseStatuses.indexOf(a.getValue<CaseStatus>(columnId)) -
+      caseStatuses.indexOf(b.getValue<CaseStatus>(columnId)),
   }),
   helper.display({
     id: 'operators',
@@ -99,6 +128,12 @@ const columns = helper.columns([
     id: 'report',
     header: () => <Heading id="report" />,
     cell: ({ row }) => <ReportDialog row={row.original} />,
+    enableSorting: false,
+  }),
+  helper.display({
+    id: 'analysis',
+    header: () => <Heading id="analysis" />,
+    cell: ({ row }) => <AnalysisLink row={row.original} />,
     enableSorting: false,
   }),
   helper.accessor('updatedAt', {
@@ -116,15 +151,35 @@ const columns = helper.columns([
  * @returns The table.
  */
 export function CaseAdmin(props: { cases: CaseRow[] }) {
+  const t = useTranslations('CaseBank');
+  const staff = useTranslations('Staff');
+
   return (
     <div className="grid gap-4">
       <DataTable
         columns={columns}
         data={props.cases}
         getRowId={(row) => row.id}
-        toolbar={false}
-        pagination={false}
-        pageSize={100}
+        pageSize={25}
+        searchPlaceholder={t('search_placeholder')}
+        labels={{
+          case: staff('col_case'),
+          jurisdictions: staff('col_jurisdictions'),
+          operators: staff('col_operators'),
+          victims: staff('col_victims'),
+          status: staff('col_status'),
+          updated: staff('col_updated'),
+          report: staff('col_report'),
+          analysis: staff('col_analysis'),
+        }}
+        filters={[
+          {
+            columnId: 'status',
+            title: staff('col_status'),
+            // Every stage can be picked, so staff can look at just the cases in one of them.
+            options: caseStatuses.map((value) => ({ value, label: t(`status_${value}`) })),
+          },
+        ]}
       />
     </div>
   );

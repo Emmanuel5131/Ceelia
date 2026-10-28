@@ -3,7 +3,7 @@ import { recordCaseEvent } from '@/libs/cases/CaseEvents';
 import { advanceCase } from '@/libs/cases/Cases';
 import { db } from '@/libs/DB';
 import { caseReportSchema, caseSchema } from '@/models/Schema';
-import { describeCase } from '@/utils/cases/Report';
+import { describeCase, parseDollars } from '@/utils/cases/Report';
 import { ReportValidation } from '@/validations/ReportValidation';
 import type { Report } from '@/validations/ReportValidation';
 
@@ -83,12 +83,15 @@ export async function listReportVersions(caseId: string): Promise<ReportVersion[
  * @param options.snapshot - The checked findings.
  * @param options.hash - The snapshot's hash.
  * @param options.savedBy - The Clerk user id of the staff member.
+ * @param options.record - Written in the same transaction, such as the staff audit row, so the save and its record stand or fall
+ *   together.
  */
 export async function saveReport(options: {
   caseId: string;
   snapshot: Report;
   hash: string;
   savedBy: string;
+  record?: (tx: Parameters<Parameters<typeof db.transaction>[0]>[0]) => Promise<void>;
 }) {
   await db.transaction(async (tx) => {
     await tx.insert(caseReportSchema).values({
@@ -104,11 +107,13 @@ export async function saveReport(options: {
       .update(caseSchema)
       .set({
         description: describeCase(options.snapshot),
-        estimatedLossUsd: options.snapshot.estimate?.lossUsd ?? null,
+        estimatedLossUsd:
+          options.snapshot.estimate?.lossUsd ?? parseDollars(options.snapshot.estimate?.losses),
       })
       .where(eq(caseSchema.id, options.caseId));
     await advanceCase(tx, options.caseId);
 
     await recordCaseEvent(tx, options.caseId, 'report_saved');
+    await options.record?.(tx);
   });
 }

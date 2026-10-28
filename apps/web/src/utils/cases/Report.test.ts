@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ReportValidation } from '@/validations/ReportValidation';
-import { canonicalJson, describeCase, hashReport } from './Report';
+import { NewReportValidation, ReportValidation } from '@/validations/ReportValidation';
+import { canonicalJson, describeCase, hashReport, parseDollars } from './Report';
 
 const report = {
   version: 1,
@@ -73,9 +73,48 @@ describe('Report format', () => {
     expect(ReportValidation.safeParse(report).success).toBeTruthy();
   });
 
+  it('accepts a notebook link over https', () => {
+    expect(
+      ReportValidation.safeParse({
+        ...report,
+        method: { notebookUrl: 'https://example.com/notebook/abc' },
+      }).success,
+    ).toBeTruthy();
+  });
+
+  it('rejects a notebook link that is not https', () => {
+    expect(
+      ReportValidation.safeParse({
+        ...report,
+        method: { notebookUrl: 'http://example.com/notebook/abc' },
+      }).success,
+    ).toBeFalsy();
+  });
+
+  it('requires a table for every test in a new report', () => {
+    const [test] = report.tests;
+    const without = {
+      ...report,
+      tests: [{ id: 'funding-trail', title: 'Funding trail', summary: test?.summary }],
+    };
+
+    expect(NewReportValidation.safeParse(report).success).toBeTruthy();
+    expect(NewReportValidation.safeParse(without).success).toBeFalsy();
+    expect(ReportValidation.safeParse(without).success).toBeTruthy();
+  });
+
   it('rejects a report with no checks', () => {
     expect(ReportValidation.safeParse({ ...report, checks: [] }).success).toBeFalsy();
   });
+
+  it.each(['scams', 'scammed', 'scamming', 'guarantees', 'exposed', 'exposing'])(
+    'rejects the form "%s" of a word Celia does not use',
+    (word) => {
+      expect(
+        ReportValidation.safeParse({ ...report, headline: `The platform ${word} people.` }).success,
+      ).toBeFalsy();
+    },
+  );
 
   it('rejects text that declares fraud', () => {
     expect(
@@ -174,5 +213,20 @@ describe(describeCase, () => {
     const checks = parsed.checks.map((check) => ({ ...check, result: 'not_checkable' as const }));
 
     expect(describeCase({ ...parsed, checks })).toBeNull();
+  });
+});
+
+describe(parseDollars, () => {
+  it.each([
+    ['$834,000', 834_000],
+    ['$1.2M', 1_200_000],
+    ['$12k', 12_000],
+    ['US$ 5,000', 5000],
+  ])('reads %s', (text, expected) => {
+    expect(parseDollars(text)).toBe(expected);
+  });
+
+  it.each(['12 ETH', 'a lot', '', undefined])('does not guess at %s', (text) => {
+    expect(parseDollars(text)).toBeNull();
   });
 });

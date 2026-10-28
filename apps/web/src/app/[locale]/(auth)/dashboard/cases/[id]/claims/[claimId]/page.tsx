@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { canViewCaseClaims, getCaseClaim } from '@/libs/cases/CaseClaims';
 import { getCase } from '@/libs/cases/Cases';
 import { claimantNames } from '@/libs/claims/ClaimantNames';
+import { listClaimExtras } from '@/libs/claims/ClaimExtras';
 import { Link } from '@/libs/I18nNavigation';
 import { parseAccount } from '@/utils/accounts/Account';
 
@@ -62,7 +63,11 @@ export default async function ClaimFilePage(props: ClaimFilePageProps) {
         title={names.get(claim.userId) ?? t('claimant_label')}
         description={<span className="font-mono text-base">{found.number}</span>}
       />
-      <ClaimFile claim={claim} name={names.get(claim.userId) ?? t('claimant_label')} />
+      <ClaimFile
+        claim={claim}
+        name={names.get(claim.userId) ?? t('claimant_label')}
+        extras={await listClaimExtras(claim.id)}
+      />
     </>
   );
 }

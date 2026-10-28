@@ -8,7 +8,7 @@ export type CheckResult = (typeof checkResults)[number];
 // Words Celia does not use: they declare fraud or promise an outcome. The court decides intent; the report only says what the
 // chain shows. Kept short and literal on purpose: it catches slips, and a person still reviews every report before it is saved.
 export const forbiddenWords =
-  /\b(scam|scammer|scammers|fraud detected|guaranteed|recover your money|exposes?)\b/iu;
+  /\b(scam\w*|fraud detected|guarantee[ds]?|recover your money|expos(?:e|es|ed|ing))\b/iu;
 
 const text = (max: number) =>
   z
@@ -102,6 +102,11 @@ export const ReportValidation = z
         .string()
         .regex(/^0x[\da-f]{64}$/iu)
         .optional(),
+      /** The published notebook the analysis was run in, so a lawyer can open it and check it. https only; no claimant data in it. */
+      notebookUrl: z
+        .url({ protocol: /^https$/u })
+        .max(300)
+        .optional(),
     }),
     /** When the chain data was read, as an ISO time. */
     dataAsOf: z.iso.datetime(),
@@ -124,5 +129,14 @@ export const ReportValidation = z
       }
     }
   });
+
+/**
+ * What a new report must satisfy: every test has a table, with columns and at least one row, so the analysis shows the numbers
+ * behind each finding. Reports saved before this rule still read with `ReportValidation`, and show a note where a test has no table.
+ */
+export const NewReportValidation = ReportValidation.refine(
+  (report) => report.tests.every((test) => test.columns && test.rows && test.rows.length > 0),
+  { message: 'table_required' },
+);
 
 export type Report = z.infer<typeof ReportValidation>;

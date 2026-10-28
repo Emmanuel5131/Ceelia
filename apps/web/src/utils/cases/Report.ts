@@ -24,6 +24,28 @@ export function canonicalJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
+const dollars = /^\s*(?:US)?\$\s*(\d[\d,]*(?:\.\d+)?)\s*([kmb])?\s*$/iu;
+const multipliers = { k: 1000, m: 1_000_000, b: 1_000_000_000 } as const;
+
+/**
+ * Reads a dollar amount written as text, such as `$834,000`, `$1.2M` or `$12k`. Anything else, such as an amount in a token, is not
+ * guessed at.
+ * @param text - The amount as written in the report.
+ * @returns Whole US dollars, or null when the text is not a dollar amount.
+ */
+export function parseDollars(text: string | undefined) {
+  const match = dollars.exec(text ?? '');
+
+  if (!match?.[1]) {
+    return null;
+  }
+
+  const suffix = match[2]?.toLowerCase();
+  const multiplier = suffix === 'k' || suffix === 'm' || suffix === 'b' ? multipliers[suffix] : 1;
+
+  return Math.round(Number(match[1].replaceAll(',', '')) * multiplier);
+}
+
 /**
  * The hash of a report: SHA-256 of its canonical JSON. Anyone holding the findings can recompute it and compare, so a stored
  * report that was changed no longer matches the hash shown with it.
