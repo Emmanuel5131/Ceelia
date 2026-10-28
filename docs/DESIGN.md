@@ -12,7 +12,7 @@ Single reference for how Celia looks and behaves, so the landing page and the ap
 
 1. **Evidence, not hype.** The look is paper and ink: documents, hairlines and data. No glows, starfields, gradients, glassmorphism or stock "crypto" imagery.
 2. **One accent, with a job.** Seal red appears only on a verdict, a finding, or the thing a finding points at. Everywhere else the UI is ink on paper.
-3. **State by shape, not extra colours.** Filled square = confirmed, dashed = pending or not checkable, hollow = not yet run. This is how every illustration on the landing page works. Do not add green or amber.
+3. **State by shape, with one exception.** Filled square = confirmed, dashed = pending or not checkable, hollow = not yet run. This is how every illustration on the landing page works. The one exception is a claim's four states in the app, which are tinted (§6): shape and label proved insufficient when two badges looked alike. Do not add green or amber anywhere else.
 4. **We establish, the court decides.** Celia does not declare fraud. It establishes falsity and loss from the chain, evidences knowledge, and collects reliance from the victims themselves. Intent is left to the court. Any finding in the UI also states what is proven and what is not. Language rules are in §10.
 5. **Fast first.** The app is dense, data-heavy and should feel instant. Motion is a short, subtle transition, never a performance (§8).
 
@@ -359,7 +359,7 @@ The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a to
 6. **Buttons:** one primary per view; variants are `default` (primary), `outline` (secondary), `ghost`, `destructive` and `link`. Sizes are `sm`, `default`, `lg` and the matching `icon` sizes. Two buttons side by side share a size.
 7. **Fields:** one look (`field-styles.ts`): 44px, square, 1.5px border, ink border on focus, seal-red border plus a message when invalid. Label above, helper text below. Error copy is short with no "try again".
 8. **Surfaces:** white page, `paper` cards with no border and no shadow, hairline `line` borders, square corners. Only menus, popovers and dialogs have a shadow. Do not nest cards.
-9. **Tags and status:** `Badge` is rectangular, 24px. State is a shape plus a text label: `solid` = confirmed, `dashed` = not confirmed, `seal` = a finding or verdict only.
+9. **Tags and status:** `Badge` is rectangular, 24px. State is a shape plus a text label: `solid` = confirmed, `dashed` = not confirmed, `seal` = a finding or verdict only; a claim's `sent`, `review`, `accepted` and `rejected` are tinted.
 10. **Focus** is the `focus-ring` utility (2px ink outline, 3px away). Do not add `ring-*` or remove outlines.
 11. **Type:** only the sizes in §3 (`text-xs`, `text-sm`, `text-base`, `text-xl`, `text-2xl`, `text-3xl`). Headings use Aeonik through the `font-heading` and `font-display` classes; mono is only for evidence data.
 12. **Text is translated.** No user-visible string is hard-coded in a component (`next-intl`).
@@ -398,7 +398,7 @@ The app uses **shadcn/ui on Radix** with the Celia tokens, so one change to a to
 3. **App header height and sidebar.** 64px with an optional 240px sidebar is the starting point.
 4. **Chart library.** Not chosen. Must follow §7.
 5. **Dark mode.** Built for the app (see §2 Rules). Decide whether the landing gets it too.
-6. **Status colours beyond seal red.** Not added on purpose. Revisit only if shape and label prove insufficient in the app.
+6. **Status colours beyond seal red.** Added for a claim's four states only (decided 2026-10): sent is blue, in review amber, accepted green, rejected the seal red. Every one keeps its text label, and the tints are tokens (`status-*`) with dark-mode values. Do not extend them to other states without the same reason.
 
 ---
 

@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { claimProofSchema, claimSchema } from '@/models/Schema';
+import { claimProofSchema } from '@/models/Schema';
 
 export type ProofFile = { id: string; name: string; contentType: string; size: number };
 
@@ -37,67 +37,36 @@ export async function getProofFile(claimId: string, proofId: string) {
   return file;
 }
 
-export type ReviewItem = {
-  id: string;
-  userId: string;
-  chain: (typeof claimSchema.$inferSelect)['chain'];
-  walletAddress: string | null;
-  platformName: string | null;
-  /** Whether the wallet is already confirmed by a signature, so staff know what else the person gave. */
-  signed: boolean;
-  videoUrl: string | null;
-  note: string | null;
-  requestedAt: Date | null;
-  files: ProofFile[];
-};
-
 /** How many rows a staff queue loads at a time. The rest appear as these are settled. */
 export const queueLimit = 500;
 
 /**
- * Lists the oldest claims with a video or files staff have not looked at yet, with the files each one sent. Files are read for all
- * of them in one query.
- * @returns The claims, oldest request first.
+ * Lists the files sent for several claims in one query, so a staff queue does not ask once per claim.
+ * @param claimIds - The claims.
+ * @returns The files of each claim that has any, oldest first; a claim with none is not in the map.
  */
-export async function listOwnershipReviews() {
-  const claims = await db
-    .select()
-    .from(claimSchema)
-    .where(and(isNotNull(claimSchema.reviewRequestedAt), isNull(claimSchema.reviewedAt)))
-    .orderBy(asc(claimSchema.reviewRequestedAt), desc(claimSchema.createdAt))
-    .limit(queueLimit);
-  const files =
-    claims.length === 0
-      ? []
-      : await db
-          .select({
-            claimId: claimProofSchema.claimId,
-            id: claimProofSchema.id,
-            name: claimProofSchema.name,
-            contentType: claimProofSchema.contentType,
-            size: claimProofSchema.size,
-          })
-          .from(claimProofSchema)
-          .where(
-            inArray(
-              claimProofSchema.claimId,
-              claims.map((claim) => claim.id),
-            ),
-          )
-          .orderBy(asc(claimProofSchema.createdAt));
+export async function listProofFilesFor(claimIds: string[]) {
+  const result = new Map<string, ProofFile[]>();
 
-  return claims.map((claim): ReviewItem => ({
-    id: claim.id,
-    userId: claim.userId,
-    chain: claim.chain,
-    walletAddress: claim.walletAddress,
-    platformName: claim.platformName,
-    signed: claim.ownershipMethod === 'signature',
-    videoUrl: claim.reviewVideoUrl,
-    note: claim.proofNote,
-    requestedAt: claim.reviewRequestedAt,
-    files: files
-      .filter((file) => file.claimId === claim.id)
-      .map(({ id, name, contentType, size }) => ({ id, name, contentType, size })),
-  }));
+  if (claimIds.length === 0) {
+    return result;
+  }
+
+  const files = await db
+    .select({
+      claimId: claimProofSchema.claimId,
+      id: claimProofSchema.id,
+      name: claimProofSchema.name,
+      contentType: claimProofSchema.contentType,
+      size: claimProofSchema.size,
+    })
+    .from(claimProofSchema)
+    .where(inArray(claimProofSchema.claimId, claimIds))
+    .orderBy(asc(claimProofSchema.createdAt));
+
+  for (const { claimId, ...file } of files) {
+    result.set(claimId, [...(result.get(claimId) ?? []), file]);
+  }
+
+  return result;
 }

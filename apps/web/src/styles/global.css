@@ -26,6 +26,14 @@
   --color-terminal: #08111f;
   --color-seal: #991f38; /* verdicts and findings only */
   --color-seal-on-dark: #e0687c;
+  /* The four states of a claim. Each is a tint with a text colour; the label always says the state too, so colour never carries it alone. */
+  --color-status-sent: #1f4f8f;
+  --color-status-sent-bg: #e8f0fa;
+  --color-status-review: #7a4d00;
+  --color-status-review-bg: #fbf0d9;
+  --color-status-accepted: #1c6b3b;
+  --color-status-accepted-bg: #e3f3e8;
+  --color-status-rejected-bg: #f7e6ea;
   --color-line: rgb(15 27 45 / 0.22);
   --color-line-soft: rgb(15 27 45 / 0.14);
 
@@ -113,6 +121,13 @@
   --color-paper: #142033;
   --color-paper-sunken: #1b2a44;
   --color-seal: #e0687c;
+  --color-status-sent: #8fb8ee;
+  --color-status-sent-bg: #14263f;
+  --color-status-review: #e8c071;
+  --color-status-review-bg: #3a2a0a;
+  --color-status-accepted: #7fd09c;
+  --color-status-accepted-bg: #0f3320;
+  --color-status-rejected-bg: #3a1520;
   --color-line: rgb(232 237 245 / 0.22);
   --color-line-soft: rgb(232 237 245 / 0.14);
 

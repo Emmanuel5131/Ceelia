@@ -6,7 +6,8 @@ import { cn } from '@/utils/Cn';
 
 /**
  * A tag: rectangular, 24px tall, hairline border (docs/DESIGN.md §6). State is shown by shape as well as colour,
- * so a status badge always carries a text label. `seal` is for findings and verdicts only.
+ * so a status badge always carries a text label. `seal` is for findings and verdicts only. A claim's four states (`sent`,
+ * `review`, `accepted`, `rejected`) are the one place the app uses colour for state.
  */
 const badgeVariants = cva(
   'group/badge inline-flex h-6 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden border px-2 text-xs font-medium whitespace-nowrap transition-colors outline-none focus-ring has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:pointer-events-none [&>svg]:size-3.5',
@@ -18,6 +19,11 @@ const badgeVariants = cva(
         muted: 'border-transparent bg-paper text-ink-muted',
         seal: 'border-seal bg-surface text-seal',
         dashed: 'border-dashed border-ink bg-surface text-ink',
+        // The four states of a claim: sent, in review, accepted and rejected. Always shown with a text label.
+        sent: 'border-status-sent bg-status-sent-bg text-status-sent',
+        review: 'border-status-review bg-status-review-bg text-status-review',
+        accepted: 'border-status-accepted bg-status-accepted-bg text-status-accepted',
+        rejected: 'border-seal bg-status-rejected-bg text-seal',
       },
     },
     defaultVariants: {

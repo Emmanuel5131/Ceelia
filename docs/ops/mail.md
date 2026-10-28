@@ -99,7 +99,7 @@ Each run sends up to 50 messages, so a minute schedule is 3,000 an hour, above a
 ## After the first deploy
 
 1. Apply the migrations (`0003` cases, `0004` notifications).
-2. Sign in as staff and press **Sync from Clerk** on the staff page. Lawyers who signed up before the notification tables existed are not in our copy of the lawyer list until you do.
+2. Lawyers are in our own lawyer table from sign-up onwards, so there is nothing to copy across. (An old "Sync from Clerk" button did that once for accounts made before the table existed; it was removed after it was run.)
 3. Send a test through each kind of event with your own accounts and read the headers in Gmail and Outlook (`Authentication-Results` must show `spf=pass`, `dkim=pass`, `dmarc=pass`). Check a mail-tester score.
 4. Watch the staff **Mail** panel: waiting, failed and stopped addresses. A growing "waiting" count with nothing sent means the scheduler or the SMTP login is broken; failed emails show the reason, and **Try again** puts one back once it is fixed.
 

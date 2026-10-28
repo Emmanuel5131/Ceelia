@@ -33,6 +33,12 @@ const isCalendarDate = (value: string) =>
   /^\d{4}-\d{2}-\d{2}$/u.test(value) &&
   new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
 
+/** How many of each kind of extra wallet or transaction a claim can list. */
+const maxExtras = 10;
+
+// An extra wallet or transaction names its own chain, so one claim can cover addresses on several chains.
+const extraRow = z.object({ chain: z.enum(chainIds), value: z.string().trim().min(1).max(200) });
+
 const claimShape = z.object({
   fraudTypes: z.array(z.enum(fraudTypes)).min(1),
   paymentMethod: z.enum(paymentMethods),
@@ -57,6 +63,9 @@ const claimShape = z.object({
   fraudDescription: optionalText(300),
   contactChannel: z.enum(contactChannels).optional(),
   amountLost: optionalText(100),
+  moreAffected: z.array(extraRow).max(maxExtras).default([]),
+  moreReceiving: z.array(extraRow).max(maxExtras).default([]),
+  moreTransactions: z.array(extraRow).max(maxExtras).default([]),
 });
 
 type ClaimInput = z.infer<typeof claimShape>;
@@ -98,6 +107,33 @@ function checkPayment(claim: ClaimInput, fail: Fail) {
 }
 
 /**
+ * Checks the extra wallets and transactions: each against its own chain, and none listed twice.
+ * @param claim - The parsed form.
+ * @param fail - Reports a failed field.
+ */
+function checkExtras(claim: ClaimInput, fail: Fail) {
+  const lists = [
+    ['moreAffected', claim.moreAffected, isValidAddress],
+    ['moreReceiving', claim.moreReceiving, isValidAddress],
+    ['moreTransactions', claim.moreTransactions, isValidTxHash],
+  ] as const;
+
+  for (const [name, rows, valid] of lists) {
+    const seen = new Set<string>();
+
+    for (const row of rows) {
+      const key = `${row.chain}:${row.value.toLowerCase()}`;
+
+      if (!valid(row.chain, row.value) || seen.has(key)) {
+        fail(name);
+      }
+
+      seen.add(key);
+    }
+  }
+}
+
+/**
  * Checks the first and last payment dates: real dates, not in the future, and the last no earlier than the first.
  * @param claim - The parsed form.
  * @param fail - Reports a failed field.
@@ -129,6 +165,7 @@ export const CreateClaimValidation = claimShape.superRefine((claim, context) => 
   };
 
   checkPayment(claim, fail);
+  checkExtras(claim, fail);
   checkDates(claim, fail);
 
   if (claim.unknownOperator !== 'on' && (claim.platformName ?? '').length < 2) {

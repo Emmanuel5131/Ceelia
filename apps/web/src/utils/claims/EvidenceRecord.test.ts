@@ -23,6 +23,11 @@ const body: EvidenceBody = {
     { name: 'a.png', contentType: 'image/png', size: 3, sha256: sha256Hex('abc'), addedAt: 'x' },
   ],
   payment: { txHash: '0x1' },
+  more: {
+    affected: ['solana: 4Nd1mYbNoVDqUPCNRkMsvxfC6kzGZsT9bYZ4wCpYh1Ke'],
+    receiving: ['tron: TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC'],
+    transactions: ['ethereum: 0xdef'],
+  },
   chainChecks: { transaction: null, funding: null },
   operator: { name: 'Nova', website: null },
   statement: 'I lost money.',
@@ -75,5 +80,13 @@ describe(renderEvidenceHtml, () => {
     expect(html).toContain(record.recordHash);
     expect(html).toContain('0xsig');
     expect(html).toContain(sha256Hex('abc'));
+  });
+
+  it('lists the extra wallets and transactions with their chains', () => {
+    const html = renderEvidenceHtml(sealEvidence(body));
+
+    expect(html).toContain('solana: 4Nd1mYbNoVDqUPCNRkMsvxfC6kzGZsT9bYZ4wCpYh1Ke');
+    expect(html).toContain('tron: TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC');
+    expect(html).toContain('ethereum: 0xdef');
   });
 });

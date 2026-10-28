@@ -25,6 +25,7 @@ import { SubmitClaimCard } from '@/components/claims/SubmitClaimCard';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { sentAfterSeal } from '@/libs/cases/Cases';
+import { listClaimExtras } from '@/libs/claims/ClaimExtras';
 import { listProofFiles } from '@/libs/claims/ClaimProofs';
 import { countOthersOnOperator, getClaim } from '@/libs/claims/Claims';
 import { Link } from '@/libs/I18nNavigation';
@@ -143,6 +144,7 @@ export default async function ClaimPage(props: ClaimPageProps) {
       aside={
         <ClaimSummary
           claim={claim}
+          extras={await listClaimExtras(claim.id)}
           footer={
             draft ? (
               <>
@@ -152,12 +154,17 @@ export default async function ClaimPage(props: ClaimPageProps) {
                 <DeleteClaimDialog action={deleteClaim.bind(null, claim.id)} />
               </>
             ) : (
-              // A sent claim is part of a case, so only the person's own account can still be changed.
-              <Button asChild variant="outline">
-                <Link href={`/dashboard/claims/${claim.id}?edit=account`}>
-                  {t('edit_account_action')}
-                </Link>
-              </Button>
+              // A sent claim can still be edited: the details, with a change sending it back for review, and the person's own account.
+              <>
+                <Button asChild variant="outline">
+                  <Link href={`/dashboard/claims/${claim.id}/edit`}>{t('edit_action')}</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href={`/dashboard/claims/${claim.id}?edit=account`}>
+                    {t('edit_account_action')}
+                  </Link>
+                </Button>
+              </>
             )
           }
         />

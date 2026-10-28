@@ -20,15 +20,25 @@ import { Textarea } from '@/components/ui/textarea';
  * saying how many are affected, because a selection is easy to make larger than meant. The decline needs a reason, which each
  * person sees.
  * @param props - The actions props.
- * @param props.count - How many rows are selected.
+ * @param props.copy - The words for the buttons and the dialogs, so wallets and claims each say it in their own terms.
  * @param props.onSettle - Applies the decision to the selection; it resolves to an error name when the server refused.
  * @returns The two buttons and their dialog.
  */
 export function BulkDecision(props: {
-  count: number;
+  copy: {
+    confirm: string;
+    decline: string;
+    confirmTitle: string;
+    confirmText: string;
+    declineTitle: string;
+    declineText: string;
+    confirmAction: string;
+    declineAction: string;
+  };
   onSettle: (decision: 'confirm' | 'decline', note: string) => Promise<string | null>;
 }) {
   const t = useTranslations('Staff');
+  const { copy } = props;
   const [asking, setAsking] = React.useState<'confirm' | 'decline' | null>(null);
   const [note, setNote] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
@@ -65,7 +75,7 @@ export function BulkDecision(props: {
           setAsking('confirm');
         }}
       >
-        {t('bulk_confirm', { count: props.count })}
+        {copy.confirm}
       </Button>
       <Button
         size="sm"
@@ -74,7 +84,7 @@ export function BulkDecision(props: {
           setAsking('decline');
         }}
       >
-        {t('bulk_decline', { count: props.count })}
+        {copy.decline}
       </Button>
       <AlertDialog
         open={asking !== null}
@@ -88,12 +98,10 @@ export function BulkDecision(props: {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {asking === 'decline'
-                ? t('bulk_decline_title', { count: props.count })
-                : t('bulk_confirm_title', { count: props.count })}
+              {asking === 'decline' ? copy.declineTitle : copy.confirmTitle}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {asking === 'decline' ? t('bulk_decline_text') : t('bulk_confirm_text')}
+              {asking === 'decline' ? copy.declineText : copy.confirmText}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {asking === 'decline' && (
@@ -118,7 +126,7 @@ export function BulkDecision(props: {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>{t('bulk_cancel')}</AlertDialogCancel>
             <Button disabled={pending} onClick={apply}>
-              {asking === 'decline' ? t('bulk_decline_action') : t('bulk_confirm_action')}
+              {asking === 'decline' ? copy.declineAction : copy.confirmAction}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -204,4 +204,4 @@ Builds on `docs/research/dashboard-research.md` §4.
 - HackerOne Docs, [Organization navigation](https://docs.hackerone.com/en/articles/8365330-organization-navigation): the profile menu switches between hacker and organization views; an organization dropdown switches between organizations.
 - TRM Labs, [Chainabuse documentation](https://docs.trmlabs.com/guides/chainabuse/offering-scam-support): public reports, not a confidential legal channel, opt-in contact from law enforcement.
 - Clerk, [Roles and permissions](https://clerk.com/docs/guides/organizations/roles-and-permissions), [Organization metadata](https://clerk.com/docs/guides/organizations/metadata) and [Pricing](https://clerk.com/pricing).
-- Product rules from `docs/legal-hack-context.md` and `.agent/copy-reviewer.md`: Celia holds no funds, pays no one, does not declare fraud, and shares a victim's statement and identity link only with the handling counsel.
+- Product rules from `docs/legal-hack-context.md` and `.agent/legal-copy-reviewer.md`: Celia holds no funds, pays no one, does not declare fraud, and shares a victim's statement and identity link only with the handling counsel.

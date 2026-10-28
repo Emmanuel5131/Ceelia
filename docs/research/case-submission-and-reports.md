@@ -23,7 +23,7 @@ From `docs/legal-hack-context.md` and the landing page copy:
 - Every finding says what is **proven** and what is **not proven**. **We do not declare fraud.** Celia establishes **falsity and loss from the chain** and collects **reliance from the victims themselves**. Intent is for the court.
 - The output is an **evidence file plus a jurisdiction-specific certificate** (Section 84 in Nigeria, FRE 902(13)/(14) in the US, in counsel review).
 
-**A correction to my own work.** I had added a *short video* to the claim (a step in the stepper, a line in the consent, a rule in the copy-reviewer notes). That is not in the pitch. The landing page says the victim adds a wallet and says what they were promised and what they lost, in text. I have removed every mention of video from the app, the docs and `.agent/copy-reviewer.md`.
+**A correction to my own work.** I had added a *short video* to the claim (a step in the stepper, a line in the consent, a rule in the legal-copy-reviewer notes). That is not in the pitch. The landing page says the victim adds a wallet and says what they were promised and what they lost, in text. I have removed every mention of video from the app, the docs and `.agent/legal-copy-reviewer.md`.
 
 ---
 

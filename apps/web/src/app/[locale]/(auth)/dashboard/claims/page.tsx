@@ -2,7 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import { toClaimRow } from '@/components/claims/claim-row';
+import { sortByState, toClaimRow } from '@/components/claims/claim-row';
 import { ClaimDataTable } from '@/components/claims/ClaimDataTable';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,7 @@ export default async function ClaimsPage(props: ClaimsPageProps) {
           )
         }
       />
-      <ClaimDataTable claims={claims.map(toClaimRow)} />
+      <ClaimDataTable claims={sortByState(claims.map(toClaimRow))} />
     </>
   );
 }

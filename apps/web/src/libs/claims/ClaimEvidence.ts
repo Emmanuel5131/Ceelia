@@ -1,5 +1,6 @@
 import { ownershipMessage, verifyOwnership } from '@celia/core';
 import { asc, eq } from 'drizzle-orm';
+import { listClaimExtras } from '@/libs/claims/ClaimExtras';
 import type { Claim } from '@/libs/claims/Claims';
 import { db } from '@/libs/DB';
 import { claimProofSchema } from '@/models/Schema';
@@ -20,6 +21,7 @@ export async function buildClaimEvidence(claim: Claim, now: Date) {
     .from(claimProofSchema)
     .where(eq(claimProofSchema.claimId, claim.id))
     .orderBy(asc(claimProofSchema.createdAt));
+  const extras = await listClaimExtras(claim.id);
   const message = claim.walletAddress
     ? ownershipMessage({ chain: claim.chain, address: claim.walletAddress, nonce: claim.nonce })
     : null;
@@ -60,6 +62,11 @@ export async function buildClaimEvidence(claim: Claim, now: Date) {
       sha256: sha256Hex(file.data),
       addedAt: file.createdAt.toISOString(),
     })),
+    more: {
+      affected: extras.affected.map((row) => `${row.chain}: ${row.address}`),
+      receiving: extras.receiving.map((row) => `${row.chain}: ${row.address}`),
+      transactions: extras.transactions.map((row) => `${row.chain}: ${row.hash}`),
+    },
     payment: {
       txHash: claim.txHash,
       fundingTxHash: claim.fundingTxHash,

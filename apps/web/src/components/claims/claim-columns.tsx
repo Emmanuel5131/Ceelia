@@ -8,6 +8,7 @@ import { useClaimLabels } from '@/components/claims/claim-labels';
 import { shortReference } from '@/components/claims/claim-row';
 import type { ClaimRow } from '@/components/claims/claim-row';
 import { OperatorName } from '@/components/claims/ClaimMeta';
+import { ClaimStateBadge } from '@/components/claims/ClaimStateBadge';
 import { DeleteClaimDialog } from '@/components/claims/DeleteClaimDialog';
 import { DataTableColumnHeader } from '@/components/data-table/DataTableColumnHeader';
 import { createSelectColumn } from '@/components/data-table/select-column';
@@ -15,6 +16,8 @@ import { createAppColumnHelper } from '@/components/data-table/table';
 import type { TableFeatures } from '@/components/data-table/table';
 import { Badge } from '@/components/ui/badge';
 import { Link } from '@/libs/I18nNavigation';
+import { claimStateOrder } from '@/utils/claims/ClaimState';
+import type { ClaimState } from '@/utils/claims/ClaimState';
 
 type ClaimColumnId =
   | 'claim'
@@ -100,18 +103,8 @@ function WalletCell(props: { value: boolean }) {
   );
 }
 
-function StatusCell(props: { value: ClaimRow['status'] | 'confirmed' }) {
-  const t = useTranslations('ClaimList');
-
-  if (props.value === 'confirmed') {
-    return <Badge variant="solid">{t('status_confirmed')}</Badge>;
-  }
-
-  return props.value === 'submitted' ? (
-    <Badge variant="default">{t('status_submitted')}</Badge>
-  ) : (
-    <Badge variant="dashed">{t('status_draft')}</Badge>
-  );
+function StatusCell(props: { value: ClaimRow['state'] }) {
+  return <ClaimStateBadge state={props.value} />;
 }
 
 function UpdatedCell(props: { value: string }) {
@@ -162,11 +155,15 @@ export const claimColumns = helper.columns([
     cell: ({ row }) => <WalletCell value={row.original.signed} />,
     filterFn: 'inSet',
   }),
-  helper.accessor((row) => (row.confirmed ? 'confirmed' : row.status), {
+  helper.accessor('state', {
     id: 'status',
     header: ({ column }) => <ClaimHeader column={column} id="status" />,
     cell: ({ getValue }) => <StatusCell value={getValue()} />,
     filterFn: 'inSet',
+    // Sorted along the way a claim takes, not alphabetically.
+    sortFn: (a, b, columnId) =>
+      claimStateOrder[a.getValue<ClaimState>(columnId)] -
+      claimStateOrder[b.getValue<ClaimState>(columnId)],
   }),
   helper.accessor('updatedAt', {
     id: 'updated',
@@ -178,7 +175,7 @@ export const claimColumns = helper.columns([
     id: 'actions',
     header: () => null,
     cell: ({ row }) =>
-      row.original.status === 'draft' ? (
+      row.original.state === 'draft' ? (
         <DeleteClaimDialog compact action={deleteClaim.bind(null, row.original.id)} />
       ) : null,
     enableSorting: false,

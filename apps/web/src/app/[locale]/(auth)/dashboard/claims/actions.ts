@@ -17,6 +17,12 @@ import { redirect } from 'next/navigation';
 import type * as z from 'zod';
 import { mustVerify } from '@/libs/accounts/Identity';
 import { detectAccountKind } from '@/libs/claims/AccountKind';
+import {
+  checkExtraTransactions,
+  deleteClaimExtras,
+  listClaimExtras,
+  replaceClaimExtras,
+} from '@/libs/claims/ClaimExtras';
 import { listProofFiles } from '@/libs/claims/ClaimProofs';
 import { getClaim } from '@/libs/claims/Claims';
 import { countSentToday } from '@/libs/claims/Signals';
@@ -24,8 +30,10 @@ import { checkClaimTransactions } from '@/libs/claims/TxChecks';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/notifications/Notify';
 import { saveLocale } from '@/libs/notifications/UserSettings';
-import { claimProofSchema, claimSchema } from '@/models/Schema';
+import { claimProofSchema, claimRevisionSchema, claimSchema } from '@/models/Schema';
 import { parseAccount } from '@/utils/accounts/Account';
+import { claimChanges } from '@/utils/claims/ClaimChanges';
+import { claimState } from '@/utils/claims/ClaimState';
 import { cleanFileName, detectProofType, proofFileLimits } from '@/utils/claims/ProofFile';
 import { maxClaimsPerDay } from '@/utils/claims/Signals';
 import { parseVideoLink } from '@/utils/claims/VideoLink';
@@ -62,6 +70,22 @@ async function requirePerson() {
   return { userId, user };
 }
 
+/**
+ * Reads the rows of one list of extra wallets or transactions: a chain and a value for each, with empty rows dropped.
+ * @param formData - The submitted form.
+ * @param name - The list's field name.
+ * @returns The rows.
+ */
+function readRows(formData: FormData, name: string) {
+  const chains = formData.getAll(`${name}Chain`);
+
+  return formData
+    .getAll(`${name}Value`)
+    .flatMap((value, index) =>
+      typeof value === 'string' && value.trim() !== '' ? [{ chain: chains[index], value }] : [],
+    );
+}
+
 const names = [
   'paymentMethod',
   'chain',
@@ -93,7 +117,7 @@ const names = [
  */
 function readClaimForm(formData: FormData) {
   // Every kind of loss the person ticked, not just the first.
-  const input: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {
+  const input: Record<string, unknown> = {
     fraudTypes: formData.getAll('fraudType'),
   };
 
@@ -105,10 +129,25 @@ function readClaimForm(formData: FormData) {
     }
   }
 
+  // Extra wallets and transactions come as rows, each with its own chain; an empty row is left out.
+  for (const name of ['moreAffected', 'moreReceiving', 'moreTransactions']) {
+    input[name] = readRows(formData, name);
+  }
+
   return input;
 }
 
 type NewClaim = z.infer<typeof CreateClaimValidation>;
+
+// A list of extra wallets or transactions as sorted text, so two lists with the same entries compare as equal.
+const pack = (rows: { chain: string; value: string }[]) =>
+  rows.map((row) => `${row.chain}:${row.value}`).toSorted();
+
+const extrasOf = (claim: NewClaim) => ({
+  affected: claim.moreAffected,
+  receiving: claim.moreReceiving,
+  transactions: claim.moreTransactions,
+});
 
 /**
  * Finds a claim this person has already filed for the same wallet and operator, or for the same transaction.
@@ -273,23 +312,34 @@ export async function createClaim(_state: ClaimState, formData: FormData): Promi
       ? await detectAccountKind(claim.chain, claim.walletAddress)
       : null;
   const country = user?.privateMetadata.country;
-  const [created] = await db
-    .insert(claimSchema)
-    .values({
-      ...claimColumns(claim, named, accountKind),
-      ...(await claimChecks(claim)),
-      userId,
-      country: typeof country === 'string' ? country : null,
-    })
-    .returning({ id: claimSchema.id });
+  const extras = extrasOf(claim);
+  const extraChecks = await checkExtraTransactions(extras.transactions, claim.walletAddress ?? '');
+  const created = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(claimSchema)
+      .values({
+        ...claimColumns(claim, named, accountKind),
+        ...(await claimChecks(claim)),
+        userId,
+        country: typeof country === 'string' ? country : null,
+      })
+      .returning({ id: claimSchema.id });
+
+    if (row) {
+      await replaceClaimExtras(tx, row.id, extras, extraChecks);
+    }
+
+    return row;
+  });
 
   return redirect(getI18nPath(`/dashboard/claims/${created?.id}`, await getLocale()));
 }
 
 /**
- * Saves the first page of a claim again, from the same form, while it is still a draft. A different chain, address or way of
+ * Saves the first page of a claim again, from the same form. A different chain, address or way of
  * paying clears the ownership proof and makes a new nonce, because the signed message names the wallet; every other change keeps
- * it. A claim that has been sent is part of a case and keeps what it had.
+ * it. A claim that was already sent can be edited too: what changed is kept in `claim_revision`, and a real change sends it back
+ * to be reviewed again, since staff accepted what it said before.
  * @param claimId - The claim.
  * @param _state - The previous state (unused).
  * @param formData - The submitted form.
@@ -303,7 +353,7 @@ export async function updateClaim(
   const { userId } = await requirePerson();
   const existing = await getClaim(userId, claimId);
 
-  if (!existing || existing.status !== 'draft') {
+  if (!existing) {
     return failed(['claim']);
   }
 
@@ -342,38 +392,90 @@ export async function updateClaim(
     moved ? walletKind : existing.accountKind,
   );
 
-  await db
-    .update(claimSchema)
-    .set({
-      ...columns,
-      ...(await claimChecks(claim)),
-      updatedAt: new Date(),
-      // A different wallet needs its own proof; the same wallet keeps the one it has.
-      ...(moved && {
-        nonce,
-        ownership: 'unsigned',
-        ownershipMethod: null,
-        signature: null,
-        signedAt: null,
-        reviewVideoUrl: null,
-        proofNote: null,
-        reviewNote: null,
-        reviewRequestedAt: null,
-        reviewedAt: null,
-      }),
-    })
-    .where(
-      and(
-        eq(claimSchema.id, existing.id),
-        eq(claimSchema.userId, userId),
-        eq(claimSchema.status, 'draft'),
-      ),
-    );
+  // A claim that was already sent can be edited too. What changed is kept, and a real change sends it back to be reviewed again,
+  // because staff accepted what it said before.
+  const sent = existing.status === 'submitted';
+  const extras = extrasOf(claim);
+  const current = await listClaimExtras(existing.id);
+  const changes = sent
+    ? claimChanges(
+        {
+          ...existing,
+          moreAffected: pack(
+            current.affected.map((row) => ({ chain: row.chain, value: row.address })),
+          ),
+          moreReceiving: pack(
+            current.receiving.map((row) => ({ chain: row.chain, value: row.address })),
+          ),
+          moreTransactions: pack(
+            current.transactions.map((row) => ({ chain: row.chain, value: row.hash })),
+          ),
+        },
+        {
+          ...columns,
+          moreAffected: pack(extras.affected),
+          moreReceiving: pack(extras.receiving),
+          moreTransactions: pack(extras.transactions),
+        },
+      )
+    : {};
+  const changed = Object.keys(changes).length > 0;
+  const extraChecks = await checkExtraTransactions(extras.transactions, claim.walletAddress ?? '');
 
-  // The documents named the old wallet, so they go with it.
-  if (moved) {
-    await db.delete(claimProofSchema).where(eq(claimProofSchema.claimId, existing.id));
-  }
+  const checks = await claimChecks(claim);
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(claimSchema)
+      .set({
+        ...columns,
+        ...checks,
+        updatedAt: new Date(),
+        ...(sent &&
+          changed && {
+            validatedAt: null,
+            staffReviewStartedAt: null,
+            rejectedAt: null,
+            rejectionNote: null,
+          }),
+        // A different wallet needs its own proof; the same wallet keeps the one it has.
+        ...(moved && {
+          nonce,
+          ownership: 'unsigned',
+          ownershipMethod: null,
+          signature: null,
+          signedAt: null,
+          reviewVideoUrl: null,
+          proofNote: null,
+          reviewNote: null,
+          reviewRequestedAt: null,
+          reviewedAt: null,
+        }),
+      })
+      .where(
+        and(
+          eq(claimSchema.id, existing.id),
+          eq(claimSchema.userId, userId),
+          eq(claimSchema.status, existing.status),
+        ),
+      );
+
+    // The documents named the old wallet, so they go with it.
+    if (moved) {
+      await tx.delete(claimProofSchema).where(eq(claimProofSchema.claimId, existing.id));
+    }
+
+    await replaceClaimExtras(tx, existing.id, extras, extraChecks);
+
+    if (sent && changed) {
+      await tx.insert(claimRevisionSchema).values({
+        claimId: existing.id,
+        userId,
+        changes,
+        stateBefore: claimState(existing),
+      });
+    }
+  });
 
   const locale = await getLocale();
   revalidatePath(getI18nPath(`/dashboard/claims/${existing.id}`, locale));
@@ -475,14 +577,20 @@ async function openToProof(userId: string, claimId: string) {
 
 /**
  * What to save when a video or files are added: the claim goes in the staff queue again, and a wallet not yet confirmed waits for
- * review. A wallet already confirmed stays confirmed. An earlier decline no longer applies.
+ * review. A wallet already confirmed stays confirmed. An earlier decline no longer applies. A claim staff already accepted goes
+ * back to be reviewed, because the proof is looked at together with the claim.
  * @param claim - The claim.
  * @param note - What the person wrote, if anything. It replaces the earlier note only when there is one.
  * @returns The columns to set.
  */
-function forReview(claim: Pick<typeof claimSchema.$inferSelect, 'ownership'>, note: string) {
+function forReview(
+  claim: Pick<typeof claimSchema.$inferSelect, 'ownership' | 'status' | 'validatedAt'>,
+  note: string,
+) {
   return {
     ...(claim.ownership === 'signed' ? {} : { ownership: 'review' }),
+    ...(claim.status === 'submitted' &&
+      claim.validatedAt !== null && { validatedAt: null, staffReviewStartedAt: null }),
     ...(note ? { proofNote: note } : {}),
     reviewRequestedAt: new Date(),
     reviewedAt: null,
@@ -799,6 +907,38 @@ export async function submitClaim(
 }
 
 /**
+ * Deletes the person's own drafts among the given claims, with the extra wallets and transactions each one holds. Anything that is
+ * not their draft is skipped, so a claim sent a moment ago is never deleted; the check is part of the delete itself.
+ * @param userId - The Clerk user id.
+ * @param claimIds - The claims to delete.
+ * @returns How many were deleted.
+ */
+async function deleteDraftsOf(userId: string, claimIds: string[]) {
+  return await db.transaction(async (tx) => {
+    const drafts = await tx
+      .select({ id: claimSchema.id })
+      .from(claimSchema)
+      .where(
+        and(
+          inArray(claimSchema.id, claimIds),
+          eq(claimSchema.userId, userId),
+          eq(claimSchema.status, 'draft'),
+        ),
+      );
+    const found = drafts.map((draft) => draft.id);
+
+    if (found.length === 0) {
+      return 0;
+    }
+
+    await deleteClaimExtras(tx, found);
+    await tx.delete(claimSchema).where(inArray(claimSchema.id, found));
+
+    return found.length;
+  });
+}
+
+/**
  * Deletes a draft claim. Only the person's own draft can go: a claim that has been sent is part of a case and is never deleted
  * here. The check is part of the delete itself, so a claim sent a moment ago cannot slip through.
  * @param claimId - The claim.
@@ -806,18 +946,9 @@ export async function submitClaim(
  */
 export async function deleteClaim(claimId: string): Promise<ClaimState> {
   const { userId } = await requirePerson();
-  const deleted = await db
-    .delete(claimSchema)
-    .where(
-      and(
-        eq(claimSchema.id, claimId),
-        eq(claimSchema.userId, userId),
-        eq(claimSchema.status, 'draft'),
-      ),
-    )
-    .returning({ id: claimSchema.id });
+  const deleted = await deleteDraftsOf(userId, [claimId]);
 
-  if (deleted.length === 0) {
+  if (deleted === 0) {
     return failed(['claim']);
   }
 
@@ -835,18 +966,9 @@ export async function deleteClaim(claimId: string): Promise<ClaimState> {
  */
 export async function deleteDrafts(claimIds: string[]): Promise<ClaimState> {
   const { userId } = await requirePerson();
-  const deleted = await db
-    .delete(claimSchema)
-    .where(
-      and(
-        inArray(claimSchema.id, claimIds),
-        eq(claimSchema.userId, userId),
-        eq(claimSchema.status, 'draft'),
-      ),
-    )
-    .returning({ id: claimSchema.id });
+  const deleted = await deleteDraftsOf(userId, claimIds);
 
-  if (deleted.length === 0) {
+  if (deleted === 0) {
     return failed(['claim']);
   }
 

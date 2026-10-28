@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import type { ClaimDefaults } from '@/components/claims/claim-defaults';
+import { ExtraRows } from '@/components/claims/ExtraRows';
 import { FieldMessage } from '@/components/claims/FieldMessage';
 import { FormStep } from '@/components/claims/FormStep';
 import { TxHashField } from '@/components/claims/TxHashField';
@@ -57,6 +58,41 @@ export function PaymentDetailsSection(props: {
           <FieldMessage show={props.errors.includes('destinationAddress')}>
             {t('error_address')}
           </FieldMessage>
+        </div>
+      )}
+      {props.onChain && (
+        <div className="grid gap-6 border-t border-border pt-6">
+          <div className="grid gap-1">
+            <h3 className="text-base font-medium">{t('more_title')}</h3>
+            <p className="text-sm text-ink-muted">{t('more_text')}</p>
+          </div>
+          <ExtraRows
+            name="moreAffected"
+            title={t('more_affected_title')}
+            hint={t('more_affected_hint')}
+            add={t('more_add_wallet')}
+            remove={t('more_remove')}
+            error={props.errors.includes('moreAffected') ? t('error_more') : undefined}
+            defaults={defaults?.moreAffected}
+          />
+          <ExtraRows
+            name="moreTransactions"
+            title={t('more_transactions_title')}
+            hint={t('more_transactions_hint')}
+            add={t('more_add_transaction')}
+            remove={t('more_remove')}
+            error={props.errors.includes('moreTransactions') ? t('error_more') : undefined}
+            defaults={defaults?.moreTransactions}
+          />
+          <ExtraRows
+            name="moreReceiving"
+            title={t('more_receiving_title')}
+            hint={t('more_receiving_hint')}
+            add={t('more_add_wallet')}
+            remove={t('more_remove')}
+            error={props.errors.includes('moreReceiving') ? t('error_more') : undefined}
+            defaults={defaults?.moreReceiving}
+          />
         </div>
       )}
       <div className="grid gap-4 sm:grid-cols-2">

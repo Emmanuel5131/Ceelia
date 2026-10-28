@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ApplicationsTable } from '@/components/staff/ApplicationsTable';
-import { SyncCounselButton } from '@/components/staff/SyncCounselButton';
 import { listApplicationsInReview } from '@/libs/accounts/Applications';
 import { requireStaff } from '@/libs/accounts/Staff';
 import { Env } from '@/libs/Env';
@@ -28,11 +27,7 @@ export default async function StaffApplicationsPage(props: PageProps) {
 
   return (
     <>
-      <PageHeader
-        title={t('queue_title')}
-        description={t('queue_description')}
-        actions={<SyncCounselButton />}
-      />
+      <PageHeader title={t('queue_title')} description={t('queue_description')} />
       <ApplicationsTable
         items={await listApplicationsInReview()}
         actorId={staff.id}

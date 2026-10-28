@@ -1,5 +1,7 @@
 import type { ChainId, FraudType } from '@celia/core';
 import type { Claim } from '@/libs/claims/Claims';
+import { claimState, claimStateOrder } from '@/utils/claims/ClaimState';
+import type { ClaimState } from '@/utils/claims/ClaimState';
 import { claimSteps } from '@/utils/claims/ClaimSteps';
 
 /** What the claims table needs from a claim. Nothing else crosses to the browser: no statement, nonce or signature. */
@@ -11,15 +13,28 @@ export type ClaimRow = {
   /** The full wallet address or transaction hash, whichever the claim has. */
   reference: string;
   amountLost: string | null;
-  status: 'draft' | 'submitted';
+  /** Draft, sent, in review, accepted or rejected, as the person sees it. */
+  state: ClaimState;
   /** Whether the wallet is proven: the person signed with it, or staff were satisfied by what they sent. */
   signed: boolean;
-  /** Whether a person at Celia has confirmed the sent claim. A signature alone never makes a claim confirmed. */
-  confirmed: boolean;
+  /** Why staff rejected the claim, when they did. */
+  rejectionNote: string | null;
   stepsDone: number;
   stepsTotal: number;
   updatedAt: string;
 };
+
+/**
+ * Sorts claims by their state, along the way a claim takes, and within a state the most recently changed first.
+ * @param rows - The claims.
+ * @returns A new sorted list.
+ */
+export function sortByState(rows: ClaimRow[]) {
+  return rows.toSorted(
+    (a, b) =>
+      claimStateOrder[a.state] - claimStateOrder[b.state] || b.updatedAt.localeCompare(a.updatedAt),
+  );
+}
 
 /**
  * A wallet address or transaction hash cut to its start and end, or a dash when the claim has neither, as when it was paid by
@@ -46,9 +61,9 @@ export function toClaimRow(claim: Claim): ClaimRow {
     chain: claim.chain,
     reference: claim.walletAddress ?? claim.txHash ?? '',
     amountLost: claim.amountLost,
-    status: claim.status === 'submitted' ? 'submitted' : 'draft',
+    state: claimState(claim),
     signed: claim.ownership === 'signed',
-    confirmed: claim.validatedAt !== null,
+    rejectionNote: claim.rejectionNote,
     stepsDone: steps.filter((step) => step === 'done').length,
     stepsTotal: steps.length,
     updatedAt: claim.updatedAt.toISOString(),

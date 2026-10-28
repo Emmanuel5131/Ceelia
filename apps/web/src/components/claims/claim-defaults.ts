@@ -6,6 +6,7 @@ import type {
   WalletApp,
   WalletType,
 } from '@celia/core';
+import type { ClaimExtrasView } from '@/libs/claims/ClaimExtras';
 import type { Claim } from '@/libs/claims/Claims';
 
 /** What the claim form shows when a draft is edited: only what the form asks for, never the nonce or a signature. */
@@ -30,14 +31,38 @@ export type ClaimDefaults = {
   fraudDescription: string;
   contactChannel: ContactChannel | null;
   amountLost: string;
+  /** The extra wallets and transactions saved with the claim, each with its own chain. */
+  moreAffected: { chain: ChainId; value: string }[];
+  moreReceiving: { chain: ChainId; value: string }[];
+  moreTransactions: { chain: ChainId; value: string }[];
 };
+
+const addresses = (rows: { chain: ChainId; address: string }[] = []) =>
+  rows.map((row) => ({ chain: row.chain, value: row.address }));
+
+/**
+ * The extra wallets and transactions as the form's rows, each with its own chain.
+ * @param extras - The extras saved with the claim, when it has any.
+ * @returns The three lists.
+ */
+function extraDefaults(extras?: ClaimExtrasView) {
+  return {
+    moreAffected: addresses(extras?.affected),
+    moreReceiving: addresses(extras?.receiving),
+    moreTransactions: (extras?.transactions ?? []).map((row) => ({
+      chain: row.chain,
+      value: row.hash,
+    })),
+  };
+}
 
 /**
  * Reduces a claim to the answers the claim form takes, so a draft can be edited in the same form it was made in.
  * @param claim - The claim.
+ * @param extras - Its extra wallets and transactions, when it has any.
  * @returns The form's answers.
  */
-export function toClaimDefaults(claim: Claim): ClaimDefaults {
+export function toClaimDefaults(claim: Claim, extras?: ClaimExtrasView): ClaimDefaults {
   return {
     fraudTypes: claim.fraudTypes.length > 0 ? claim.fraudTypes : [claim.fraudType],
     paymentMethod: claim.paymentMethod,
@@ -59,5 +84,6 @@ export function toClaimDefaults(claim: Claim): ClaimDefaults {
     fraudDescription: claim.fraudDescription ?? '',
     contactChannel: claim.contactChannel,
     amountLost: claim.amountLost ?? '',
+    ...extraDefaults(extras),
   };
 }

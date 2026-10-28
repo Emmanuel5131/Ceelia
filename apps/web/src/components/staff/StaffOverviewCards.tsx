@@ -11,15 +11,15 @@ import { Link } from '@/libs/I18nNavigation';
  */
 export async function StaffOverviewCards(props: { counts: StaffCounts }) {
   const t = await getTranslations('Staff');
+  const nav = await getTranslations('AppShell');
   const cards = [
     { id: 'applications', href: '/dashboard/staff/applications', value: props.counts.applications },
-    { id: 'wallets', href: '/dashboard/staff/wallets', value: props.counts.wallets },
     { id: 'claims', href: '/dashboard/staff/claims', value: props.counts.claims },
     { id: 'mail', href: '/dashboard/staff/mail', value: props.counts.mail },
   ] as const;
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-3">
       {cards.map((card) => (
         <Link
           key={card.id}
@@ -27,7 +27,7 @@ export async function StaffOverviewCards(props: { counts: StaffCounts }) {
           className="block focus-ring hover:[&_[data-slot=card]]:bg-paper-sunken"
         >
           <StatCard
-            label={t(`nav_${card.id}`)}
+            label={nav(`nav_staff_${card.id}`)}
             value={String(card.value)}
             hint={t(`overview_${card.id}_hint`)}
           />

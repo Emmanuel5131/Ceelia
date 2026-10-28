@@ -31,6 +31,8 @@ export type EvidenceBody = {
   video: string | null;
   files: EvidenceFile[];
   payment: Record<string, string | null>;
+  /** The extra wallets and transactions, each written as `chain: value`. */
+  more: { affected: string[]; receiving: string[]; transactions: string[] };
   chainChecks: { transaction: StoredCheck | null; funding: StoredCheck | null };
   operator: { name: string | null; website: string | null };
   statement: string | null;
@@ -103,6 +105,10 @@ const confirmed = (ownership: EvidenceBody['ownership']) => {
 const row = (label: string, value: string | null | undefined) =>
   value ? `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>` : '';
 
+// One row listing several values, or nothing when there are none.
+const list = (label: string, values: string[]) =>
+  values.length > 0 ? row(label, values.join('\n')) : '';
+
 function checkLine(label: string, check: StoredCheck | null) {
   if (!check) {
     return '';
@@ -159,6 +165,8 @@ ${body.ownership.signature ? `<p class="note">The signature. Anyone can check it
 ${files ? `<table><tr><th>File</th><th>Size</th><th>SHA-256</th></tr>${files}</table>` : '<p class="note">No files were added.</p>'}
 <h2>Payment</h2>
 <table>${payment}${checkLine('Payment transaction', body.chainChecks.transaction)}${checkLine('Funding transaction', body.chainChecks.funding)}</table>
+<h2>More wallets and transactions</h2>
+<table>${list('Other affected wallets', body.more.affected)}${list('Other transactions', body.more.transactions)}${list('Wallets that received the money', body.more.receiving)}</table>
 <h2>Operator named</h2>
 <table>${row('Name', body.operator.name)}${row('Website', body.operator.website)}</table>
 <h2>The claimant's account</h2>

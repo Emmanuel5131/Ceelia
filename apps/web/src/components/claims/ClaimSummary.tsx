@@ -5,10 +5,13 @@ import { ChainLabel } from '@/components/claims/ChainLabel';
 import { useClaimLabels } from '@/components/claims/claim-labels';
 import { shortReference } from '@/components/claims/claim-row';
 import { OperatorName } from '@/components/claims/ClaimMeta';
+import { ClaimStateBadge } from '@/components/claims/ClaimStateBadge';
 import { ExplorerLink } from '@/components/claims/ExplorerLink';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import type { ClaimExtrasView } from '@/libs/claims/ClaimExtras';
 import type { Claim } from '@/libs/claims/Claims';
+import { claimState } from '@/utils/claims/ClaimState';
 import type { StoredCheck } from '@/utils/claims/Transaction';
 
 function Row(props: { label: string; children: React.ReactNode }) {
@@ -105,15 +108,96 @@ function PaymentRows(props: { claim: Claim }) {
 }
 
 /**
+ * The extra wallets and transactions on a claim, each with its own chain: the wallets that were affected, the transactions, and the
+ * wallets that received the money. A list shows only when it has something in it.
+ * @param props - The rows props.
+ * @param props.extras - The extra wallets and transactions.
+ * @returns The rows.
+ */
+function ExtraRows(props: { extras?: ClaimExtrasView }) {
+  const t = useTranslations('ClaimPage');
+  const { extras } = props;
+
+  if (!extras) {
+    return null;
+  }
+
+  const lists = [
+    {
+      key: 'affected',
+      label: t('more_affected_title'),
+      kind: 'address' as const,
+      rows: extras.affected.map((row) => ({
+        id: row.id,
+        chain: row.chain,
+        value: row.address,
+        check: null,
+      })),
+    },
+    {
+      key: 'transactions',
+      label: t('more_transactions_title'),
+      kind: 'tx' as const,
+      rows: extras.transactions.map((row) => ({
+        id: row.id,
+        chain: row.chain,
+        value: row.hash,
+        check: row.check,
+      })),
+    },
+    {
+      key: 'receiving',
+      label: t('more_receiving_title'),
+      kind: 'address' as const,
+      rows: extras.receiving.map((row) => ({
+        id: row.id,
+        chain: row.chain,
+        value: row.address,
+        check: null,
+      })),
+    },
+  ];
+
+  return (
+    <>
+      {lists
+        .filter((list) => list.rows.length > 0)
+        .map((list) => (
+          <Row key={list.key} label={list.label}>
+            <ul className="grid gap-2">
+              {list.rows.map((row) => (
+                <li key={row.id} className="grid gap-1">
+                  <ChainLabel chain={row.chain} />
+                  <Reference
+                    chain={row.chain}
+                    kind={list.kind}
+                    value={row.value}
+                    check={row.check}
+                  />
+                </li>
+              ))}
+            </ul>
+          </Row>
+        ))}
+    </>
+  );
+}
+
+/**
  * Everything the person entered about a claim, in one box beside the steps: what happened, how it was paid, the wallet and
  * transactions with links to check them on the explorer, and who took the money. Only what was given is listed. A footer holds
  * the actions that belong to the claim, such as deleting a draft.
  * @param props - The summary props.
  * @param props.claim - The claim.
+ * @param props.extras - Its extra wallets and transactions, each on its own chain.
  * @param props.footer - Actions for the claim, shown under the rows.
  * @returns The summary card.
  */
-export function ClaimSummary(props: { claim: Claim; footer?: React.ReactNode }) {
+export function ClaimSummary(props: {
+  claim: Claim;
+  extras?: ClaimExtrasView;
+  footer?: React.ReactNode;
+}) {
   const t = useTranslations('ClaimPage');
   const tc = useTranslations('CaseClaim');
   const tl = useTranslations('ClaimList');
@@ -125,13 +209,15 @@ export function ClaimSummary(props: { claim: Claim; footer?: React.ReactNode }) 
     <Card variant="outline" size="sm">
       <CardHeader className="flex items-center justify-between gap-3">
         <CardTitle className="font-sans text-base font-medium">{t('summary_title')}</CardTitle>
-        {claim.validatedAt ? (
-          <Badge variant="solid">{tl('confirmed')}</Badge>
-        ) : (
-          <Badge variant="dashed">{tl('unconfirmed')}</Badge>
-        )}
+        <ClaimStateBadge state={claimState(claim)} />
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-4">
+        {claim.rejectedAt && claim.rejectionNote && (
+          <div className="grid gap-1 border border-seal bg-status-rejected-bg p-3 text-sm">
+            <p className="font-medium text-seal">{tl('rejection_title')}</p>
+            <p className="whitespace-pre-wrap">{claim.rejectionNote}</p>
+          </div>
+        )}
         <dl className="grid gap-3 text-sm">
           <Row label={t('summary_what')}>
             {kinds.map((type) => labels.fraudType[type]).join(', ')}
@@ -148,6 +234,7 @@ export function ClaimSummary(props: { claim: Claim; footer?: React.ReactNode }) 
             </Row>
           )}
           <PaymentRows claim={claim} />
+          <ExtraRows extras={props.extras} />
           <Row label={tc('operator')}>
             <span>
               <OperatorName name={claim.platformName} />

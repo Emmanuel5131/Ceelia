@@ -148,6 +148,11 @@ export const claimSchema = pgTable(
     consentedAt: timestamp('consented_at', { mode: 'date' }),
     /** When Celia staff checked the sent claim and its evidence; null until they have. */
     validatedAt: timestamp('validated_at', { mode: 'date' }),
+    /** When a member of staff started reviewing the sent claim; shown to the person as "In review". */
+    staffReviewStartedAt: timestamp('staff_review_started_at', { mode: 'date' }),
+    /** When staff rejected the claim, with the reason the person sees. A rejected claim is never validated. */
+    rejectedAt: timestamp('rejected_at', { mode: 'date' }),
+    rejectionNote: text('rejection_note'),
     updatedAt: timestamp('updated_at', { mode: 'date' })
       .defaultNow()
       .$onUpdate(() => new Date())
@@ -162,6 +167,71 @@ export const claimSchema = pgTable(
       table.platformKey,
     ),
   ],
+);
+
+/**
+ * An extra wallet on a claim, beyond the main one the claim itself holds: a wallet of the person's that was affected, or a wallet
+ * that received their money, on any chain. A claim can list several of each, so the evidence is collected whole. Rows are only
+ * written with the claim; they are not claims of their own.
+ */
+export const claimAddressSchema = pgTable(
+  'claim_address',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    claimId: uuid('claim_id')
+      .notNull()
+      .references(() => claimSchema.id),
+    /** `affected` for the person's own wallet that was hit; `receiving` for a wallet that received their money. */
+    role: text('role').$type<'affected' | 'receiving'>().notNull(),
+    chain: text('chain').$type<ChainId>().notNull(),
+    address: text('address').notNull(),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    unique('claim_address_once').on(table.claimId, table.role, table.chain, table.address),
+  ],
+);
+
+/**
+ * An extra transaction on a claim, beyond the main one the claim itself holds, on any chain. What the chain showed for it when
+ * it was saved is kept with it.
+ */
+export const claimTransactionSchema = pgTable(
+  'claim_transaction',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    claimId: uuid('claim_id')
+      .notNull()
+      .references(() => claimSchema.id),
+    chain: text('chain').$type<ChainId>().notNull(),
+    hash: text('hash').notNull(),
+    check: jsonb('check').$type<StoredCheck>(),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [unique('claim_transaction_once').on(table.claimId, table.chain, table.hash)],
+);
+
+/**
+ * What a person changed on a claim after sending it: each field with its value before and after, kept so an edit never erases
+ * what was first said. Rows are only ever added.
+ */
+export const claimRevisionSchema = pgTable(
+  'claim_revision',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    claimId: uuid('claim_id')
+      .notNull()
+      .references(() => claimSchema.id),
+    /** The Clerk user id of the person who edited it. */
+    userId: text('user_id').notNull(),
+    changes: jsonb('changes')
+      .$type<Record<string, { from: string | null; to: string | null }>>()
+      .notNull(),
+    /** The claim's state when it was edited, such as `accepted`; an edit sends it back for review. */
+    stateBefore: text('state_before').notNull(),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('claim_revision_by_claim').on(table.claimId, table.createdAt)],
 );
 
 const bytea = customType<{ data: Buffer }>({
@@ -436,6 +506,8 @@ export type StaffAction =
   | 'ownership_confirmed'
   | 'ownership_declined'
   | 'claim_validated'
+  | 'claim_review_started'
+  | 'claim_rejected'
   | 'case_opened'
   | 'case_status_set'
   | 'case_operators_saved'

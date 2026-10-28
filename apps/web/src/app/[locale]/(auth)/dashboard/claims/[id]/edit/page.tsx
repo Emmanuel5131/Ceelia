@@ -8,6 +8,7 @@ import { toClaimDefaults } from '@/components/claims/claim-defaults';
 import { NewClaimForm } from '@/components/claims/NewClaimForm';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import { listClaimExtras } from '@/libs/claims/ClaimExtras';
 import { getClaim } from '@/libs/claims/Claims';
 import { Link } from '@/libs/I18nNavigation';
 import { parseAccount } from '@/utils/accounts/Account';
@@ -45,11 +46,6 @@ export default async function EditClaimPage(props: EditClaimPageProps) {
     notFound();
   }
 
-  // A sent claim is part of a case: it is read, not edited.
-  if (claim.status === 'submitted') {
-    redirect(getI18nPath(`/dashboard/claims/${claim.id}`, locale));
-  }
-
   return (
     <>
       <Button asChild variant="ghost" size="sm" className="mb-2 -ml-3 justify-self-start">
@@ -59,7 +55,14 @@ export default async function EditClaimPage(props: EditClaimPageProps) {
         </Link>
       </Button>
       <PageHeader centered compact title={t('edit_title')} />
-      <NewClaimForm edit={{ id: claim.id, defaults: toClaimDefaults(claim) }} />
+      {claim.status === 'submitted' && (
+        <output className="mb-6 block border border-border bg-paper px-4 py-3 text-sm text-ink-muted">
+          {t('edit_sent_notice')}
+        </output>
+      )}
+      <NewClaimForm
+        edit={{ id: claim.id, defaults: toClaimDefaults(claim, await listClaimExtras(claim.id)) }}
+      />
     </>
   );
 }

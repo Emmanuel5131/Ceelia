@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
 import { setCounselReview } from '@/libs/accounts/CounselProfile';
 import { lookupRegistry, lookupSanctions } from '@/libs/accounts/Lookups';
-import { requireStaff, syncCounselProfiles } from '@/libs/accounts/Staff';
+import { requireStaff } from '@/libs/accounts/Staff';
 import { recordStaffAction, staffActor } from '@/libs/accounts/StaffAudit';
 import { recordCaseEvent } from '@/libs/cases/CaseEvents';
 import { addConfirmedClaim } from '@/libs/cases/Cases';
@@ -29,8 +29,8 @@ import {
 import { parseAccount } from '@/utils/accounts/Account';
 import { approvalRefusal, reviewChecks } from '@/utils/accounts/Institution';
 import { caseStatuses } from '@/utils/cases/Case';
-import { hashReport } from '@/utils/cases/Report';
-import { forbiddenWords, ReportValidation } from '@/validations/ReportValidation';
+import { hashReport, parseDollars } from '@/utils/cases/Report';
+import { forbiddenWords, NewReportValidation } from '@/validations/ReportValidation';
 
 // Notes on who is alleged to have run a platform. The house language applies: they record what is alleged, they do not declare fraud.
 const CaseOperatorsValidation = z.object({
@@ -326,66 +326,54 @@ export type BulkResult = { done: number; skipped: number };
 
 const ids = z.array(z.uuid()).min(1).max(100);
 
-const WalletsValidation = z.object({
-  claimIds: ids,
-  decision: z.enum(['confirm', 'decline']),
-  note: z.string().trim().max(500),
-});
-
 type Staff = Awaited<ReturnType<typeof requireStaff>>;
 
 /**
- * Settles one wallet inside a transaction. Confirming marks the evidence as reviewed and, if the wallet was not already
- * confirmed by a signature, confirms it as checked by staff and tells the person. Declining deletes their files and forgets
- * their link so they are not kept; a wallet confirmed by signature stays confirmed.
+ * Runs one change over a list of claims in a single transaction, one after another, and counts how many it changed. Each change
+ * may read what the one before wrote (the first accepted claim for a platform opens its case), so they run in order.
+ * @param claimIds - The claims.
+ * @param change - The change for one claim; true when it changed it, false when it was no longer applicable.
+ * @returns How many were changed.
+ */
+async function runBatch(
+  claimIds: string[],
+  change: (
+    tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+    claimId: string,
+  ) => Promise<boolean>,
+) {
+  const results = await db.transaction(async (tx) => {
+    const changed: boolean[] = [];
+
+    for (const claimId of claimIds) {
+      // oxlint-disable-next-line no-await-in-loop
+      changed.push(await change(tx, claimId));
+    }
+
+    return changed;
+  });
+  revalidatePath('/', 'layout');
+
+  return results.filter(Boolean).length;
+}
+
+/**
+ * Confirms the video or files a person added to show the wallet is theirs, as part of accepting their claim. A wallet not already
+ * confirmed by a signature is confirmed as checked by staff. Nothing is sent about it: the person hears that the claim was accepted.
  * @param tx - The transaction.
  * @param staff - The staff member.
- * @param settle - What to do.
- * @param settle.claimId - The claim.
- * @param settle.decision - `confirm` or `decline`.
- * @param settle.note - Why it was declined.
- * @returns True when it was changed; false when it was no longer waiting.
+ * @param claim - The claim and where its proof stands.
  */
-async function settleWallet(
+async function confirmWalletProof(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   staff: Staff,
-  settle: { claimId: string; decision: 'confirm' | 'decline'; note: string },
+  claim: Pick<
+    typeof claimSchema.$inferSelect,
+    'id' | 'ownership' | 'reviewRequestedAt' | 'reviewedAt'
+  >,
 ) {
-  const { claimId, decision, note } = settle;
-  const [claim] = await tx
-    .select({ userId: claimSchema.userId, ownership: claimSchema.ownership })
-    .from(claimSchema)
-    .where(
-      and(
-        eq(claimSchema.id, claimId),
-        isNotNull(claimSchema.reviewRequestedAt),
-        isNull(claimSchema.reviewedAt),
-      ),
-    );
-
-  if (!claim) {
-    return false;
-  }
-
-  if (decision === 'decline') {
-    await tx.delete(claimProofSchema).where(eq(claimProofSchema.claimId, claimId));
-    await tx
-      .update(claimSchema)
-      .set({
-        ownership: claim.ownership === 'review' ? 'unsigned' : claim.ownership,
-        reviewNote: note,
-        reviewVideoUrl: null,
-        proofNote: null,
-        reviewRequestedAt: null,
-      })
-      .where(eq(claimSchema.id, claimId));
-    await recordStaffAction(tx, {
-      actor: staffActor(staff),
-      action: 'ownership_declined',
-      target: { type: 'claim', id: claimId },
-    });
-
-    return true;
+  if (!claim.reviewRequestedAt || claim.reviewedAt) {
+    return;
   }
 
   const confirming = claim.ownership !== 'signed';
@@ -397,76 +385,18 @@ async function settleWallet(
       reviewNote: null,
       ...(confirming && { ownership: 'signed', ownershipMethod: 'staff', signedAt: new Date() }),
     })
-    .where(eq(claimSchema.id, claimId));
+    .where(eq(claimSchema.id, claim.id));
   await recordStaffAction(tx, {
     actor: staffActor(staff),
     action: 'ownership_confirmed',
-    target: { type: 'claim', id: claimId },
+    target: { type: 'claim', id: claim.id },
     details: { method: confirming ? 'staff' : 'signature' },
   });
-
-  if (confirming) {
-    await notify(tx, [
-      {
-        userId: claim.userId,
-        type: 'ownership_confirmed',
-        dedupeKey: `ownership_confirmed:${claimId}`,
-        data: { claimId },
-      },
-    ]);
-  }
-
-  return true;
 }
 
 /**
- * Settles what people sent to show their wallets are theirs, a video, files or both: one wallet or a selection of up to 100, all
- * with the same decision. A decline needs a short reason, which each person sees. A wallet that was settled by someone else in the
- * meantime is left alone and counted as skipped, so a batch is never refused because one item changed.
- * @param input - The claims, the decision and, for a decline, the reason.
- * @param input.claimIds - The claims.
- * @param input.decision - `confirm` or `decline`.
- * @param input.note - Why it was declined.
- * @returns How many were changed and skipped, or `error` when the decision or the reason is missing.
- */
-export async function settleWallets(input: {
-  claimIds: string[];
-  decision: string;
-  note: string;
-}): Promise<BulkResult & { error?: 'decision' | 'note' }> {
-  const staff = await requireStaff();
-  const parsed = WalletsValidation.safeParse(input);
-
-  if (!parsed.success) {
-    return { done: 0, skipped: 0, error: 'decision' };
-  }
-
-  const { claimIds, decision, note } = parsed.data;
-
-  if (decision === 'decline' && !note) {
-    return { done: 0, skipped: 0, error: 'note' };
-  }
-
-  const results = await db.transaction(async (tx) => {
-    const settled: boolean[] = [];
-
-    for (const claimId of claimIds) {
-      // The queries share one connection and run one at a time anyway, so a loop is no slower than doing them together.
-      // oxlint-disable-next-line no-await-in-loop
-      settled.push(await settleWallet(tx, staff, { claimId, decision, note }));
-    }
-
-    return settled;
-  });
-  revalidatePath('/', 'layout');
-  const done = results.filter(Boolean).length;
-
-  return { done, skipped: results.length - done };
-}
-
-/**
- * Validates one sent claim inside a transaction: staff have checked it and the evidence the person added. It only works on a claim
- * that was sent and not validated yet, and it tells the person.
+ * Validates one sent claim inside a transaction: staff have checked it and the evidence the person added, including any proof of
+ * the wallet, which is confirmed with it. It only works on a claim that was sent and not validated yet, and it tells the person.
  * @param tx - The transaction.
  * @param staff - The staff member.
  * @param claimId - The claim.
@@ -485,17 +415,23 @@ async function validateOne(
         eq(claimSchema.id, claimId),
         eq(claimSchema.status, 'submitted'),
         isNull(claimSchema.validatedAt),
+        isNull(claimSchema.rejectedAt),
       ),
     )
     .returning({
       userId: claimSchema.userId,
       platformKey: claimSchema.platformKey,
       platformName: claimSchema.platformName,
+      ownership: claimSchema.ownership,
+      reviewRequestedAt: claimSchema.reviewRequestedAt,
+      reviewedAt: claimSchema.reviewedAt,
     });
 
   if (!claim) {
     return false;
   }
+
+  await confirmWalletProof(tx, staff, { id: claimId, ...claim });
 
   // The first confirmed claim for a platform opens its case; more of them move it on.
   const caseId = await addConfirmedClaim(tx, claim);
@@ -530,7 +466,7 @@ async function validateOne(
 /**
  * Validates sent claims: one or a selection of up to 100. A claim for a wallet that another person has proved they control, when
  * this claim has not proved it, is refused and counted as skipped, as is one that was validated in the meantime. The rest are
- * validated and each person is told.
+ * validated, any video or files they added for the wallet are confirmed with them, and each person is told.
  * @param claimIds - The claims.
  * @returns How many were validated and how many were skipped.
  */
@@ -555,21 +491,193 @@ export async function validateClaims(claimIds: string[]): Promise<BulkResult> {
       .map((claim) => claim.id),
   );
   const allowed = parsed.data.filter((claimId) => !blocked.has(claimId));
-  const results = await db.transaction(async (tx) => {
-    const validated: boolean[] = [];
-
-    for (const claimId of allowed) {
-      // Each claim reads what the one before it wrote: the first confirmed claim for a platform opens its case.
-      // oxlint-disable-next-line no-await-in-loop
-      validated.push(await validateOne(tx, staff, claimId));
-    }
-
-    return validated;
-  });
-  revalidatePath('/', 'layout');
-  const done = results.filter(Boolean).length;
+  const done = await runBatch(
+    allowed,
+    async (tx, claimId) => await validateOne(tx, staff, claimId),
+  );
 
   return { done, skipped: parsed.data.length - done };
+}
+
+const DeclineProofValidation = z.object({
+  claimId: z.uuid(),
+  note: z.string().trim().min(1).max(500),
+});
+
+/**
+ * Turns down the video and files a person added for their wallet and asks for new ones, while the claim stays in the queue. Their
+ * files are deleted and their link forgotten so they are not kept, and the reason is shown to them on the claim. A wallet confirmed
+ * by signature stays confirmed. It only works on a claim still waiting with proof nobody has looked at.
+ * @param input - The claim and the reason.
+ * @param input.claimId - The claim.
+ * @param input.note - Why the proof was not enough.
+ * @returns How many were changed and skipped, or `error` when the claim or the reason is missing.
+ */
+export async function declineWalletProof(input: {
+  claimId: string;
+  note: string;
+}): Promise<BulkResult & { error?: 'note' }> {
+  const staff = await requireStaff();
+  const parsed = DeclineProofValidation.safeParse(input);
+
+  if (!parsed.success) {
+    return { done: 0, skipped: 0, error: 'note' };
+  }
+
+  const { claimId, note } = parsed.data;
+  const done = await runBatch([claimId], async (tx) => {
+    const [claim] = await tx
+      .select({ ownership: claimSchema.ownership })
+      .from(claimSchema)
+      .where(
+        and(
+          eq(claimSchema.id, claimId),
+          eq(claimSchema.status, 'submitted'),
+          isNull(claimSchema.validatedAt),
+          isNull(claimSchema.rejectedAt),
+          isNotNull(claimSchema.reviewRequestedAt),
+          isNull(claimSchema.reviewedAt),
+        ),
+      );
+
+    if (!claim) {
+      return false;
+    }
+
+    await tx.delete(claimProofSchema).where(eq(claimProofSchema.claimId, claimId));
+    await tx
+      .update(claimSchema)
+      .set({
+        ownership: claim.ownership === 'review' ? 'unsigned' : claim.ownership,
+        reviewNote: note,
+        reviewVideoUrl: null,
+        proofNote: null,
+        reviewRequestedAt: null,
+      })
+      .where(eq(claimSchema.id, claimId));
+    await recordStaffAction(tx, {
+      actor: staffActor(staff),
+      action: 'ownership_declined',
+      target: { type: 'claim', id: claimId },
+    });
+
+    return true;
+  });
+
+  return { done, skipped: 1 - done };
+}
+
+/**
+ * Marks sent claims as in review: a member of staff has started on them. The person sees it on the claim and in the app. It only
+ * works on a claim that is sent, not yet in review and not settled; any other is skipped.
+ * @param claimIds - The claims.
+ * @returns How many were changed and how many were skipped.
+ */
+export async function startClaimReviews(claimIds: string[]): Promise<BulkResult> {
+  const staff = await requireStaff();
+  const parsed = ids.safeParse(claimIds);
+
+  if (!parsed.success) {
+    return { done: 0, skipped: 0 };
+  }
+
+  const done = await runBatch(parsed.data, async (tx, claimId) => {
+    const [claim] = await tx
+      .update(claimSchema)
+      .set({ staffReviewStartedAt: new Date() })
+      .where(
+        and(
+          eq(claimSchema.id, claimId),
+          eq(claimSchema.status, 'submitted'),
+          isNull(claimSchema.validatedAt),
+          isNull(claimSchema.rejectedAt),
+          isNull(claimSchema.staffReviewStartedAt),
+        ),
+      )
+      .returning({ userId: claimSchema.userId });
+
+    if (!claim) {
+      return false;
+    }
+
+    await recordStaffAction(tx, {
+      actor: staffActor(staff),
+      action: 'claim_review_started',
+      target: { type: 'claim', id: claimId },
+    });
+    await notify(tx, [
+      {
+        userId: claim.userId,
+        type: 'claim_in_review',
+        dedupeKey: `claim_in_review:${claimId}`,
+        data: { claimId },
+      },
+    ]);
+
+    return true;
+  });
+
+  return { done, skipped: parsed.data.length - done };
+}
+
+const RejectClaimsValidation = z.object({ claimIds: ids, note: z.string().trim().min(1).max(500) });
+
+/**
+ * Rejects sent claims: one or a selection of up to 100, all with the same reason, which each person sees on their claim and in an
+ * email. A rejected claim leaves the queue and never joins a case. A claim already accepted or rejected is skipped.
+ * @param input - The claims and the reason.
+ * @param input.claimIds - The claims.
+ * @param input.note - Why they were rejected.
+ * @returns How many were changed and skipped, or `error` when the reason is missing.
+ */
+export async function rejectClaims(input: {
+  claimIds: string[];
+  note: string;
+}): Promise<BulkResult & { error?: 'note' }> {
+  const staff = await requireStaff();
+  const parsed = RejectClaimsValidation.safeParse(input);
+
+  if (!parsed.success) {
+    return { done: 0, skipped: 0, error: 'note' };
+  }
+
+  const { claimIds, note } = parsed.data;
+  const done = await runBatch(claimIds, async (tx, claimId) => {
+    const [claim] = await tx
+      .update(claimSchema)
+      .set({ rejectedAt: new Date(), rejectionNote: note })
+      .where(
+        and(
+          eq(claimSchema.id, claimId),
+          eq(claimSchema.status, 'submitted'),
+          isNull(claimSchema.validatedAt),
+          isNull(claimSchema.rejectedAt),
+        ),
+      )
+      .returning({ userId: claimSchema.userId });
+
+    if (!claim) {
+      return false;
+    }
+
+    await recordStaffAction(tx, {
+      actor: staffActor(staff),
+      action: 'claim_rejected',
+      target: { type: 'claim', id: claimId },
+    });
+    await notify(tx, [
+      {
+        userId: claim.userId,
+        type: 'claim_rejected',
+        dedupeKey: `claim_rejected:${claimId}`,
+        data: { claimId },
+      },
+    ]);
+
+    return true;
+  });
+
+  return { done, skipped: claimIds.length - done };
 }
 
 /**
@@ -707,16 +815,6 @@ export async function setCaseStatus(caseId: string, status: string) {
 }
 
 /**
- * Copies the lawyers in Clerk into our own table, for lawyers who signed up before it existed.
- */
-export async function syncCounsel() {
-  const staff = await requireStaff();
-  await syncCounselProfiles();
-  await recordStaffAction(db, { actor: staffActor(staff), action: 'counsel_synced' });
-  revalidatePath('/', 'layout');
-}
-
-/**
  * Puts a failed email back in the queue to be tried again, for when the cause (a wrong setting, a down server) is fixed.
  * @param id - The message id.
  */
@@ -752,10 +850,16 @@ export async function allowMail(email: string) {
  * lawyers.
  * @param caseId - The case id.
  * @param formData - The form with `report` (the JSON).
- * @returns The problems found, or none when saved: `json`, `schema` or `words`.
+ * @returns The problems found, or none when saved: `json`, `schema`, `words`, `table` (a test has no table), `loss` (the estimate
+ *   has no dollar amount that can be read) or `case`.
  */
 export async function saveCaseReport(caseId: string, formData: FormData) {
   const user = await requireStaff();
+
+  if (!z.uuid().safeParse(caseId).success) {
+    return ['case'];
+  }
+
   const raw = formData.get('report');
   let json: unknown;
 
@@ -766,12 +870,24 @@ export async function saveCaseReport(caseId: string, formData: FormData) {
     return ['json'];
   }
 
-  const parsed = ReportValidation.safeParse(json);
+  const parsed = NewReportValidation.safeParse(json);
 
   if (!parsed.success) {
-    return parsed.error.issues.some((issue) => issue.message === 'forbidden_words')
-      ? ['words']
-      : ['schema'];
+    const messages = new Set(parsed.error.issues.map((issue) => issue.message));
+
+    if (messages.has('forbidden_words')) {
+      return ['words'];
+    }
+
+    return messages.has('table_required') ? ['table'] : ['schema'];
+  }
+
+  // The loss decides when a case starts building evidence, so a report that gives none that can be read is refused, not saved
+  // with no effect.
+  const { estimate } = parsed.data;
+
+  if (estimate && (estimate.lossUsd ?? parseDollars(estimate.losses)) === null) {
+    return ['loss'];
   }
 
   await saveReport({
@@ -779,11 +895,13 @@ export async function saveCaseReport(caseId: string, formData: FormData) {
     snapshot: parsed.data,
     hash: hashReport(parsed.data),
     savedBy: user.id,
-  });
-  await recordStaffAction(db, {
-    actor: staffActor(user),
-    action: 'report_saved',
-    target: { type: 'case', id: caseId },
+    record: async (tx) => {
+      await recordStaffAction(tx, {
+        actor: staffActor(user),
+        action: 'report_saved',
+        target: { type: 'case', id: caseId },
+      });
+    },
   });
   revalidatePath('/', 'layout');
 

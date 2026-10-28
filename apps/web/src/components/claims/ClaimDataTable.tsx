@@ -38,14 +38,6 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
   const types = [...new Set(props.claims.map((claim) => claim.fraudType))];
   const chains = [...new Set(props.claims.map((claim) => claim.chain))];
 
-  const statusLabel = (row: ClaimRow) => {
-    if (row.confirmed) {
-      return t('status_confirmed');
-    }
-
-    return row.status === 'submitted' ? t('status_submitted') : t('status_draft');
-  };
-
   const exportClaims = (rows: ClaimRow[]) => {
     downloadCsv(
       `celia-claims-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -67,7 +59,7 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           row.reference,
           row.amountLost ?? '',
           row.signed ? t('wallet_signed') : t('wallet_unsigned'),
-          statusLabel(row),
+          t(`state_${row.state}`),
           row.updatedAt.slice(0, 10),
         ]),
       ]),
@@ -86,9 +78,11 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           columnId: 'status',
           title: labels.status,
           options: [
-            { value: 'draft', label: t('status_draft') },
-            { value: 'submitted', label: t('status_submitted') },
-            { value: 'confirmed', label: t('status_confirmed') },
+            { value: 'draft', label: t('state_draft') },
+            { value: 'sent', label: t('state_sent') },
+            { value: 'in_review', label: t('state_in_review') },
+            { value: 'accepted', label: t('state_accepted') },
+            { value: 'rejected', label: t('state_rejected') },
           ],
         },
         {
@@ -116,7 +110,7 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
       onExport={exportClaims}
       selectable
       selectionActions={(rows) => {
-        const drafts = rows.filter((row) => row.status === 'draft');
+        const drafts = rows.filter((row) => row.state === 'draft');
 
         return drafts.length > 0 ? (
           <DeleteDraftsDialog

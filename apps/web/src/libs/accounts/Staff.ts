@@ -1,17 +1,16 @@
-import { clerkClient, currentUser } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
 import { notFound, redirect } from 'next/navigation';
 import { getUsersById } from '@/libs/accounts/ClerkUsers';
-import { saveCounselProfile } from '@/libs/accounts/CounselProfile';
-import { listOwnershipReviews, queueLimit } from '@/libs/claims/ClaimProofs';
+import { listProofFilesFor, queueLimit } from '@/libs/claims/ClaimProofs';
 import { signalsFor } from '@/libs/claims/Signals';
 import { db } from '@/libs/DB';
 import { Env } from '@/libs/Env';
 import { claimSchema } from '@/models/Schema';
 import { parseAccount } from '@/utils/accounts/Account';
-import { parseProfile } from '@/utils/accounts/Profile';
 import { parseStaffEmails, staffAccess } from '@/utils/accounts/StaffAccess';
+import { claimState } from '@/utils/claims/ClaimState';
 import { getI18nPath } from '@/utils/Helpers';
 
 /**
@@ -67,67 +66,8 @@ export async function requireStaff(options?: { twoFactor?: boolean }) {
 }
 
 /**
- * Copies every lawyer in Clerk into our own table. Lawyers who signed up before the table existed are not in it, so they would
- * be missing from the queue and from the lawyers a case is announced to. It is safe to run again: it only writes what Clerk says.
- * Clerk cannot filter on metadata, so this reads up to 500 recent users.
- * @returns How many lawyers it copied.
- */
-export async function syncCounselProfiles() {
-  const client = await clerkClient();
-  const { data } = await client.users.getUserList({ limit: 500, orderBy: '+created_at' });
-  let copied = 0;
-
-  for (const user of data) {
-    const account = parseAccount(user.publicMetadata);
-    const profile = parseProfile('counsel', user.privateMetadata);
-
-    if (account?.accountType === 'counsel' && profile?.accountType === 'counsel') {
-      // One lawyer at a time is fine: this runs by hand, rarely.
-      // oxlint-disable-next-line eslint/no-await-in-loop
-      await saveCounselProfile(db, {
-        userId: user.id,
-        review: account.review === 'verified' ? 'verified' : 'pending',
-        firm: profile.firm,
-        jurisdictions: profile.jurisdictions,
-      });
-      copied += 1;
-    }
-  }
-
-  return copied;
-}
-
-/**
- * Lists the wallets waiting for staff to confirm, with who to write to about each one. The name and email come from Clerk and are
- * only for staff.
- * @returns The claims waiting, oldest request first.
- */
-export async function listOwnershipQueue() {
-  const reviews = await listOwnershipReviews();
-
-  if (reviews.length === 0) {
-    return [];
-  }
-
-  const users = await getUsersById(reviews.map((review) => review.userId));
-
-  return reviews.map((review) => {
-    const user = users.get(review.userId);
-
-    return {
-      ...review,
-      requestedAt: review.requestedAt?.toISOString() ?? null,
-      name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || null,
-      email: user?.primaryEmailAddress?.emailAddress ?? null,
-    };
-  });
-}
-
-export type OwnershipQueueItem = Awaited<ReturnType<typeof listOwnershipQueue>>[number];
-
-/**
- * Lists the oldest sent claims waiting for staff to validate, with who to write to about each one and the reasons to look closer
- * at it. The name and email come from Clerk and are only for staff.
+ * Lists the oldest sent claims waiting for staff to validate, with who to write to about each one, the reasons to look closer at
+ * it and the video or files the person added to show the wallet is theirs. The name and email come from Clerk and are only for staff.
  * @returns The claims waiting.
  */
 export async function listClaimsToValidate() {
@@ -141,14 +81,28 @@ export async function listClaimsToValidate() {
       amountLost: claimSchema.amountLost,
       ownership: claimSchema.ownership,
       submittedAt: claimSchema.submittedAt,
+      status: claimSchema.status,
+      validatedAt: claimSchema.validatedAt,
+      rejectedAt: claimSchema.rejectedAt,
+      staffReviewStartedAt: claimSchema.staffReviewStartedAt,
       walletAddress: claimSchema.walletAddress,
+      reviewVideoUrl: claimSchema.reviewVideoUrl,
+      proofNote: claimSchema.proofNote,
+      reviewRequestedAt: claimSchema.reviewRequestedAt,
+      reviewedAt: claimSchema.reviewedAt,
       txHash: claimSchema.txHash,
       fundingTxHash: claimSchema.fundingTxHash,
       txCheck: claimSchema.txCheck,
       platformKey: claimSchema.platformKey,
     })
     .from(claimSchema)
-    .where(and(eq(claimSchema.status, 'submitted'), isNull(claimSchema.validatedAt)))
+    .where(
+      and(
+        eq(claimSchema.status, 'submitted'),
+        isNull(claimSchema.validatedAt),
+        isNull(claimSchema.rejectedAt),
+      ),
+    )
     .orderBy(asc(claimSchema.submittedAt))
     // The oldest first; the rest appear as these are confirmed.
     .limit(queueLimit);
@@ -157,9 +111,11 @@ export async function listClaimsToValidate() {
     return [];
   }
 
-  const signals = await signalsFor(rows);
-
-  const users = await getUsersById(rows.map((row) => row.userId));
+  const [signals, files, users] = await Promise.all([
+    signalsFor(rows),
+    listProofFilesFor(rows.map((row) => row.id)),
+    getUsersById(rows.map((row) => row.userId)),
+  ]);
 
   return rows.map((row) => {
     const user = users.get(row.userId);
@@ -170,8 +126,20 @@ export async function listClaimsToValidate() {
       fraudType: row.fraudType,
       chain: row.chain,
       amountLost: row.amountLost,
+      walletAddress: row.walletAddress,
       signed: row.ownership === 'signed',
+      // Only sent and in-review claims are waiting; accepted and rejected ones have left the queue.
+      state: claimState(row) === 'in_review' ? ('in_review' as const) : ('sent' as const),
       signals: signals.get(row.id) ?? [],
+      // What the person added to show the wallet is theirs, until staff have looked at it.
+      proof:
+        row.reviewRequestedAt && !row.reviewedAt
+          ? {
+              videoUrl: row.reviewVideoUrl,
+              note: row.proofNote,
+              files: files.get(row.id) ?? [],
+            }
+          : null,
       submittedAt: row.submittedAt?.toISOString() ?? null,
       name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || null,
       email: user?.primaryEmailAddress?.emailAddress ?? null,

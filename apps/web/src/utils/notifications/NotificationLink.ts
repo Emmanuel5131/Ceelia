@@ -11,7 +11,9 @@ export function notificationPath(type: NotificationType, data: Record<string, st
   switch (type) {
     case 'claim_submitted':
     case 'ownership_confirmed':
-    case 'claim_validated': {
+    case 'claim_validated':
+    case 'claim_in_review':
+    case 'claim_rejected': {
       return data.claimId ? `/dashboard/claims/${data.claimId}` : '/dashboard/claims';
     }
     case 'claim_in_case':

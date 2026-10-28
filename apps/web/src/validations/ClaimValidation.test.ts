@@ -111,6 +111,56 @@ describe('Claim input', () => {
     });
   });
 
+  describe('more wallets and transactions', () => {
+    const solana = '4Nd1mYbNoVDqUPCNRkMsvxfC6kzGZsT9bYZ4wCpYh1Ke';
+
+    it('accepts several wallets and transactions on different chains', () => {
+      const claim = {
+        ...wallet,
+        moreAffected: [
+          { chain: 'ethereum', value: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' },
+          { chain: 'solana', value: solana },
+        ],
+        moreReceiving: [{ chain: 'tron', value: 'TJRyWwFs9wTFGZg3JbrVriFbNfCug5tDeC' }],
+        moreTransactions: [{ chain: 'ethereum', value: hash }],
+      };
+
+      expect(CreateClaimValidation.safeParse(claim).success).toBeTruthy();
+    });
+
+    it('checks each address against its own chain', () => {
+      const result = CreateClaimValidation.safeParse({
+        ...wallet,
+        moreAffected: [{ chain: 'solana', value: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' }],
+      });
+
+      expect(result.success).toBeFalsy();
+    });
+
+    it('rejects a transaction hash that does not fit its chain', () => {
+      const result = CreateClaimValidation.safeParse({
+        ...wallet,
+        moreTransactions: [{ chain: 'solana', value: hash }],
+      });
+
+      expect(result.success).toBeFalsy();
+    });
+
+    it('rejects the same wallet listed twice', () => {
+      const row = { chain: 'ethereum', value: '0x70997970c51812dc3a010c7d01b50e0d17dc79c8' };
+
+      expect(
+        CreateClaimValidation.safeParse({ ...wallet, moreReceiving: [row, row] }).success,
+      ).toBeFalsy();
+    });
+
+    it('has none by default', () => {
+      const result = CreateClaimValidation.safeParse(wallet);
+
+      expect(result.success && result.data.moreAffected).toStrictEqual([]);
+    });
+  });
+
   describe('paid another way', () => {
     it('accepts a transaction hash and an unknown operator', () => {
       expect(CreateClaimValidation.safeParse(exchange).success).toBeTruthy();

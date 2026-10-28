@@ -106,7 +106,10 @@ function CardValue({ className, ...props }: React.ComponentProps<'p'>) {
   return (
     <p
       data-slot="card-value"
-      className={cn('font-heading text-4xl leading-none tabular-nums', className)}
+      className={cn(
+        'font-heading text-4xl leading-none tabular-nums group-data-[size=sm]/card:text-2xl',
+        className,
+      )}
       {...props}
     />
   );
