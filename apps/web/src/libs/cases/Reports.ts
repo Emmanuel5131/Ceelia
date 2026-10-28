@@ -1,5 +1,6 @@
 import { desc, eq, sql } from 'drizzle-orm';
 import { recordCaseEvent } from '@/libs/cases/CaseEvents';
+import { advanceCase } from '@/libs/cases/Cases';
 import { db } from '@/libs/DB';
 import { caseReportSchema, caseSchema } from '@/models/Schema';
 import { describeCase } from '@/utils/cases/Report';
@@ -101,8 +102,12 @@ export async function saveReport(options: {
     // The case carries its own one-line description, kept in step with the newest report.
     await tx
       .update(caseSchema)
-      .set({ description: describeCase(options.snapshot) })
+      .set({
+        description: describeCase(options.snapshot),
+        estimatedLossUsd: options.snapshot.estimate?.lossUsd ?? null,
+      })
       .where(eq(caseSchema.id, options.caseId));
+    await advanceCase(tx, options.caseId);
 
     await recordCaseEvent(tx, options.caseId, 'report_saved');
   });

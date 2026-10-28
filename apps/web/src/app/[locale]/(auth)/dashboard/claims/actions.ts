@@ -16,17 +16,18 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type * as z from 'zod';
 import { mustVerify } from '@/libs/accounts/Identity';
-import { recordCaseEvent } from '@/libs/cases/CaseEvents';
 import { detectAccountKind } from '@/libs/claims/AccountKind';
 import { listProofFiles } from '@/libs/claims/ClaimProofs';
 import { getClaim } from '@/libs/claims/Claims';
+import { countSentToday } from '@/libs/claims/Signals';
 import { checkClaimTransactions } from '@/libs/claims/TxChecks';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/notifications/Notify';
 import { saveLocale } from '@/libs/notifications/UserSettings';
-import { caseSchema, claimProofSchema, claimSchema } from '@/models/Schema';
+import { claimProofSchema, claimSchema } from '@/models/Schema';
 import { parseAccount } from '@/utils/accounts/Account';
 import { cleanFileName, detectProofType, proofFileLimits } from '@/utils/claims/ProofFile';
+import { maxClaimsPerDay } from '@/utils/claims/Signals';
 import { parseVideoLink } from '@/utils/claims/VideoLink';
 import { getI18nPath } from '@/utils/Helpers';
 import {
@@ -738,8 +739,9 @@ export async function saveStatement(
  * cannot sign, and some chains cannot be checked yet); the file then shows it as not confirmed.
  * @param claimId - The claim.
  * @param _state - The previous state (unused).
- * @param formData - The submitted form: `consent` and `connect` must be on.
- * @returns `done` when sent; otherwise `statement` if the account is missing, or `consent` or `connect` if the person has not agreed.
+ * @param formData - The submitted form: `consent`, `connect` and `truthful` must be on.
+ * @returns `done` when sent; otherwise `statement` if the account is missing, `consent`, `connect` or `truthful` if the person has
+ * not agreed, or `limit` if they have sent the most claims allowed in a day.
  */
 export async function submitClaim(
   claimId: string,
@@ -765,6 +767,15 @@ export async function submitClaim(
     return failed(['connect']);
   }
 
+  if (formData.get('truthful') !== 'on') {
+    return failed(['truthful']);
+  }
+
+  // A real victim has a handful of claims; a script has hundreds.
+  if ((await countSentToday(userId)) >= maxClaimsPerDay) {
+    return failed(['limit']);
+  }
+
   const locale = await getLocale();
   await saveLocale(userId, locale);
   await db.transaction(async (tx) => {
@@ -773,24 +784,6 @@ export async function submitClaim(
       .set({ status: 'submitted', submittedAt: new Date(), consentedAt: new Date() })
       .where(eq(claimSchema.id, claim.id));
 
-    // When a case is still open for this platform, the claim joins it the moment it is sent. Once its evidence file is sealed
-    // the file is fixed, so a later claim is not added to it.
-    const [existing] = claim.platformKey
-      ? await tx
-          .select({ id: caseSchema.id })
-          .from(caseSchema)
-          .where(
-            and(
-              eq(caseSchema.platformKey, claim.platformKey),
-              inArray(caseSchema.status, ['collecting', 'building']),
-            ),
-          )
-      : [];
-
-    if (existing) {
-      await recordCaseEvent(tx, existing.id, 'claim_added');
-    }
-
     await notify(tx, [
       {
         userId,
@@ -798,16 +791,6 @@ export async function submitClaim(
         dedupeKey: `claim_submitted:${claim.id}`,
         data: { claimId: claim.id },
       },
-      ...(existing
-        ? [
-            {
-              userId,
-              type: 'claim_in_case' as const,
-              dedupeKey: `claim_in_case:${existing.id}`,
-              data: { caseId: existing.id },
-            },
-          ]
-        : []),
     ]);
   });
   revalidatePath(getI18nPath(`/dashboard/claims/${claim.id}`, locale));

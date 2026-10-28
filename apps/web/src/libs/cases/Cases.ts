@@ -5,16 +5,17 @@ import { recordCaseEvent } from '@/libs/cases/CaseEvents';
 import type { Claim } from '@/libs/claims/Claims';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/notifications/Notify';
+import type { Executor } from '@/libs/notifications/Notify';
 import { claimantIds } from '@/libs/notifications/Recipients';
 import {
   caseEventSchema,
   caseReportSchema,
   caseSchema,
+  counselProfileSchema,
   caseTeamSchema,
   claimSchema,
 } from '@/models/Schema';
-import { isAdmittedFor } from '@/utils/cases/Admission';
-import { caseNumber } from '@/utils/cases/Case';
+import { caseNumber, readyToBuild, sortByStatus } from '@/utils/cases/Case';
 import type { CaseRow } from '@/utils/cases/Case';
 
 /** A case with the platform key that ties it to claims. The key never reaches the browser. */
@@ -36,20 +37,28 @@ const inCase = and(
   eq(claimSchema.status, 'submitted'),
 );
 
+// A case is only shown once one of its claims is confirmed: until then it is not a case yet.
+const hasConfirmedClaim = sql`count(${claimSchema.validatedAt}) > 0`;
+
 // One row per case with its number of claimants (people with a submitted claim against the same platform) and how many of them staff have confirmed.
 const caseSelect = {
   id: caseSchema.id,
   seq: caseSchema.seq,
   name: caseSchema.name,
   platformKey: caseSchema.platformKey,
-  jurisdiction: caseSchema.jurisdiction,
   description: caseSchema.description,
+  operators: caseSchema.operators,
+  operatorJurisdictions: caseSchema.operatorJurisdictions,
   status: caseSchema.status,
   updatedAt: caseSchema.updatedAt,
   claimants:
     sql<number>`count(distinct ${claimSchema.userId}) filter (where ${sentInFile})`.mapWith(Number),
   confirmed:
     sql<number>`count(distinct ${claimSchema.userId}) filter (where ${sentInFile} and ${claimSchema.validatedAt} is not null)`.mapWith(
+      Number,
+    ),
+  jurisdictions:
+    sql<number>`count(distinct lower(${claimSchema.country})) filter (where ${sentInFile})`.mapWith(
       Number,
     ),
   hasReport: sql<boolean>`exists (select 1 from ${caseReportSchema} where ${caseReportSchema.caseId} = ${caseSchema.id})`,
@@ -59,22 +68,26 @@ const toRow = (row: {
   id: string;
   seq: number;
   name: string;
-  jurisdiction: string;
   description: string | null;
+  operators: string | null;
+  operatorJurisdictions: string[];
   status: CaseRow['status'];
   updatedAt: Date;
   claimants: number;
   confirmed: number;
+  jurisdictions: number;
   hasReport: boolean;
 }): CaseRow => ({
   id: row.id,
   number: caseNumber(row.seq),
   name: row.name,
-  jurisdiction: row.jurisdiction,
   description: row.description,
+  operators: row.operators,
+  operatorJurisdictions: row.operatorJurisdictions,
   status: row.status,
   claimants: row.claimants,
   confirmed: row.confirmed,
+  jurisdictions: row.jurisdictions,
   hasReport: row.hasReport,
   updatedAt: row.updatedAt.toISOString(),
 });
@@ -85,7 +98,7 @@ const toDetail = (row: Parameters<typeof toRow>[0] & { platformKey: string }): C
 });
 
 /**
- * Lists every case for the case bank, most recently changed first. Only the summary: nobody's claim is in it.
+ * Lists every case for the case bank, by status and then most recently changed first. Only the summary: nobody's claim is in it.
  * @returns The cases.
  */
 export async function listCases() {
@@ -95,9 +108,9 @@ export async function listCases() {
     .leftJoin(sealedEvents, eq(sealedEvents.caseId, caseSchema.id))
     .leftJoin(claimSchema, inCase)
     .groupBy(caseSchema.id, sealedEvents.at)
-    .orderBy(desc(caseSchema.updatedAt));
+    .having(hasConfirmedClaim);
 
-  return rows.map(toRow);
+  return sortByStatus(rows.map(toRow));
 }
 
 /**
@@ -112,9 +125,130 @@ export async function getCase(id: string) {
     .leftJoin(sealedEvents, eq(sealedEvents.caseId, caseSchema.id))
     .leftJoin(claimSchema, inCase)
     .where(eq(caseSchema.id, id))
-    .groupBy(caseSchema.id, sealedEvents.at);
+    .groupBy(caseSchema.id, sealedEvents.at)
+    .having(hasConfirmedClaim);
 
   return row ? toDetail(row) : undefined;
+}
+
+/**
+ * Where a case's claimants are, as counts only: each country with how many claims, most first. It names nobody, and a country with
+ * one claim is left out of the list and counted in `others`, so a single claim cannot point at one person.
+ * @param caseId - The case id.
+ * @returns The countries with two or more claims, and how many claims sit in the rest.
+ */
+export async function listAffectedCountries(caseId: string) {
+  const rows = await db
+    .select({ country: sql<string | null>`lower(${claimSchema.country})`, total: count() })
+    .from(claimSchema)
+    .innerJoin(caseSchema, eq(caseSchema.platformKey, claimSchema.platformKey))
+    .where(and(eq(caseSchema.id, caseId), eq(claimSchema.status, 'submitted')))
+    .groupBy(sql`lower(${claimSchema.country})`)
+    .orderBy(desc(count()));
+  const named = rows.flatMap((row) =>
+    row.country && row.total >= 2 ? [{ country: row.country, total: row.total }] : [],
+  );
+
+  return {
+    countries: named,
+    others:
+      rows.reduce((sum, row) => sum + row.total, 0) -
+      named.reduce((sum, row) => sum + row.total, 0),
+  };
+}
+
+/**
+ * Moves a case from collecting claims to building evidence when it has enough confirmed claims and a big enough estimated loss.
+ * It never moves a case back or past building: the team marks enough evidence. Call it in the transaction of whatever changed the
+ * claims or the estimate.
+ * @param executor - The transaction.
+ * @param caseId - The case id.
+ */
+export async function advanceCase(executor: Executor, caseId: string) {
+  const [found] = await executor
+    .select({
+      status: caseSchema.status,
+      platformKey: caseSchema.platformKey,
+      estimatedLossUsd: caseSchema.estimatedLossUsd,
+    })
+    .from(caseSchema)
+    .where(eq(caseSchema.id, caseId));
+
+  if (found?.status !== 'collecting') {
+    return;
+  }
+
+  const [confirmed] = await executor
+    .select({ total: count() })
+    .from(claimSchema)
+    .where(
+      and(
+        eq(claimSchema.platformKey, found.platformKey),
+        eq(claimSchema.status, 'submitted'),
+        sql`${claimSchema.validatedAt} is not null`,
+      ),
+    );
+
+  if (readyToBuild(confirmed?.total ?? 0, found.estimatedLossUsd)) {
+    await executor.update(caseSchema).set({ status: 'building' }).where(eq(caseSchema.id, caseId));
+  }
+}
+
+/**
+ * Adds a claim that staff just confirmed to its case. The first confirmed claim for a platform opens the case, as collecting
+ * claims. Once there is enough evidence the file is fixed, so a later claim is not added to it. Call it in the same transaction as
+ * the confirmation.
+ * @param executor - The transaction.
+ * @param claim - The confirmed claim's platform.
+ * @param claim.platformKey - The reduced platform name, or null when the operator is unknown.
+ * @param claim.platformName - The platform name as the person gave it.
+ * @returns The id of the case the claim joined, or null when it joined none.
+ */
+export async function addConfirmedClaim(
+  executor: Executor,
+  claim: { platformKey: string | null; platformName: string | null },
+) {
+  if (!claim.platformKey || !claim.platformName) {
+    return null;
+  }
+
+  const [opened] = await executor
+    .insert(caseSchema)
+    .values({ name: claim.platformName, platformKey: claim.platformKey })
+    .onConflictDoNothing()
+    .returning({ id: caseSchema.id });
+
+  if (opened) {
+    await recordCaseEvent(executor, opened.id, 'case_opened');
+  }
+
+  const [found] = await executor
+    .select({ id: caseSchema.id, status: caseSchema.status })
+    .from(caseSchema)
+    .where(eq(caseSchema.platformKey, claim.platformKey));
+
+  if (!found || found.status === 'sealed') {
+    return null;
+  }
+
+  await recordCaseEvent(executor, found.id, 'claim_added');
+  await advanceCase(executor, found.id);
+
+  return found.id;
+}
+
+/**
+ * Whether any firm leads a case.
+ * @param caseId - The case id.
+ * @returns True when a firm has taken it.
+ */
+export async function hasLead(caseId: string) {
+  const [row] = await db
+    .select({ id: caseTeamSchema.id })
+    .from(caseTeamSchema)
+    .where(and(eq(caseTeamSchema.caseId, caseId), eq(caseTeamSchema.role, 'lead')));
+
+  return row !== undefined;
 }
 
 /**
@@ -143,7 +277,6 @@ export async function leadsCase(caseId: string, userId: string) {
  * @param options - The question.
  * @param options.userId - The Clerk user id of the lawyer.
  * @param options.verified - Whether staff have verified them.
- * @param options.admittedIn - The jurisdiction ids they are admitted in.
  * @param options.found - The case.
  * @param options.conflictsConfirmed - Whether they confirmed their firm checked conflicts.
  * @returns The input for `canTakeCase`.
@@ -151,11 +284,10 @@ export async function leadsCase(caseId: string, userId: string) {
 async function takeCaseInput(options: {
   userId: string;
   verified: boolean;
-  admittedIn: string[];
   found: CaseDetail;
   conflictsConfirmed: boolean;
 }): Promise<TakeCaseInput> {
-  const [lead, open, claims] = await Promise.all([
+  const [lead, open, claims, profile] = await Promise.all([
     db
       .select({ id: caseTeamSchema.id })
       .from(caseTeamSchema)
@@ -173,13 +305,17 @@ async function takeCaseInput(options: {
           eq(claimSchema.platformKey, options.found.platformKey),
         ),
       ),
+    db
+      .select({ kind: counselProfileSchema.kind })
+      .from(counselProfileSchema)
+      .where(eq(counselProfileSchema.userId, options.userId)),
   ]);
 
   return {
     verified: options.verified,
+    lawFirm: profile[0]?.kind === 'law_firm',
     caseSealed: options.found.status === 'sealed',
     caseHasLead: lead.length > 0,
-    admittedInJurisdiction: isAdmittedFor(options.admittedIn, options.found.jurisdiction),
     isClaimant: claims.length > 0,
     conflictsConfirmed: options.conflictsConfirmed,
     openCases: open[0]?.total ?? 0,
@@ -221,10 +357,9 @@ export async function takeCase(options: { caseId: string; userId: string }) {
     }
 
     const [taken] = await tx
-      .update(caseSchema)
-      .set({ status: 'counsel' })
-      .where(eq(caseSchema.id, options.caseId))
-      .returning({ platformKey: caseSchema.platformKey });
+      .select({ platformKey: caseSchema.platformKey })
+      .from(caseSchema)
+      .where(eq(caseSchema.id, options.caseId));
 
     await recordCaseEvent(tx, options.caseId, 'case_taken');
 

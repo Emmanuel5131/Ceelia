@@ -1,0 +1,1 @@
+ALTER TABLE "case" ADD COLUMN "operators" text;

@@ -28,6 +28,21 @@ const baseConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/': ['./migrations/**/*'],
   },
+  // Next expects `headers` to return a promise; there is nothing to await.
+  // oxlint-disable-next-line require-await
+  async headers() {
+    return [
+      {
+        // The staff area shows people's claims: never cached, never put in a frame, never indexed.
+        source: '/(.*)dashboard/staff(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      },
+    ];
+  },
 };
 
 // Initialize the Next-Intl plugin

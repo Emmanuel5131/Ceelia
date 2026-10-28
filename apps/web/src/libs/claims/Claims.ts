@@ -1,4 +1,4 @@
-import { and, countDistinct, desc, eq, ne, or } from 'drizzle-orm';
+import { and, countDistinct, desc, eq, isNotNull, ne, or } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { claimSchema } from '@/models/Schema';
@@ -34,7 +34,8 @@ export async function getClaim(userId: string, id: string) {
 }
 
 /**
- * Counts how many other people have reported the same operator. Claims match when they share any strong identifier: the
+ * Counts how many other people have reported the same operator, counting only claims that staff have confirmed, so claims
+ * nobody has checked cannot make an operator look bigger. Claims match when they share any strong identifier: the
  * name, the website, or the token contract. Only a number leaves here, never who they are.
  * @param claim - The claim whose operator to look at.
  * @returns The number of other people.
@@ -55,7 +56,9 @@ export async function countOthersOnOperator(
   const [row] = await db
     .select({ others: countDistinct(claimSchema.userId) })
     .from(claimSchema)
-    .where(and(or(...matches), ne(claimSchema.userId, claim.userId)));
+    .where(
+      and(or(...matches), ne(claimSchema.userId, claim.userId), isNotNull(claimSchema.validatedAt)),
+    );
 
   return row?.others ?? 0;
 }

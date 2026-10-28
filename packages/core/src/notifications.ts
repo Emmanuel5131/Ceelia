@@ -12,6 +12,7 @@ export const notificationTypes = [
   'counsel_received',
   'counsel_verified',
   'counsel_review_reset',
+  'application_rejected',
   'case_ready_for_counsel',
   'case_taken_by_you',
 ] as const;
@@ -48,6 +49,7 @@ export const notificationCatalog: Record<NotificationType, CatalogEntry> = {
   counsel_received: { audience: 'counsel', category: 'account', essential: true, email: true },
   counsel_verified: { audience: 'counsel', category: 'account', essential: true, email: true },
   counsel_review_reset: { audience: 'counsel', category: 'account', essential: true, email: true },
+  application_rejected: { audience: 'counsel', category: 'account', essential: true, email: true },
   case_ready_for_counsel: { audience: 'counsel', category: 'cases', essential: false, email: true },
   case_taken_by_you: { audience: 'counsel', category: 'cases', essential: true, email: true },
 };

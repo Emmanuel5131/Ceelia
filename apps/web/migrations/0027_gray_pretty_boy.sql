@@ -1,0 +1,1 @@
+ALTER TABLE "case" DROP COLUMN "jurisdiction";

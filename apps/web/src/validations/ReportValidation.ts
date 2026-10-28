@@ -7,7 +7,7 @@ export type CheckResult = (typeof checkResults)[number];
 
 // Words Celia does not use: they declare fraud or promise an outcome. The court decides intent; the report only says what the
 // chain shows. Kept short and literal on purpose: it catches slips, and a person still reviews every report before it is saved.
-const forbidden =
+export const forbiddenWords =
   /\b(scam|scammer|scammers|fraud detected|guaranteed|recover your money|exposes?)\b/iu;
 
 const text = (max: number) =>
@@ -16,7 +16,7 @@ const text = (max: number) =>
     .trim()
     .min(1)
     .max(max)
-    .refine((value) => !forbidden.test(value), { message: 'forbidden_words' });
+    .refine((value) => !forbiddenWords.test(value), { message: 'forbidden_words' });
 
 /** A link outside Celia that backs a check up, such as a transaction or an address on a block explorer. https only. */
 const ProofValidation = z.object({
@@ -87,6 +87,8 @@ export const ReportValidation = z
         wallets: text(40),
         /** How much those wallets sent, as read from the chain. Never a claimant's own figure. */
         losses: text(40),
+        /** The same loss in whole US dollars. It decides when a case starts building evidence. Optional: older reports have none. */
+        lossUsd: z.number().int().nonnegative().optional(),
       })
       .optional(),
     /** Up to four big numbers, such as wallets involved or total received. */

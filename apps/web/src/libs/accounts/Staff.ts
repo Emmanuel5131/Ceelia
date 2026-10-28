@@ -1,78 +1,69 @@
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { getUsersById } from '@/libs/accounts/ClerkUsers';
 import { saveCounselProfile } from '@/libs/accounts/CounselProfile';
-import { listOwnershipReviews } from '@/libs/claims/ClaimProofs';
+import { listOwnershipReviews, queueLimit } from '@/libs/claims/ClaimProofs';
+import { signalsFor } from '@/libs/claims/Signals';
 import { db } from '@/libs/DB';
-import { claimSchema, counselProfileSchema } from '@/models/Schema';
+import { Env } from '@/libs/Env';
+import { claimSchema } from '@/models/Schema';
 import { parseAccount } from '@/utils/accounts/Account';
 import { parseProfile } from '@/utils/accounts/Profile';
+import { parseStaffEmails, staffAccess } from '@/utils/accounts/StaffAccess';
 import { getI18nPath } from '@/utils/Helpers';
 
 /**
- * Lets only Celia staff through. Anyone else goes back to the dashboard. Every staff page and every staff action calls this
- * first, because hiding a link is not access control.
- * @returns The signed-in staff member.
+ * Decides whether a signed-in person can use the staff area. See `staffAccess` for the rules.
+ * @param user - The signed-in person, or null.
+ * @returns `allowed`, or the first reason not.
  */
-export async function requireStaff() {
-  const user = await currentUser();
+export function staffDecision(
+  user: { publicMetadata: UserPublicMetadata } & Pick<
+    NonNullable<Awaited<ReturnType<typeof currentUser>>>,
+    'primaryEmailAddress' | 'twoFactorEnabled'
+  >,
+) {
+  const primary = user.primaryEmailAddress;
+  const staffDomain = Env.STAFF_EMAIL_DOMAIN?.trim().toLowerCase();
 
-  if (!user || !parseAccount(user.publicMetadata)?.staff) {
-    return redirect(getI18nPath('/dashboard', await getLocale()));
-  }
-
-  return user;
+  return staffAccess({
+    staff: parseAccount(user.publicMetadata)?.staff === true,
+    email: primary?.verification?.status === 'verified' ? primary.emailAddress : null,
+    twoFactor: user.twoFactorEnabled,
+    allowed: parseStaffEmails(Env.STAFF_EMAILS),
+    domain: staffDomain === undefined || staffDomain === '' ? null : staffDomain,
+    production: Env.NODE_ENV === 'production',
+  });
 }
 
-export type PendingCounsel = {
-  id: string;
-  name: string;
-  email: string;
-  firm: string | null;
-  jurisdictions: string[];
-  createdAt: string;
-};
-
 /**
- * Lists the lawyers waiting for staff to check them, oldest first. The review status and jurisdictions come from our own copy
- * of each lawyer; only the name and email are read from Clerk.
- * @returns The pending lawyers.
+ * Lets only Celia staff through. Anyone else gets a 404, so the area does not show that it exists. Every staff page and every
+ * staff action calls this first, because hiding a link is not access control. Staff who have not turned on two-step sign-in are
+ * sent to do that first, unless the page is the one that helps them (`twoFactor: false`).
+ * @param options - How strict to be.
+ * @param options.twoFactor - Whether two-step sign-in is required; true unless set to false.
+ * @returns The signed-in staff member.
  */
-export async function listPendingCounsel() {
-  const rows = await db
-    .select()
-    .from(counselProfileSchema)
-    .where(eq(counselProfileSchema.review, 'pending'))
-    .orderBy(asc(counselProfileSchema.createdAt));
+export async function requireStaff(options?: { twoFactor?: boolean }) {
+  const user = await currentUser();
 
-  if (rows.length === 0) {
-    return [];
+  if (!user) {
+    return notFound();
   }
 
-  const client = await clerkClient();
-  const { data } = await client.users.getUserList({
-    userId: rows.map((row) => row.userId),
-    limit: 500,
-  });
-  const users = new Map(data.map((user) => [user.id, user]));
+  const decision = staffDecision(user);
 
-  return rows.flatMap((row): PendingCounsel[] => {
-    const user = users.get(row.userId);
+  if (decision === 'needs_two_factor' && options?.twoFactor === false) {
+    return user;
+  }
 
-    return user
-      ? [
-          {
-            id: row.userId,
-            name: [user.firstName, user.lastName].filter(Boolean).join(' '),
-            email: user.primaryEmailAddress?.emailAddress ?? '',
-            firm: row.firm,
-            jurisdictions: row.jurisdictions,
-            createdAt: row.createdAt.toISOString(),
-          },
-        ]
-      : [];
-  });
+  if (decision === 'needs_two_factor') {
+    return redirect(getI18nPath('/dashboard/staff/secure', await getLocale()));
+  }
+
+  return decision === 'allowed' ? user : notFound();
 }
 
 /**
@@ -118,12 +109,7 @@ export async function listOwnershipQueue() {
     return [];
   }
 
-  const client = await clerkClient();
-  const { data } = await client.users.getUserList({
-    userId: reviews.map((review) => review.userId),
-    limit: 500,
-  });
-  const users = new Map(data.map((user) => [user.id, user]));
+  const users = await getUsersById(reviews.map((review) => review.userId));
 
   return reviews.map((review) => {
     const user = users.get(review.userId);
@@ -140,8 +126,8 @@ export async function listOwnershipQueue() {
 export type OwnershipQueueItem = Awaited<ReturnType<typeof listOwnershipQueue>>[number];
 
 /**
- * Lists the sent claims waiting for staff to validate, oldest first, with who to write to about each one. The name and email come
- * from Clerk and are only for staff.
+ * Lists the oldest sent claims waiting for staff to validate, with who to write to about each one and the reasons to look closer
+ * at it. The name and email come from Clerk and are only for staff.
  * @returns The claims waiting.
  */
 export async function listClaimsToValidate() {
@@ -155,21 +141,25 @@ export async function listClaimsToValidate() {
       amountLost: claimSchema.amountLost,
       ownership: claimSchema.ownership,
       submittedAt: claimSchema.submittedAt,
+      walletAddress: claimSchema.walletAddress,
+      txHash: claimSchema.txHash,
+      fundingTxHash: claimSchema.fundingTxHash,
+      txCheck: claimSchema.txCheck,
+      platformKey: claimSchema.platformKey,
     })
     .from(claimSchema)
     .where(and(eq(claimSchema.status, 'submitted'), isNull(claimSchema.validatedAt)))
-    .orderBy(asc(claimSchema.submittedAt));
+    .orderBy(asc(claimSchema.submittedAt))
+    // The oldest first; the rest appear as these are confirmed.
+    .limit(queueLimit);
 
   if (rows.length === 0) {
     return [];
   }
 
-  const client = await clerkClient();
-  const { data } = await client.users.getUserList({
-    userId: [...new Set(rows.map((row) => row.userId))],
-    limit: 500,
-  });
-  const users = new Map(data.map((user) => [user.id, user]));
+  const signals = await signalsFor(rows);
+
+  const users = await getUsersById(rows.map((row) => row.userId));
 
   return rows.map((row) => {
     const user = users.get(row.userId);
@@ -181,6 +171,7 @@ export async function listClaimsToValidate() {
       chain: row.chain,
       amountLost: row.amountLost,
       signed: row.ownership === 'signed',
+      signals: signals.get(row.id) ?? [],
       submittedAt: row.submittedAt?.toISOString() ?? null,
       name: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || null,
       email: user?.primaryEmailAddress?.emailAddress ?? null,

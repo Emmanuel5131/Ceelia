@@ -1,0 +1,1 @@
+ALTER TABLE "case" ADD COLUMN "operator_jurisdictions" jsonb DEFAULT '[]'::jsonb NOT NULL;

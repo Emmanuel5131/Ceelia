@@ -8,6 +8,8 @@ import { AppShell } from '@/components/shell/AppShell';
 import { NotificationsBell } from '@/components/shell/NotificationsBell';
 import { ReviewNotice } from '@/components/shell/ReviewNotice';
 import { SignOutAction } from '@/components/shell/SignOutAction';
+import { getApplication } from '@/libs/accounts/Applications';
+import { staffDecision } from '@/libs/accounts/Staff';
 import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
@@ -39,6 +41,8 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
     redirect(getI18nPath('/onboarding', locale));
   }
 
+  const application =
+    user && account.accountType === 'counsel' ? await getApplication(user.id) : undefined;
   const cookieStore = await cookies();
   // The sidebar remembers whether it was collapsed in a cookie (set by the shadcn sidebar).
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
@@ -46,13 +50,14 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
   return (
     <AppShell
       accountType={account.accountType}
-      staff={account.staff}
+      // Only people who can really use the area see the link; for everyone else it does not exist.
+      staff={user ? ['allowed', 'needs_two_factor'].includes(staffDecision(user)) : false}
       notifications={user ? <NotificationsBell userId={user.id} /> : null}
       userMenu={<UserButton />}
       signOut={<SignOutAction />}
       defaultOpen={defaultOpen}
     >
-      {account.review === 'pending' && <ReviewNotice />}
+      {account.review === 'pending' && <ReviewNotice application={application} />}
       {props.children}
     </AppShell>
   );

@@ -4,16 +4,16 @@ import type { TakeCaseInput } from './caseTeam';
 
 const ready: TakeCaseInput = {
   verified: true,
+  lawFirm: true,
   caseSealed: true,
   caseHasLead: false,
-  admittedInJurisdiction: true,
   isClaimant: false,
   conflictsConfirmed: true,
   openCases: 0,
 };
 
 describe(canTakeCase, () => {
-  it('lets a verified lawyer take a sealed case they are admitted for', () => {
+  it('lets a verified lawyer take a sealed case', () => {
     expect(canTakeCase(ready)).toStrictEqual({ ok: true });
   });
 
@@ -24,18 +24,16 @@ describe(canTakeCase, () => {
     });
   });
 
+  it('refuses an institution that is not a law firm', () => {
+    expect(canTakeCase({ ...ready, lawFirm: false })).toMatchObject({ reason: 'not_law_firm' });
+  });
+
   it('refuses a case without a sealed evidence file', () => {
     expect(canTakeCase({ ...ready, caseSealed: false })).toMatchObject({ reason: 'not_sealed' });
   });
 
   it('refuses a case another firm already leads', () => {
     expect(canTakeCase({ ...ready, caseHasLead: true })).toMatchObject({ reason: 'already_taken' });
-  });
-
-  it('refuses a lawyer who is not admitted where the case is', () => {
-    expect(canTakeCase({ ...ready, admittedInJurisdiction: false })).toMatchObject({
-      reason: 'not_admitted',
-    });
   });
 
   it('refuses a lawyer who is a claimant in the case', () => {

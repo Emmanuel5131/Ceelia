@@ -3,7 +3,8 @@
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { getLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import { saveCounselProfile } from '@/libs/accounts/CounselProfile';
+import { blankToNull, readApplicationFields } from '@/libs/accounts/ApplicationForm';
+import { saveApplicationDetails, saveCounselProfile } from '@/libs/accounts/CounselProfile';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/notifications/Notify';
 import { saveLocale } from '@/libs/notifications/UserSettings';
@@ -31,13 +32,7 @@ function readForm(formData: FormData) {
     accountType: text(formData, 'accountType'),
     country: text(formData, 'country'),
     consent: text(formData, 'consent'),
-    independent: text(formData, 'independent'),
-    firmName: text(formData, 'firmName'),
-    acceptTerms: text(formData, 'acceptTerms'),
-    confirmConflicts: text(formData, 'confirmConflicts'),
-    registrations: formData.getAll('registrationJurisdiction').map((jurisdiction) => ({
-      jurisdiction,
-    })),
+    ...readApplicationFields(formData),
   };
 }
 
@@ -88,6 +83,8 @@ export async function completeOnboarding(
         : {
             firm: input.independent === 'on' ? null : input.firmName,
             registrations: input.registrations,
+            kind: input.kind,
+            registrationNumber: input.registrationNumber,
             terms: { version: consentVersion, at },
           },
   });
@@ -99,8 +96,17 @@ export async function completeOnboarding(
       await saveCounselProfile(tx, {
         userId,
         review: 'pending',
+        kind: input.kind,
         firm: input.independent === 'on' ? null : (input.firmName ?? null),
         jurisdictions: input.registrations.map((registration) => registration.jurisdiction),
+      });
+      await saveApplicationDetails(tx, {
+        userId,
+        kind: input.kind,
+        organisation: input.independent === 'on' ? null : (input.firmName ?? null),
+        registrationNumber: input.registrationNumber,
+        website: blankToNull(input.website),
+        contactRole: blankToNull(input.contactRole),
       });
       await notify(tx, [
         { userId, type: 'counsel_received', dedupeKey: `counsel_received:${userId}` },

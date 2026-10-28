@@ -1,6 +1,5 @@
 'use client';
 
-import { getJurisdiction } from '@celia/jurisdictions';
 import type { Column } from '@tanstack/react-table';
 import { useFormatter, useTranslations } from 'next-intl';
 import { CasePreviewDialog } from '@/components/cases/CasePreviewDialog';
@@ -10,16 +9,10 @@ import { createAppColumnHelper } from '@/components/data-table/table';
 import type { TableFeatures } from '@/components/data-table/table';
 import { StatusBadge } from '@/components/overview/StatusBadge';
 import { Link } from '@/libs/I18nNavigation';
+import { caseStatusOrder } from '@/utils/cases/Case';
 import type { CaseRow, CaseStatus } from '@/utils/cases/Case';
 
-type CaseColumnId = 'case' | 'jurisdiction' | 'claimants' | 'confirmed' | 'status' | 'updated';
-
-const statusOrder: Record<CaseStatus, number> = {
-  sealed: 0,
-  building: 1,
-  collecting: 2,
-  counsel: 3,
-};
+type CaseColumnId = 'case' | 'jurisdictions' | 'claimants' | 'confirmed' | 'status' | 'updated';
 
 /**
  * The translated name of every case column, by column id. Headings, the columns menu and the filters all read it, so a column
@@ -31,7 +24,7 @@ export function useCaseColumnLabels(): Record<CaseColumnId, string> {
 
   return {
     case: t('col_case'),
-    jurisdiction: t('col_jurisdiction'),
+    jurisdictions: t('col_jurisdictions'),
     claimants: t('col_claimants'),
     confirmed: t('col_confirmed'),
     status: t('col_status'),
@@ -102,10 +95,10 @@ function createCaseColumns(linked: boolean) {
       header: ({ column }) => <CaseHeader column={column} id="case" />,
       cell: ({ row }) => <CaseCell caseRow={row.original} linked={linked} />,
     }),
-    helper.accessor((row) => getJurisdiction(row.jurisdiction)?.name ?? row.jurisdiction, {
-      id: 'jurisdiction',
-      header: ({ column }) => <CaseHeader column={column} id="jurisdiction" />,
-      filterFn: 'inSet',
+    helper.accessor('jurisdictions', {
+      id: 'jurisdictions',
+      header: ({ column }) => <CaseHeader column={column} id="jurisdictions" align="end" />,
+      cell: ({ getValue }) => <ClaimantsCell value={getValue()} />,
     }),
     helper.accessor('claimants', {
       id: 'claimants',
@@ -123,8 +116,8 @@ function createCaseColumns(linked: boolean) {
       cell: ({ getValue }) => <StatusBadge status={getValue()} />,
       filterFn: 'inSet',
       sortFn: (a, b, columnId) =>
-        statusOrder[a.getValue<CaseStatus>(columnId)] -
-        statusOrder[b.getValue<CaseStatus>(columnId)],
+        caseStatusOrder[a.getValue<CaseStatus>(columnId)] -
+        caseStatusOrder[b.getValue<CaseStatus>(columnId)],
     }),
     helper.accessor('updatedAt', {
       id: 'updated',

@@ -30,6 +30,16 @@ export const Env = createEnv({
     UNSUBSCRIBE_SECRET: z.string().min(32).optional(),
     /** Verifies the mail server's bounce and complaint webhooks. */
     MAIL_WEBHOOK_SECRET: z.string().min(16).optional(),
+    /** The emails of Celia staff, separated by commas. In production only these accounts can use the staff area, and an empty list lets nobody in. */
+    STAFF_EMAILS: z.string().optional(),
+    /** The Celia email domain, such as `celia.example`. A staff member's verified email must be on it (or on `STAFF_EMAILS`). */
+    STAFF_EMAIL_DOMAIN: z.string().optional(),
+    /** The flat fee for institutions, as shown to applicants, such as `€1,200 a year`. Shown before anyone applies; when unset the page says the fee is published before payment. It is invoiced outside the app. */
+    INSTITUTION_PRICE: z.string().optional(),
+    /** OpenSanctions, for the sanctions lookup on an application. Without it the lookup shows as not set up. */
+    OPENSANCTIONS_API_KEY: z.string().min(1).optional(),
+    /** OpenCorporates, for the company registry lookup on an application. Without it the lookup shows as not set up. */
+    OPENCORPORATES_API_TOKEN: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().optional(),
@@ -64,6 +74,11 @@ export const Env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     UNSUBSCRIBE_SECRET: process.env.UNSUBSCRIBE_SECRET,
     MAIL_WEBHOOK_SECRET: process.env.MAIL_WEBHOOK_SECRET,
+    STAFF_EMAILS: process.env.STAFF_EMAILS,
+    STAFF_EMAIL_DOMAIN: process.env.STAFF_EMAIL_DOMAIN,
+    INSTITUTION_PRICE: process.env.INSTITUTION_PRICE,
+    OPENSANCTIONS_API_KEY: process.env.OPENSANCTIONS_API_KEY,
+    OPENCORPORATES_API_TOKEN: process.env.OPENCORPORATES_API_TOKEN,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     NEXT_PUBLIC_LOGGING_LEVEL: process.env.NEXT_PUBLIC_LOGGING_LEVEL,

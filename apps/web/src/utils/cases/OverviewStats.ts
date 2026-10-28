@@ -28,8 +28,8 @@ export type ActivityItem = {
 
 const dayMs = 24 * 60 * 60 * 1000;
 
-// Sealed cases are ready for counsel, then cases still being built, then cases still collecting claims.
-const priority = { sealed: 0, building: 1, collecting: 2, counsel: 3 } as const;
+// Cases with enough evidence first, then cases building evidence, then cases still collecting claims.
+const priority = { sealed: 0, building: 1, collecting: 2 } as const;
 
 const kinds: Record<CaseEventType, ActivityKind> = {
   case_opened: 'case_opened',
@@ -44,7 +44,7 @@ const kinds: Record<CaseEventType, ActivityKind> = {
  * that need attention, and the activity feed. It reads nothing and invents nothing, so every figure on the page traces back
  * to a row.
  * @param input - The facts.
- * @param input.cases - The cases in the lawyer's jurisdictions.
+ * @param input.cases - The cases to show.
  * @param input.events - What happened to those cases, in any order.
  * @param input.ledByYou - The cases the lawyer leads, and when they took each.
  * @param input.hashes - The newest report hash of each case, by case id.
@@ -60,7 +60,7 @@ export function buildOverview(input: {
 }) {
   const since = (days: number) => input.now.getTime() - days * dayMs;
   const after = (iso: string, days: number) => new Date(iso).getTime() >= since(days);
-  const open = input.cases.filter((c) => c.status !== 'counsel');
+  const open = input.cases;
   const names = new Map(input.cases.map((c) => [c.id, c.name]));
 
   const stats = {

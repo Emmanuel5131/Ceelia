@@ -33,6 +33,7 @@ export function SubmitClaimCard(props: {
   const { state, onSubmit, pending } = useFormAction(props.action, { errors: [] });
   const [agreed, setAgreed] = React.useState(false);
   const [connected, setConnected] = React.useState(false);
+  const [truthful, setTruthful] = React.useState(false);
 
   return (
     <Card variant="outline">
@@ -100,9 +101,33 @@ export function SubmitClaimCard(props: {
                 {t('error_connect')}
               </p>
             )}
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="claim-truthful"
+                name="truthful"
+                className="mt-1"
+                checked={truthful}
+                onCheckedChange={(next) => {
+                  setTruthful(next === true);
+                }}
+              />
+              <Label htmlFor="claim-truthful" className="leading-relaxed font-normal">
+                {t('truthful_label')}
+              </Label>
+            </div>
+            {state.errors.includes('truthful') && (
+              <p role="alert" className="text-sm text-seal">
+                {t('error_truthful')}
+              </p>
+            )}
+            {state.errors.includes('limit') && (
+              <p role="alert" className="text-sm text-seal">
+                {t('error_limit')}
+              </p>
+            )}
             <Button
               type="submit"
-              disabled={pending || !props.ready || !agreed || !connected}
+              disabled={pending || !props.ready || !agreed || !connected || !truthful}
               className="justify-self-start"
             >
               {t('submit')}

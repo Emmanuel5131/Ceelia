@@ -1,6 +1,5 @@
 'use client';
 
-import { getJurisdiction } from '@celia/jurisdictions';
 import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { loadCasePreview } from '@/app/[locale]/(auth)/dashboard/cases/actions';
@@ -20,7 +19,6 @@ import {
 } from '@/components/ui/dialog';
 import { Link } from '@/libs/I18nNavigation';
 import type { CaseRow } from '@/utils/cases/Case';
-import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 /**
  * The two estimates a preview shows as big numbers: wallets affected and what they lost to the platform.
@@ -93,7 +91,6 @@ export function CasePreviewDialog(props: { row: CaseRow }) {
   const [preview, setPreview] = React.useState<Awaited<ReturnType<typeof loadCasePreview>>>();
   const [pending, startTransition] = React.useTransition();
   const { row } = props;
-  const jurisdiction = getJurisdiction(row.jurisdiction);
   const report = preview?.report;
   const estimate = report?.snapshot.estimate;
   return (
@@ -121,7 +118,7 @@ export function CasePreviewDialog(props: { row: CaseRow }) {
           <DialogDescription>
             <span className="font-mono">{row.number}</span>
             {' · '}
-            {jurisdiction ? jurisdictionName(jurisdiction) : row.jurisdiction}
+            {t('jurisdictions_count', { count: row.jurisdictions })}
           </DialogDescription>
         </DialogHeader>
 

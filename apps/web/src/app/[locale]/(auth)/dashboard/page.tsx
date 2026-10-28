@@ -4,7 +4,6 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { OverviewContent } from '@/components/overview/OverviewContent';
 import { parseAccount } from '@/utils/accounts/Account';
-import { parseProfile } from '@/utils/accounts/Profile';
 import { getI18nPath } from '@/utils/Helpers';
 
 type OverviewPageProps = {
@@ -32,13 +31,10 @@ export default async function OverviewPage(props: OverviewPageProps) {
     redirect(getI18nPath('/onboarding', locale));
   }
 
-  const profile = parseProfile(account.accountType, user.privateMetadata);
-
   return (
     <OverviewContent
       accountType={account.accountType}
       userId={user.id}
-      admittedIn={profile?.accountType === 'counsel' ? profile.jurisdictions : []}
       firstName={user.firstName}
     />
   );

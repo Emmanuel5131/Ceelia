@@ -22,6 +22,8 @@ const isClaimsApi = createRouteMatcher(['/api/claims(.*)']);
 const isAuthPage = createRouteMatcher([
   '/sign-in(.*)',
   '/:locale/sign-in(.*)',
+  '/staff/sign-in(.*)',
+  '/:locale/staff/sign-in(.*)',
   '/sign-up(.*)',
   '/:locale/sign-up(.*)',
 ]);

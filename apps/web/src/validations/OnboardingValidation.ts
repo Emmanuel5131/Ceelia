@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import { institutionKinds } from '@/utils/accounts/Institution';
 
 const required = z.string().trim().min(1).max(200);
 
@@ -32,10 +33,21 @@ const PersonValidation = PersonProfileValidation.extend({
   consent: z.literal('on'),
 });
 
-const CounselValidation = z
+/** The application a professional or institution sends, in onboarding and when applying again. */
+export const ApplicationValidation = z
   .object({
     accountType: z.literal('counsel'),
     ...counselProfileShape,
+    kind: z.enum(institutionKinds),
+    // The company registration number, or for a lawyer the bar number: what staff look up in the public record.
+    registrationNumber: required,
+    website: z
+      .string()
+      .trim()
+      .max(200)
+      .refine((value) => value === '' || URL.canParse(value))
+      .optional(),
+    contactRole: z.string().trim().max(200).optional(),
     acceptTerms: z.literal('on'),
     confirmConflicts: z.literal('on'),
   })
@@ -44,5 +56,5 @@ const CounselValidation = z
 /** The onboarding form, as the server action receives it. */
 export const OnboardingValidation = z.discriminatedUnion('accountType', [
   PersonValidation,
-  CounselValidation,
+  ApplicationValidation,
 ]);

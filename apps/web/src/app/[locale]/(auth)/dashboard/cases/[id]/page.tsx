@@ -1,31 +1,32 @@
 import { maxOpenCasesPerLawyer } from '@celia/core';
-import { getJurisdiction } from '@celia/jurisdictions';
 import { currentUser } from '@clerk/nextjs/server';
 import { ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import * as z from 'zod';
+import { AffectedJurisdictions } from '@/components/cases/AffectedJurisdictions';
 import { CaseClaimantsTable } from '@/components/cases/CaseClaimantsTable';
 import type { ClaimantRow } from '@/components/cases/CaseClaimantsTable';
 import { CaseDescription } from '@/components/cases/CaseDescription';
+import { CaseOperators } from '@/components/cases/CaseOperators';
 import { ReportedPattern } from '@/components/cases/ReportedPattern';
 import { ReportSummary } from '@/components/cases/ReportSummary';
 import { TakeCaseDialog } from '@/components/cases/TakeCaseDialog';
+import { JurisdictionFinder } from '@/components/jurisdictions/JurisdictionFinder';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageSection } from '@/components/layout/PageSection';
 import { StatCard } from '@/components/overview/StatCard';
 import { StatusBadge } from '@/components/overview/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { canViewCaseClaims, listCaseClaims, reportedPattern } from '@/libs/cases/CaseClaims';
-import { evaluateTake, getCase, leadsCase } from '@/libs/cases/Cases';
+import { evaluateTake, getCase, hasLead, leadsCase } from '@/libs/cases/Cases';
 import type { CaseDetail } from '@/libs/cases/Cases';
 import { getReport } from '@/libs/cases/Reports';
 import { claimantNames } from '@/libs/claims/ClaimantNames';
 import { Link } from '@/libs/I18nNavigation';
 import { parseAccount } from '@/utils/accounts/Account';
 import { parseProfile } from '@/utils/accounts/Profile';
-import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 type CasePageProps = {
   params: Promise<{ locale: string; id: string }>;
@@ -77,7 +78,7 @@ async function loadViewer(found: CaseDetail, user: Awaited<ReturnType<typeof cur
   const profile = parseProfile('counsel', user?.privateMetadata);
   const counsel =
     user && account?.accountType === 'counsel' && profile?.accountType === 'counsel'
-      ? { id: user.id, verified: account.review === 'verified', admittedIn: profile.jurisdictions }
+      ? { id: user.id, verified: account.review === 'verified' }
       : undefined;
 
   // Ask as if the lawyer had confirmed conflicts: that is the one thing they do in the dialog, so what is left is why not.
@@ -85,17 +86,17 @@ async function loadViewer(found: CaseDetail, user: Awaited<ReturnType<typeof cur
     ? await evaluateTake({
         userId: counsel.id,
         verified: counsel.verified,
-        admittedIn: counsel.admittedIn,
         found,
         conflictsConfirmed: true,
       })
     : undefined;
   const yours = counsel ? await leadsCase(found.id, counsel.id) : false;
+  const taken = await hasLead(found.id);
   const canSeeClaims = user
     ? await canViewCaseClaims({ userId: user.id, staff: account?.staff === true }, found.id)
     : false;
 
-  return { decision, yours, canSeeClaims };
+  return { decision, yours, taken, canSeeClaims };
 }
 
 export default async function CasePage(props: CasePageProps) {
@@ -110,8 +111,7 @@ export default async function CasePage(props: CasePageProps) {
   }
 
   const user = await currentUser();
-  const { decision, yours, canSeeClaims } = await loadViewer(found, user);
-  const jurisdiction = getJurisdiction(found.jurisdiction);
+  const { decision, yours, taken, canSeeClaims } = await loadViewer(found, user);
   const report = found.hasReport ? await getReport(found.id) : null;
   const reported = await reportedPattern(found.id);
 
@@ -121,7 +121,7 @@ export default async function CasePage(props: CasePageProps) {
 
   let team = t('team_open');
 
-  if (found.status === 'counsel') {
+  if (taken) {
     team = yours ? t('team_yours') : t('team_taken');
   }
 
@@ -140,11 +140,8 @@ export default async function CasePage(props: CasePageProps) {
       />
       <div className="grid grid-cols-[minmax(0,1fr)] gap-12">
         <CaseDescription description={found.description} headline={report?.snapshot.headline} />
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label={t('stat_jurisdiction')}
-            value={jurisdiction ? jurisdictionName(jurisdiction) : found.jurisdiction}
-          />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard label={t('stat_jurisdictions')} value={format.number(found.jurisdictions)} />
           {canSeeClaims ? (
             <a href="#claimants" className="focus-ring hover:opacity-80">
               <StatCard label={t('stat_claimants')} value={format.number(found.claimants)} />
@@ -152,12 +149,15 @@ export default async function CasePage(props: CasePageProps) {
           ) : (
             <StatCard label={t('stat_claimants')} value={format.number(found.claimants)} />
           )}
+          <StatCard label={t('stat_confirmed')} value={format.number(found.confirmed)} />
           <StatCard
             label={t('stat_updated')}
             value={format.dateTime(new Date(found.updatedAt), { dateStyle: 'medium' })}
           />
         </div>
+        <AffectedJurisdictions caseId={found.id} />
         <ReportedPattern pattern={reported} />
+        <CaseOperators operators={found.operators} jurisdictions={found.operatorJurisdictions} />
         <PageSection title={t('report_title')} description={t('report_description')}>
           {report ? (
             <ReportSummary report={report} caseId={found.id} />
@@ -171,6 +171,11 @@ export default async function CasePage(props: CasePageProps) {
               <CaseClaimantsTable claims={claimants} />
             </PageSection>
           </div>
+        )}
+        {decision && (
+          <PageSection title={t('rule_title')} description={t('rule_description')}>
+            <JurisdictionFinder />
+          </PageSection>
         )}
         {decision && (
           <PageSection title={t('team_title')} description={t('team_description')}>

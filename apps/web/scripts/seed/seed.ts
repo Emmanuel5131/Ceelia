@@ -12,6 +12,7 @@ import {
   caseTeamSchema,
   claimSchema,
   counselProfileSchema,
+  institutionApplicationSchema,
   identityCheckSchema,
   userSettingSchema,
 } from '@/models/Schema';
@@ -258,8 +259,6 @@ for (const [index, plan] of plans.entries()) {
   const id = randomUUID();
   const word = name.split(' ')[0] ?? name;
   const country = weighted(victimCountries);
-  // Cases are filed where the victims are; in the US, mostly in a state.
-  const jurisdiction = country === 'us' && random() < 0.55 ? pick(usStates) : country;
   const opened = now - int(10, 540) * DAY;
   const mean = (20 + Math.min(size, 400) * 0.15) * DAY;
   const arrivals = Array.from({ length: size }, () =>
@@ -272,9 +271,7 @@ for (const [index, plan] of plans.entries()) {
   // Bigger cases are further along: more have been built or sealed.
   const roll = random();
   const sealedShare = size >= 100 ? 0.5 : size >= 25 ? 0.3 : 0.1;
-  const buildingShare = size >= 25 ? 0.35 : 0.2;
-  const status: CaseStatus =
-    roll < sealedShare ? 'sealed' : roll < sealedShare + buildingShare ? 'building' : 'collecting';
+  const status: CaseStatus = roll < sealedShare ? 'sealed' : size >= 8 ? 'building' : 'collecting';
 
   const facts: CaseFacts = {
     name,
@@ -357,7 +354,6 @@ for (const [index, plan] of plans.entries()) {
     id,
     name,
     platformKey: key,
-    jurisdiction,
     description,
     status,
     createdAt: new Date(opened),
@@ -396,6 +392,9 @@ await db.delete(claimSchema).where(seedUsers(claimSchema.userId));
 await db.delete(userSettingSchema).where(seedUsers(userSettingSchema.userId));
 await db.delete(identityCheckSchema).where(seedUsers(identityCheckSchema.userId));
 await db.delete(counselProfileSchema).where(inArray(counselProfileSchema.userId, realIds));
+await db
+  .delete(institutionApplicationSchema)
+  .where(inArray(institutionApplicationSchema.userId, realIds));
 
 for (const rows of chunks(cases)) {
   await db.insert(caseSchema).values(rows);
@@ -436,6 +435,27 @@ await db.insert(counselProfileSchema).values(
   }),
 );
 
+// A lawyer waiting for review has an application to review, sent a few days ago.
+await db.insert(institutionApplicationSchema).values(
+  accounts.flatMap((account) => {
+    const userId = clerkIds.get(account.email);
+
+    return userId && 'review' in account.metadata && account.metadata.review === 'pending'
+      ? [
+          {
+            userId,
+            kind: 'law_firm' as const,
+            organisation: 'Seed & Partners',
+            registrationNumber: 'SEED-0001',
+            website: 'https://seed-partners.example',
+            submittedAt: new Date(now - 3 * DAY),
+            reviewDueAt: new Date(now + 2 * DAY),
+          },
+        ]
+      : [];
+  }),
+);
+
 let claimTotal = 0;
 
 for (const job of claimJobs) {
@@ -457,9 +477,8 @@ for (const rows of chunks(events)) {
 }
 
 const sealed = cases.filter((row) => row.status === 'sealed').length;
-const building = cases.filter((row) => row.status === 'building').length;
 
 console.log(
-  `Seeded ${cases.length} cases (${cases.length - sealed - building} collecting, ${building} building, ${sealed} sealed), ${claimTotal} claims from ${claimants.length} claimants, ${reports.length} reports, ${events.length} events.`,
+  `Seeded ${cases.length} cases (${cases.length - sealed} building, ${sealed} with enough evidence), ${claimTotal} claims from ${claimants.length} claimants, ${reports.length} reports, ${events.length} events.`,
 );
 process.exit(0);

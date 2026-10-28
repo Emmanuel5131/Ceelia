@@ -16,21 +16,17 @@ import type { AccountType } from '@/utils/accounts/Account';
  * @param props - The content props.
  * @param props.accountType - The signed-in person's account type: a person sees their claim, counsel see the case bank numbers.
  * @param props.userId - The Clerk user id, to find their claims or their cases.
- * @param props.admittedIn - For a lawyer: the jurisdiction ids they are admitted in, which decide the cases they see.
  * @param props.firstName - Their first name, for the greeting.
  * @returns The overview page content.
  */
 export async function OverviewContent(props: {
   accountType: AccountType;
   userId: string;
-  admittedIn: string[];
   firstName?: string | null;
 }) {
   const t = await getTranslations('Overview');
   const overview =
-    props.accountType === 'person'
-      ? null
-      : await loadCounselOverview({ userId: props.userId, admittedIn: props.admittedIn });
+    props.accountType === 'person' ? null : await loadCounselOverview({ userId: props.userId });
 
   return (
     <>

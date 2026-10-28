@@ -9,7 +9,9 @@ const make = (id: string, over: Partial<OverviewCase> = {}): OverviewCase => ({
   id,
   number: `CB-${id}`,
   name: `Case ${id}`,
-  jurisdiction: 'ng',
+  jurisdictions: 1,
+  operators: null,
+  operatorJurisdictions: [],
   claimants: 10,
   confirmed: 4,
   description: null,
@@ -30,9 +32,7 @@ const input = (cases: OverviewCase[], events: OverviewEvent[] = []) => ({
 
 describe(buildOverview, () => {
   it('counts open cases and the ones added this week', () => {
-    const { stats } = buildOverview(
-      input([make('1', { createdAt: daysAgo(2) }), make('2'), make('3', { status: 'counsel' })]),
-    );
+    const { stats } = buildOverview(input([make('1', { createdAt: daysAgo(2) }), make('2')]));
 
     expect(stats.newCases).toBe(2);
     expect(stats.newThisWeek).toBe(1);
@@ -40,11 +40,7 @@ describe(buildOverview, () => {
 
   it('adds up the claimants waiting in open cases and the cases they are across', () => {
     const { stats } = buildOverview(
-      input([
-        make('1', { claimants: 5 }),
-        make('2', { claimants: 0 }),
-        make('3', { status: 'counsel', claimants: 99 }),
-      ]),
+      input([make('1', { claimants: 5 }), make('2', { claimants: 0 })]),
     );
 
     expect(stats.waitingClaimants).toBe(5);
@@ -79,17 +75,12 @@ describe(buildOverview, () => {
     expect(stats.sealedThisMonth).toBe(1);
   });
 
-  it('shows sealed cases first, then building, then collecting, and never ones with counsel', () => {
+  it('shows cases with enough evidence first, then building', () => {
     const { attention } = buildOverview(
-      input([
-        make('c', { status: 'collecting' }),
-        make('s', { status: 'sealed' }),
-        make('b', { status: 'building' }),
-        make('t', { status: 'counsel' }),
-      ]),
+      input([make('s', { status: 'sealed' }), make('b', { status: 'building' })]),
     );
 
-    expect(attention.map((c) => c.id)).toStrictEqual(['s', 'b', 'c']);
+    expect(attention.map((c) => c.id)).toStrictEqual(['s', 'b']);
   });
 
   it('shows at most five cases', () => {
@@ -132,7 +123,7 @@ describe(buildOverview, () => {
     expect(activity[0]?.hash).toBe('a1b2c3d');
   });
 
-  it('leaves out events for cases outside the lawyer’s jurisdictions', () => {
+  it('leaves out events for cases that are not in the list', () => {
     const { activity } = buildOverview(
       input([make('1')], [{ caseId: 'elsewhere', type: 'case_opened', count: 1, at: daysAgo(1) }]),
     );

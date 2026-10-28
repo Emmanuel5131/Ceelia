@@ -26,6 +26,9 @@ export function notificationPath(type: NotificationType, data: Record<string, st
     case 'counsel_review_reset': {
       return '/dashboard/settings';
     }
+    case 'application_rejected': {
+      return '/dashboard';
+    }
     default: {
       return '/dashboard';
     }

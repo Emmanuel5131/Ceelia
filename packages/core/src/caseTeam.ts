@@ -8,12 +8,12 @@ export const maxOpenCasesPerLawyer = 5;
 export type TakeCaseInput = {
   /** Staff have checked the lawyer's registration. */
   verified: boolean;
+  /** The account is a law firm or lawyer. Other institutions are approved to use the tools but cannot take a case. */
+  lawFirm: boolean;
   /** The case has a sealed evidence file, so it is ready for counsel. */
   caseSealed: boolean;
   /** Another firm already leads the case. */
   caseHasLead: boolean;
-  /** The lawyer is admitted where the case is. */
-  admittedInJurisdiction: boolean;
   /** The lawyer is a claimant in the case. */
   isClaimant: boolean;
   /** The firm confirmed it checked conflicts for the whole firm. */
@@ -24,9 +24,9 @@ export type TakeCaseInput = {
 
 export type TakeCaseRefusal =
   | 'not_verified'
+  | 'not_law_firm'
   | 'not_sealed'
   | 'already_taken'
-  | 'not_admitted'
   | 'is_claimant'
   | 'conflicts_not_confirmed'
   | 'at_capacity';
@@ -43,9 +43,9 @@ export function canTakeCase(
 ): { ok: true } | { ok: false; reason: TakeCaseRefusal } {
   const refusals: [boolean, TakeCaseRefusal][] = [
     [!input.verified, 'not_verified'],
+    [!input.lawFirm, 'not_law_firm'],
     [!input.caseSealed, 'not_sealed'],
     [input.caseHasLead, 'already_taken'],
-    [!input.admittedInJurisdiction, 'not_admitted'],
     [input.isClaimant, 'is_claimant'],
     [!input.conflictsConfirmed, 'conflicts_not_confirmed'],
     [input.openCases >= maxOpenCasesPerLawyer, 'at_capacity'],

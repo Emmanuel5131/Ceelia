@@ -18,8 +18,7 @@ export type TakeCaseState = {
 };
 
 /**
- * Takes a case for the signed-in lawyer's firm. The server decides: it re-reads the lawyer's review status, jurisdictions and
- * open cases itself and trusts nothing in the form except the lawyer's confirmation that their firm checked conflicts.
+ * Takes a case for the signed-in lawyer's firm. The server decides: it re-reads the lawyer's review status and open cases itself and trusts nothing in the form except the lawyer's confirmation that their firm checked conflicts.
  * @param caseId - The case id.
  * @param formData - The submitted form, with the `conflicts` confirmation.
  * @returns The reason the case could not be taken, or null.
@@ -43,7 +42,6 @@ export async function takeCaseAction(caseId: string, formData: FormData): Promis
   const decision = await evaluateTake({
     userId: user.id,
     verified: account.review === 'verified',
-    admittedIn: profile.jurisdictions,
     found,
     conflictsConfirmed: formData.get('conflicts') === 'on',
   });

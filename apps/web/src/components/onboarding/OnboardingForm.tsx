@@ -12,11 +12,14 @@ import type { AccountType } from '@/utils/accounts/Account';
 /**
  * The two-step onboarding form: what you are, then the details that go with it. The form is sent from the submit handler
  * rather than as a form action, because a form action clears every field when it fails and the person would have to retype.
+ * @param props - The form props.
+ * @param props.plan - The institution plan, shown before an institution fills in its details.
+ * @param props.initialType - The type to start on, when the person came from the join page.
  * @returns The form.
  */
-export function OnboardingForm() {
+export function OnboardingForm(props: { plan: React.ReactNode; initialType?: AccountType }) {
   const t = useTranslations('OnboardingPage');
-  const [type, setType] = React.useState<AccountType>();
+  const [type, setType] = React.useState<AccountType | undefined>(props.initialType);
   const [confirmed, setConfirmed] = React.useState(false);
   const [state, formAction, pending] = React.useActionState(completeOnboarding, { errors: [] });
   const [, startTransition] = React.useTransition();
@@ -48,7 +51,10 @@ export function OnboardingForm() {
           {type === 'person' ? (
             <PersonFields errors={state.errors} />
           ) : (
-            <CounselFields errors={state.errors} />
+            <>
+              {props.plan}
+              <CounselFields errors={state.errors} />
+            </>
           )}
           <div className="flex gap-4">
             <Button
@@ -68,6 +74,7 @@ export function OnboardingForm() {
       ) : (
         <>
           <AccountTypeChoice value={type} onChange={setType} />
+          {type === 'counsel' && props.plan}
           <Button
             type="button"
             disabled={!type}

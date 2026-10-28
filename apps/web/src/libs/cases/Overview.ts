@@ -2,19 +2,17 @@ import { and, desc, eq, inArray } from 'drizzle-orm';
 import { listCases } from '@/libs/cases/Cases';
 import { db } from '@/libs/DB';
 import { caseEventSchema, caseReportSchema, caseSchema, caseTeamSchema } from '@/models/Schema';
-import { isAdmittedFor } from '@/utils/cases/Admission';
 import { buildOverview } from '@/utils/cases/OverviewStats';
 
 /**
- * Loads what a lawyer's overview shows, all from the database: the cases in the jurisdictions they are admitted in, what has
+ * Loads what a lawyer's overview shows, all from the database: every case, what has
  * happened to them, which cases they lead, and each case's newest report hash. Then `buildOverview` turns those into the
  * numbers, the list and the feed, so nothing on the page is typed in.
  * @param options - Whose overview.
  * @param options.userId - The lawyer's Clerk user id.
- * @param options.admittedIn - The jurisdiction ids they are admitted in.
  * @returns The stats, the cases that need attention and the activity.
  */
-export async function loadCounselOverview(options: { userId: string; admittedIn: string[] }) {
+export async function loadCounselOverview(options: { userId: string }) {
   const [all, created, led] = await Promise.all([
     listCases(),
     db.select({ id: caseSchema.id, createdAt: caseSchema.createdAt }).from(caseSchema),
@@ -25,9 +23,7 @@ export async function loadCounselOverview(options: { userId: string; admittedIn:
   ]);
 
   const createdAt = new Map(created.map((row) => [row.id, row.createdAt.toISOString()]));
-  const cases = all
-    .filter((row) => isAdmittedFor(options.admittedIn, row.jurisdiction))
-    .map((row) => ({ ...row, createdAt: createdAt.get(row.id) ?? row.updatedAt }));
+  const cases = all.map((row) => ({ ...row, createdAt: createdAt.get(row.id) ?? row.updatedAt }));
   const ids = cases.map((row) => row.id);
 
   const [events, reports] =

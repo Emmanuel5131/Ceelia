@@ -1,6 +1,5 @@
 'use client';
 
-import { getJurisdiction } from '@celia/jurisdictions';
 import { BankIcon } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
 import { DataTable } from '@/components/data-table/DataTable';
@@ -18,10 +17,10 @@ import {
 } from '@/components/ui/empty';
 import type { CaseRow, CaseStatus } from '@/utils/cases/Case';
 
-const statuses: CaseStatus[] = ['collecting', 'building', 'sealed', 'counsel'];
+const statuses: CaseStatus[] = ['collecting', 'building', 'sealed'];
 
 /**
- * The cases as a table. `full` is the case bank list: search, status and jurisdiction filters, column menu, row selection and
+ * The cases as a table. `full` is the case bank list: search, a status filter, column menu, row selection and
  * pagination. `compact` is a short read-only list, such as "Needs your attention" on the overview.
  * @param props - The table props.
  * @param props.cases - The cases to list.
@@ -37,12 +36,7 @@ export function CaseDataTable(props: { cases: CaseRow[]; variant?: 'full' | 'com
     collecting: t('status_collecting'),
     building: t('status_building'),
     sealed: t('status_sealed'),
-    counsel: t('status_counsel'),
   };
-
-  const jurisdictions = [
-    ...new Set(props.cases.map((c) => getJurisdiction(c.jurisdiction)?.name ?? c.jurisdiction)),
-  ].toSorted();
 
   return (
     <DataTable
@@ -56,11 +50,6 @@ export function CaseDataTable(props: { cases: CaseRow[]; variant?: 'full' | 'com
           columnId: 'status',
           title: labels.status,
           options: statuses.map((value) => ({ value, label: statusLabels[value] })),
-        },
-        {
-          columnId: 'jurisdiction',
-          title: labels.jurisdiction,
-          options: jurisdictions.map((value) => ({ value, label: value })),
         },
       ]}
       toolbar={full}

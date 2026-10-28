@@ -11,6 +11,7 @@ import type {
 } from '@celia/core';
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
   customType,
   date,
@@ -25,6 +26,12 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import type {
+  ApplicationLookups,
+  ApplicationStatus,
+  InstitutionKind,
+  ReviewCheck,
+} from '@/utils/accounts/Institution';
 import type { CaseStatus } from '@/utils/cases/Case';
 import type { OwnershipMethod } from '@/utils/claims/Ownership';
 import type { StoredCheck } from '@/utils/claims/Transaction';
@@ -193,11 +200,15 @@ export const caseSchema = pgTable('case', {
   name: text('name').notNull(),
   /** The same reduced name the claims carry in `claim.platform_key`. */
   platformKey: text('platform_key').notNull().unique(),
-  /** A jurisdiction id from `@celia/jurisdictions`. */
-  jurisdiction: text('jurisdiction').notNull(),
   /** One line on the case, such as the wallets affected and the estimated loss. Written when a report is saved. */
   description: text('description'),
-  /** `collecting`, `building`, `sealed` or `counsel`. Moves forward only; staff set the first three, taking a case sets the last. */
+  /** Who the claimants allege ran the platform: names, links and the countries they are linked to, as plain notes. Staff write it. It records what is alleged, not a finding. */
+  /** The estimated loss to the platform in US dollars, from the newest report. It decides when a case starts building evidence. */
+  estimatedLossUsd: bigint('estimated_loss_usd', { mode: 'number' }),
+  operators: text('operators'),
+  /** The jurisdiction ids the alleged operators are linked to, such as where a company is registered. Staff set them; they record what is alleged. */
+  operatorJurisdictions: jsonb('operator_jurisdictions').$type<string[]>().notNull().default([]),
+  /** `collecting` claims, `building` evidence or `sealed` (enough evidence). A case begins as `collecting`, moves to `building` by itself, and staff mark it `sealed`. */
   status: text('status').$type<CaseStatus>().notNull().default('collecting'),
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()
@@ -349,6 +360,8 @@ export const notificationPreferenceSchema = pgTable(
 export const counselProfileSchema = pgTable('counsel_profile', {
   userId: text('user_id').primaryKey(),
   review: text('review').$type<'pending' | 'verified'>().notNull(),
+  /** What kind of professional or institution it is. Only a law firm can take a case. */
+  kind: text('kind').$type<InstitutionKind>().notNull().default('law_firm'),
   firm: text('firm'),
   jurisdictions: jsonb('jurisdictions').$type<string[]>().notNull().default([]),
   createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
@@ -356,6 +369,43 @@ export const counselProfileSchema = pgTable('counsel_profile', {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
+});
+
+/**
+ * A professional or institution's application to join, kept with the review of it. Staff tick the checks against public
+ * records, one person marks it ready and a different person approves it. The decision and its reason stay on record. Nothing
+ * here is shown to other people.
+ */
+export const institutionApplicationSchema = pgTable('institution_application', {
+  /** The Clerk user id of the person who applied. */
+  userId: text('user_id').primaryKey(),
+  kind: text('kind').$type<InstitutionKind>().notNull(),
+  /** The firm or organisation; null for an independent lawyer. */
+  organisation: text('organisation'),
+  /** The company registration or bar number they gave. */
+  registrationNumber: text('registration_number'),
+  website: text('website'),
+  /** Their role at the organisation. */
+  contactRole: text('contact_role'),
+  status: text('status').$type<ApplicationStatus>().notNull().default('in_review'),
+  /** The checks staff have ticked, by name. */
+  checks: jsonb('checks').$type<Partial<Record<ReviewCheck, boolean>>>().notNull().default({}),
+  /** The staff member who marked it ready for approval. */
+  readyBy: text('ready_by'),
+  readyAt: timestamp('ready_at', { mode: 'date', withTimezone: true }),
+  /** The staff member who approved or rejected it, and when. */
+  decidedBy: text('decided_by'),
+  decidedAt: timestamp('decided_at', { mode: 'date', withTimezone: true }),
+  /** Why it was rejected. Shown to the applicant. */
+  decisionNote: text('decision_note'),
+  submittedAt: timestamp('submitted_at', { mode: 'date', withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  /** When we aim to have decided by, shown to the applicant. */
+  reviewDueAt: timestamp('review_due_at', { mode: 'date', withTimezone: true }).notNull(),
+  /** What the registry and sanctions lookups found, when staff ran them. They inform the checks; staff still tick each one. */
+  lookups: jsonb('lookups').$type<ApplicationLookups>(),
+  lookedUpAt: timestamp('looked_up_at', { mode: 'date', withTimezone: true }),
 });
 
 /**
@@ -378,6 +428,47 @@ export const caseReportSchema = pgTable(
     createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [unique('case_report_one_per_version').on(table.caseId, table.version)],
+);
+
+/** What a member of staff did, as recorded in `staff_audit`. */
+export type StaffAction =
+  | 'counsel_verified'
+  | 'ownership_confirmed'
+  | 'ownership_declined'
+  | 'claim_validated'
+  | 'case_opened'
+  | 'case_status_set'
+  | 'case_operators_saved'
+  | 'report_saved'
+  | 'counsel_synced'
+  | 'mail_retried'
+  | 'mail_allowed'
+  | 'application_checked'
+  | 'application_lookup'
+  | 'application_ready'
+  | 'application_approved'
+  | 'application_rejected';
+
+/**
+ * The record of what staff did: who, what, to which thing and when. Rows are only ever added, never changed or removed by the
+ * app, so it can answer "who confirmed this?" later. `details` holds ids and short codes, never a person's claim.
+ */
+export const staffAuditSchema = pgTable(
+  'staff_audit',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    /** The Clerk user id of the staff member. */
+    actorId: text('actor_id').notNull(),
+    /** Their email at the time, so the record still reads if the account is later deleted. */
+    actorEmail: text('actor_email'),
+    action: text('action').$type<StaffAction>().notNull(),
+    /** What it was done to, such as `claim`, `case`, `lawyer` or `email`. */
+    targetType: text('target_type'),
+    targetId: text('target_id'),
+    details: jsonb('details').$type<Record<string, string>>().notNull().default({}),
+    createdAt: timestamp('created_at', { mode: 'date', withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('staff_audit_recent').on(table.createdAt)],
 );
 
 export type CaseEventType =
