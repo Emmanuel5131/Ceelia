@@ -5,7 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { OnboardingForm } from '@/components/onboarding/OnboardingForm';
 import { OnboardingShell } from '@/components/onboarding/OnboardingShell';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
 type OnboardingPageProps = {

@@ -17,15 +17,15 @@ import { PageSection } from '@/components/layout/PageSection';
 import { StatCard } from '@/components/overview/StatCard';
 import { StatusBadge } from '@/components/overview/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { canViewCaseClaims, listCaseClaims, reportedPattern } from '@/libs/CaseClaims';
-import { evaluateTake, getCase, leadsCase } from '@/libs/Cases';
-import type { CaseDetail } from '@/libs/Cases';
-import { claimantNames } from '@/libs/ClaimantNames';
+import { canViewCaseClaims, listCaseClaims, reportedPattern } from '@/libs/cases/CaseClaims';
+import { evaluateTake, getCase, leadsCase } from '@/libs/cases/Cases';
+import type { CaseDetail } from '@/libs/cases/Cases';
+import { getReport } from '@/libs/cases/Reports';
+import { claimantNames } from '@/libs/claims/ClaimantNames';
 import { Link } from '@/libs/I18nNavigation';
-import { getReport } from '@/libs/Reports';
-import { parseAccount } from '@/utils/Account';
-import { jurisdictionName } from '@/utils/JurisdictionName';
-import { parseProfile } from '@/utils/Profile';
+import { parseAccount } from '@/utils/accounts/Account';
+import { parseProfile } from '@/utils/accounts/Profile';
+import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 type CasePageProps = {
   params: Promise<{ locale: string; id: string }>;

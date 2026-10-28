@@ -2,8 +2,8 @@
 
 import { auth } from '@clerk/nextjs/server';
 import * as z from 'zod';
-import { reportedPattern } from '@/libs/CaseClaims';
-import { getReport } from '@/libs/Reports';
+import { reportedPattern } from '@/libs/cases/CaseClaims';
+import { getReport } from '@/libs/cases/Reports';
 
 /**
  * Loads what the preview shows for a case: its newest report and the kind of loss most claimants report. Any signed-in person may

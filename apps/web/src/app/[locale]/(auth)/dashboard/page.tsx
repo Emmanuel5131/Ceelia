@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { OverviewContent } from '@/components/overview/OverviewContent';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
+import { parseProfile } from '@/utils/accounts/Profile';
 import { getI18nPath } from '@/utils/Helpers';
-import { parseProfile } from '@/utils/Profile';
 
 type OverviewPageProps = {
   params: Promise<{ locale: string }>;

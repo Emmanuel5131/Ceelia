@@ -6,7 +6,7 @@ import type {
   WalletApp,
   WalletType,
 } from '@celia/core';
-import type { Claim } from '@/libs/Claims';
+import type { Claim } from '@/libs/claims/Claims';
 
 /** What the claim form shows when a draft is edited: only what the form asks for, never the nonce or a signature. */
 export type ClaimDefaults = {

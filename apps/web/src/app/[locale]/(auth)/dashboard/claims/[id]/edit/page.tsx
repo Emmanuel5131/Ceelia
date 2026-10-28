@@ -8,9 +8,9 @@ import { toClaimDefaults } from '@/components/claims/claim-defaults';
 import { NewClaimForm } from '@/components/claims/NewClaimForm';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { getClaim } from '@/libs/Claims';
+import { getClaim } from '@/libs/claims/Claims';
 import { Link } from '@/libs/I18nNavigation';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
 type EditClaimPageProps = {

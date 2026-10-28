@@ -7,9 +7,9 @@ import { ReportSummary } from '@/components/cases/ReportSummary';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PageSection } from '@/components/layout/PageSection';
 import { Button } from '@/components/ui/button';
-import { getCase } from '@/libs/Cases';
+import { getCase } from '@/libs/cases/Cases';
+import { getReport, listReportVersions } from '@/libs/cases/Reports';
 import { Link } from '@/libs/I18nNavigation';
-import { getReport, listReportVersions } from '@/libs/Reports';
 
 type AnalysisPageProps = {
   params: Promise<{ locale: string; id: string }>;

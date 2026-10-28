@@ -17,8 +17,8 @@ import type { OwnershipAction } from '@/components/claims/OwnershipWays';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { ProofFile } from '@/libs/ClaimProofs';
-import type { OwnershipMethod } from '@/utils/Ownership';
+import type { ProofFile } from '@/libs/claims/ClaimProofs';
+import type { OwnershipMethod } from '@/utils/claims/Ownership';
 
 type Section = 'sign' | 'video' | 'files';
 type SignStep = 'choose' | 'wallet' | 'copy' | 'paste';

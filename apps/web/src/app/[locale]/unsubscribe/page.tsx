@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { UnsubscribeForm } from '@/components/email/UnsubscribeForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Env } from '@/libs/Env';
-import { verifyUnsubscribe } from '@/utils/Unsubscribe';
+import { verifyUnsubscribe } from '@/utils/notifications/Unsubscribe';
 
 type UnsubscribePageProps = {
   params: Promise<{ locale: string }>;

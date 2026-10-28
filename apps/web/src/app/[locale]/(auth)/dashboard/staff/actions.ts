@@ -5,14 +5,14 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq, isNotNull, isNull } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
-import { recordCaseEvent } from '@/libs/CaseEvents';
-import { setCounselReview } from '@/libs/CounselProfile';
+import { setCounselReview } from '@/libs/accounts/CounselProfile';
+import { requireStaff, syncCounselProfiles } from '@/libs/accounts/Staff';
+import { recordCaseEvent } from '@/libs/cases/CaseEvents';
+import { saveReport } from '@/libs/cases/Reports';
 import { db } from '@/libs/DB';
-import { notify } from '@/libs/Notify';
-import { claimantIds, counselIdsFor } from '@/libs/Recipients';
-import { saveReport } from '@/libs/Reports';
-import { requireStaff, syncCounselProfiles } from '@/libs/Staff';
-import { unsuppress } from '@/libs/Suppression';
+import { notify } from '@/libs/notifications/Notify';
+import { claimantIds, counselIdsFor } from '@/libs/notifications/Recipients';
+import { unsuppress } from '@/libs/notifications/Suppression';
 import {
   caseReportSchema,
   caseSchema,
@@ -20,9 +20,9 @@ import {
   claimSchema,
   emailMessageSchema,
 } from '@/models/Schema';
-import { parseAccount } from '@/utils/Account';
-import { caseStatuses } from '@/utils/Case';
-import { hashReport } from '@/utils/Report';
+import { parseAccount } from '@/utils/accounts/Account';
+import { caseStatuses } from '@/utils/cases/Case';
+import { hashReport } from '@/utils/cases/Report';
 import { ReportValidation } from '@/validations/ReportValidation';
 
 const CreateCaseValidation = z.object({

@@ -19,7 +19,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Link } from '@/libs/I18nNavigation';
-import { downloadCsv, toCsv } from '@/utils/Csv';
+import { downloadCsv, toCsv } from '@/utils/cases/Csv';
 
 /**
  * A person's claims as a table: search, status, type and chain filters, a column menu, sorting, pagination and a CSV export of
@@ -39,8 +39,8 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
   const chains = [...new Set(props.claims.map((claim) => claim.chain))];
 
   const statusLabel = (row: ClaimRow) => {
-    if (row.validated) {
-      return t('status_validated');
+    if (row.confirmed) {
+      return t('status_confirmed');
     }
 
     return row.status === 'submitted' ? t('status_submitted') : t('status_draft');
@@ -56,7 +56,7 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           labels.chain,
           t('col_reference'),
           labels.amount,
-          labels.confirmed,
+          labels.wallet,
           labels.status,
           labels.updated,
         ],
@@ -66,7 +66,7 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           chainName(row.chain),
           row.reference,
           row.amountLost ?? '',
-          row.confirmed ? t('confirmed') : t('unconfirmed'),
+          row.signed ? t('wallet_signed') : t('wallet_unsigned'),
           statusLabel(row),
           row.updatedAt.slice(0, 10),
         ]),
@@ -88,15 +88,15 @@ export function ClaimDataTable(props: { claims: ClaimRow[] }) {
           options: [
             { value: 'draft', label: t('status_draft') },
             { value: 'submitted', label: t('status_submitted') },
-            { value: 'validated', label: t('status_validated') },
+            { value: 'confirmed', label: t('status_confirmed') },
           ],
         },
         {
-          columnId: 'confirmed',
-          title: labels.confirmed,
+          columnId: 'wallet',
+          title: labels.wallet,
           options: [
-            { value: 'confirmed', label: t('confirmed') },
-            { value: 'unconfirmed', label: t('unconfirmed') },
+            { value: 'signed', label: t('wallet_signed') },
+            { value: 'unsigned', label: t('wallet_unsigned') },
           ],
         },
         {

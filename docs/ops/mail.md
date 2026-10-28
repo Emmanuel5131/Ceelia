@@ -34,13 +34,17 @@ Generate each secret with `openssl rand -base64 32`. Production refuses to send 
 
 ## Development
 
-Run a local mail catcher and open its inbox in the browser, for example Mailpit on SMTP `1025` and web `8025`. With no `SMTP_*` set, Celia sends there. Then call the drain route by hand:
+Install a local mail catcher and open its inbox in the browser: `brew install mailpit`, then run `mailpit` (SMTP on `1025`, inbox at http://localhost:8025). With no `SMTP_*` set, Celia sends there, and Mailpit keeps mail for any recipient, so nothing reaches a real address.
+
+Set `CRON_SECRET` (at least 16 characters) and `UNSUBSCRIBE_SECRET` (at least 32) in `.env.local`; `openssl rand -hex 32` makes one. Without `CRON_SECRET` the send route answers 401 to everyone, and without `UNSUBSCRIBE_SECRET` optional emails carry no unsubscribe link.
+
+`pnpm dev` also runs `scripts/drain-dev.ts`, which calls the send route every ten seconds, so mail queued by an action reaches the inbox on its own. To send by hand instead:
 
 ```
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/notifications/drain
 ```
 
-Set `CRON_SECRET` in `.env.local` first, or the route answers 401 to everyone.
+Seeded data is written straight to the database and sends nothing. To see mail, act in the app: send a claim, confirm a wallet, or verify a lawyer as staff.
 
 ## The mail server (production)
 
@@ -90,7 +94,7 @@ Each run sends up to 50 messages, so a minute schedule is 3,000 an hour, above a
 
 `type` is `hard_bounce` or `complaint`. Authenticate with `Authorization: Bearer <MAIL_WEBHOOK_SECRET>`. Each report suppresses the address: nothing is mailed to it again until staff allow it on the staff page.
 
-**Still to do at deployment:** translate the mail server's own webhook payload into that format. Postal posts its own event shapes and signs them differently; read Postal's webhook documentation (I could not confirm the payload or the signature scheme from public pages) and put a small adapter in front of the route, or add a route for it that verifies Postal's signature and calls `suppress()` from `libs/Suppression.ts`. This is required before real sending, not optional. Celia hands each message to the mail server, which accepts it and then delivers it to the recipient's provider, so a bounce comes back to Celia later and only through this route. The `5.1.1` check in the worker only catches a refusal that the server returns while Celia is still connected, which a relay does not do. Without the adapter, bounced and complaining addresses keep being mailed, which damages the sending reputation.
+**Still to do at deployment:** translate the mail server's own webhook payload into that format. Postal posts its own event shapes and signs them differently; read Postal's webhook documentation (I could not confirm the payload or the signature scheme from public pages) and put a small adapter in front of the route, or add a route for it that verifies Postal's signature and calls `suppress()` from `libs/notifications/Suppression.ts`. This is required before real sending, not optional. Celia hands each message to the mail server, which accepts it and then delivers it to the recipient's provider, so a bounce comes back to Celia later and only through this route. The `5.1.1` check in the worker only catches a refusal that the server returns while Celia is still connected, which a relay does not do. Without the adapter, bounced and complaining addresses keep being mailed, which damages the sending reputation.
 
 ## After the first deploy
 

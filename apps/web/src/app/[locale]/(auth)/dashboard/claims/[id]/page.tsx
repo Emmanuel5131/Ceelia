@@ -24,10 +24,10 @@ import { StatementCard } from '@/components/claims/StatementCard';
 import { SubmitClaimCard } from '@/components/claims/SubmitClaimCard';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { listProofFiles } from '@/libs/ClaimProofs';
-import { countOthersOnOperator, getClaim } from '@/libs/Claims';
+import { listProofFiles } from '@/libs/claims/ClaimProofs';
+import { countOthersOnOperator, getClaim } from '@/libs/claims/Claims';
 import { Link } from '@/libs/I18nNavigation';
-import { claimSteps } from '@/utils/ClaimSteps';
+import { claimSteps } from '@/utils/claims/ClaimSteps';
 
 type ClaimPageProps = {
   params: Promise<{ locale: string; id: string }>;

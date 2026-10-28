@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { CaseRow } from '@/utils/Case';
+import type { CaseRow } from '@/utils/cases/Case';
 
 /**
  * Where staff add the findings of an analysis to a case: paste the JSON the analysis produced, and optionally the link to the

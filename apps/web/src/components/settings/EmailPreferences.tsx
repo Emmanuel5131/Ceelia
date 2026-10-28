@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { SettingsList, SettingsRow } from '@/components/layout/SettingsList';
 import { Switch } from '@/components/ui/switch';
-import { updateEmailPreference } from '@/libs/InboxActions';
+import { updateEmailPreference } from '@/libs/notifications/InboxActions';
 
 function CategorySwitch(props: { category: OptionalCategory; initial: boolean }) {
   const t = useTranslations('Settings');

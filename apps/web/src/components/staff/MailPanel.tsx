@@ -14,7 +14,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import type { FailedMail, SuppressedAddress } from '@/libs/MailStatus';
+import type { FailedMail, SuppressedAddress } from '@/libs/notifications/MailStatus';
 
 function Heading(props: { id: 'type' | 'error' | 'tries' | 'when' | 'email' | 'reason' }) {
   const t = useTranslations('Staff');

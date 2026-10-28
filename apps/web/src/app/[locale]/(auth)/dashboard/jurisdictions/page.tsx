@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { JurisdictionFinder } from '@/components/JurisdictionFinder';
+import { JurisdictionFinder } from '@/components/jurisdictions/JurisdictionFinder';
 import { PageHeader } from '@/components/layout/PageHeader';
 
 type JurisdictionsPageProps = {

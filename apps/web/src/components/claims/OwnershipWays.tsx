@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useFormAction } from '@/hooks/use-form-action';
-import { findBrowserWallet } from '@/utils/BrowserWallet';
-import { proofFileLimits } from '@/utils/ProofFile';
+import { findBrowserWallet } from '@/utils/claims/BrowserWallet';
+import { proofFileLimits } from '@/utils/claims/ProofFile';
 
 export type OwnershipAction = (state: ClaimState, formData: FormData) => Promise<ClaimState>;
 

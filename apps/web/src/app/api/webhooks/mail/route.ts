@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import * as z from 'zod';
 import { Env } from '@/libs/Env';
 import { logger } from '@/libs/Logger';
-import { suppress } from '@/libs/Suppression';
+import { suppress } from '@/libs/notifications/Suppression';
 import { matchesSecret } from '@/utils/Secret';
 
 /**

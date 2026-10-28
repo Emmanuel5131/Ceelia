@@ -25,9 +25,9 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import type { CaseStatus } from '@/utils/Case';
-import type { OwnershipMethod } from '@/utils/Ownership';
-import type { StoredCheck } from '@/utils/Transaction';
+import type { CaseStatus } from '@/utils/cases/Case';
+import type { OwnershipMethod } from '@/utils/claims/Ownership';
+import type { StoredCheck } from '@/utils/claims/Transaction';
 import type { Report } from '@/validations/ReportValidation';
 
 // This file defines the structure of your database tables using the Drizzle ORM.

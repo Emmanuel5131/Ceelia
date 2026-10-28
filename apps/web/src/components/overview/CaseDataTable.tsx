@@ -16,7 +16,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import type { CaseRow, CaseStatus } from '@/utils/Case';
+import type { CaseRow, CaseStatus } from '@/utils/cases/Case';
 
 const statuses: CaseStatus[] = ['collecting', 'building', 'sealed', 'counsel'];
 

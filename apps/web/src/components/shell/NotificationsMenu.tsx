@@ -6,9 +6,9 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Link } from '@/libs/I18nNavigation';
-import type { InboxItem } from '@/libs/Inbox';
-import { markAllRead } from '@/libs/InboxActions';
-import { notificationPath } from '@/utils/NotificationLink';
+import type { InboxItem } from '@/libs/notifications/Inbox';
+import { markAllRead } from '@/libs/notifications/InboxActions';
+import { notificationPath } from '@/utils/notifications/NotificationLink';
 
 /**
  * The notifications button in the header: a count of unread ones, and the latest few in a popover, each linking to where it

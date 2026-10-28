@@ -1,4 +1,4 @@
-import type { AccountType } from '@/utils/Account';
+import type { AccountType } from '@/utils/accounts/Account';
 
 export type NavId = 'overview' | 'claims' | 'cases' | 'jurisdictions' | 'settings' | 'staff';
 

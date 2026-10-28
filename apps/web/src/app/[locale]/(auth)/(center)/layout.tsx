@@ -1,5 +1,5 @@
 import { setRequestLocale } from 'next-intl/server';
-import { AuthShell } from '@/components/AuthShell';
+import { AuthShell } from '@/components/auth/AuthShell';
 
 export default async function CenteredLayout(props: {
   children: React.ReactNode;

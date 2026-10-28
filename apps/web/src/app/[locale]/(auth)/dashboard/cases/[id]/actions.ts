@@ -6,11 +6,11 @@ import { getLocale } from 'next-intl/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import * as z from 'zod';
-import { evaluateTake, getCase, takeCase } from '@/libs/Cases';
-import { saveLocale } from '@/libs/UserSettings';
-import { parseAccount } from '@/utils/Account';
+import { evaluateTake, getCase, takeCase } from '@/libs/cases/Cases';
+import { saveLocale } from '@/libs/notifications/UserSettings';
+import { parseAccount } from '@/utils/accounts/Account';
+import { parseProfile } from '@/utils/accounts/Profile';
 import { getI18nPath } from '@/utils/Helpers';
-import { parseProfile } from '@/utils/Profile';
 
 export type TakeCaseState = {
   /** Why the case could not be taken, or null when it was. */

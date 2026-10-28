@@ -22,7 +22,7 @@ type ClaimColumnId =
   | 'chain'
   | 'amount'
   | 'progress'
-  | 'confirmed'
+  | 'wallet'
   | 'status'
   | 'updated';
 
@@ -40,7 +40,7 @@ export function useClaimColumnLabels(): Record<ClaimColumnId, string> {
     chain: t('col_chain'),
     amount: t('col_amount'),
     progress: t('col_progress'),
-    confirmed: t('col_confirmed'),
+    wallet: t('col_wallet'),
     status: t('col_status'),
     updated: t('col_updated'),
   };
@@ -90,21 +90,21 @@ function ProgressCell(props: { claim: ClaimRow }) {
   );
 }
 
-function ConfirmedCell(props: { value: boolean }) {
+function WalletCell(props: { value: boolean }) {
   const t = useTranslations('ClaimList');
 
   return props.value ? (
-    <Badge variant="solid">{t('confirmed')}</Badge>
+    <Badge variant="solid">{t('wallet_signed')}</Badge>
   ) : (
-    <Badge variant="dashed">{t('unconfirmed')}</Badge>
+    <Badge variant="dashed">{t('wallet_unsigned')}</Badge>
   );
 }
 
-function StatusCell(props: { value: ClaimRow['status'] | 'validated' }) {
+function StatusCell(props: { value: ClaimRow['status'] | 'confirmed' }) {
   const t = useTranslations('ClaimList');
 
-  if (props.value === 'validated') {
-    return <Badge variant="solid">{t('status_validated')}</Badge>;
+  if (props.value === 'confirmed') {
+    return <Badge variant="solid">{t('status_confirmed')}</Badge>;
   }
 
   return props.value === 'submitted' ? (
@@ -156,13 +156,13 @@ export const claimColumns = helper.columns([
     header: ({ column }) => <ClaimHeader column={column} id="progress" />,
     cell: ({ row }) => <ProgressCell claim={row.original} />,
   }),
-  helper.accessor((row) => (row.confirmed ? 'confirmed' : 'unconfirmed'), {
-    id: 'confirmed',
-    header: ({ column }) => <ClaimHeader column={column} id="confirmed" />,
-    cell: ({ row }) => <ConfirmedCell value={row.original.confirmed} />,
+  helper.accessor((row) => (row.signed ? 'signed' : 'unsigned'), {
+    id: 'wallet',
+    header: ({ column }) => <ClaimHeader column={column} id="wallet" />,
+    cell: ({ row }) => <WalletCell value={row.original.signed} />,
     filterFn: 'inSet',
   }),
-  helper.accessor((row) => (row.validated ? 'validated' : row.status), {
+  helper.accessor((row) => (row.confirmed ? 'confirmed' : row.status), {
     id: 'status',
     header: ({ column }) => <ClaimHeader column={column} id="status" />,
     cell: ({ getValue }) => <StatusCell value={getValue()} />,

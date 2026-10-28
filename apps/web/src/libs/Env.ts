@@ -5,7 +5,7 @@ export const Env = createEnv({
   server: {
     ARCJET_KEY: z.string().startsWith('ajkey_').optional(),
     CLERK_SECRET_KEY: z.string().min(1),
-    /** The Idswyft key. With it, a person must pass the one-time identity check before reporting a loss; without it there is no check. */
+    /** The Idswyft key. In production, with it, a person must pass the one-time identity check before reporting a loss; without it, or in development, there is no check. */
     IDSWYFT_API_KEY: z.string().min(1).optional(),
     /** `true` to use Idswyft's sandbox, which accepts test documents. */
     IDSWYFT_SANDBOX: z.enum(['true', 'false']).optional(),

@@ -6,6 +6,7 @@
   "scripts": {
     "dev:spotlight": "pnpm dlx @spotlightjs/spotlight",
     "dev:next": "next dev",
+    "dev:drain": "dotenv -c -- tsx scripts/drain-dev.ts",
     "dev": "run-p db-server:file dev:*",
     "build:next": "next build",
     "build-local": "run-p db-server:memory build:next --race",
@@ -23,7 +24,7 @@
     "db-server:file": "pglite-server -m 100 --db=local.db --run 'pnpm run db:migrate'",
     "db-server:memory": "pglite-server -m 100 --run 'pnpm run db:migrate'",
     "db:generate": "drizzle-kit generate",
-    "db:seed": "dotenv -c -- tsx scripts/seed.ts",
+    "db:seed": "dotenv -c -- tsx scripts/seed/seed.ts",
     "db:migrate": "dotenv -c -- drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "storybook": "storybook dev -p 6006",

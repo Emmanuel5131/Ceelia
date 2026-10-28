@@ -28,9 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { caseStatuses } from '@/utils/Case';
-import type { CaseRow } from '@/utils/Case';
-import { jurisdictionName } from '@/utils/JurisdictionName';
+import { caseStatuses } from '@/utils/cases/Case';
+import type { CaseRow } from '@/utils/cases/Case';
+import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 function Heading(props: {
   id: 'case' | 'jurisdiction' | 'claimants' | 'status' | 'updated' | 'report';

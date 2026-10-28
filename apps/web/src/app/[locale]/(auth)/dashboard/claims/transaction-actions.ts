@@ -3,9 +3,9 @@
 import { chainIds, isValidTxHash } from '@celia/core';
 import { auth } from '@clerk/nextjs/server';
 import * as z from 'zod';
-import { lookUpTransaction } from '@/libs/TxLookup';
-import { walletRole } from '@/utils/Transaction';
-import type { TxLookup, WalletRole } from '@/utils/Transaction';
+import { lookUpTransaction } from '@/libs/claims/TxLookup';
+import { walletRole } from '@/utils/claims/Transaction';
+import type { TxLookup, WalletRole } from '@/utils/claims/Transaction';
 
 const CheckValidation = z.object({
   chain: z.enum(chainIds),

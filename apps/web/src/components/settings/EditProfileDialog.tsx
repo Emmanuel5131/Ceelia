@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import type { Profile } from '@/utils/Profile';
+import type { Profile } from '@/utils/accounts/Profile';
 
 /**
  * The "Edit" button and the dialog behind it, for the details given in onboarding: a person's country, or a lawyer's practice

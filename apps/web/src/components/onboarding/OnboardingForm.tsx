@@ -7,7 +7,7 @@ import { AccountTypeChoice } from '@/components/onboarding/AccountTypeChoice';
 import { CounselFields } from '@/components/onboarding/CounselFields';
 import { PersonFields } from '@/components/onboarding/PersonFields';
 import { Button } from '@/components/ui/button';
-import type { AccountType } from '@/utils/Account';
+import type { AccountType } from '@/utils/accounts/Account';
 
 /**
  * The two-step onboarding form: what you are, then the details that go with it. The form is sent from the submit handler

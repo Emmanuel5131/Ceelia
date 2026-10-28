@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { Env } from '@/libs/Env';
-import { setEmailPreference } from '@/libs/Preferences';
+import { setEmailPreference } from '@/libs/notifications/Preferences';
 import { getBaseUrl } from '@/utils/Helpers';
-import { verifyUnsubscribe } from '@/utils/Unsubscribe';
+import { verifyUnsubscribe } from '@/utils/notifications/Unsubscribe';
 
 /**
  * One-click unsubscribe (RFC 8058): the mail app sends a POST to the link in the `List-Unsubscribe` header and the person does

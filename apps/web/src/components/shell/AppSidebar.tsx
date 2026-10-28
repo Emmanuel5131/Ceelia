@@ -9,8 +9,8 @@ import {
   SquaresFourIcon,
 } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
-import { Logo } from '@/components/Logo';
-import { LogoMark } from '@/components/LogoMark';
+import { Logo } from '@/components/brand/Logo';
+import { LogoMark } from '@/components/brand/LogoMark';
 import type { NavId } from '@/components/shell/nav';
 import { navHref } from '@/components/shell/nav';
 import { ThemeToggle } from '@/components/shell/ThemeToggle';

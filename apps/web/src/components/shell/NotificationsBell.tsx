@@ -1,5 +1,5 @@
 import { NotificationsMenu } from '@/components/shell/NotificationsMenu';
-import { countUnread, listInbox } from '@/libs/Inbox';
+import { countUnread, listInbox } from '@/libs/notifications/Inbox';
 
 /**
  * The bell in the header, with the signed-in person's latest notifications and how many are unread.

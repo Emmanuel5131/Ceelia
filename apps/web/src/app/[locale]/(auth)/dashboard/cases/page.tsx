@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { CaseDataTable } from '@/components/overview/CaseDataTable';
-import { listCases } from '@/libs/Cases';
+import { listCases } from '@/libs/cases/Cases';
 
 type CaseBankPageProps = {
   params: Promise<{ locale: string }>;

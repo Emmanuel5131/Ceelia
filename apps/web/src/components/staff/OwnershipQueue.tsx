@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/empty';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { OwnershipQueueItem } from '@/libs/Staff';
+import type { OwnershipQueueItem } from '@/libs/accounts/Staff';
 
 function ReviewCard(props: { item: OwnershipQueueItem }) {
   const t = useTranslations('Staff');

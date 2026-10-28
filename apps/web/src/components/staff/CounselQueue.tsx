@@ -15,8 +15,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import type { PendingCounsel } from '@/libs/Staff';
-import { jurisdictionName } from '@/utils/JurisdictionName';
+import type { PendingCounsel } from '@/libs/accounts/Staff';
+import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 function LawyerCell(props: { lawyer: PendingCounsel }) {
   return (

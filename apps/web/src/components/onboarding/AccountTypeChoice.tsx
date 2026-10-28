@@ -4,7 +4,7 @@ import { BankIcon, UserIcon } from '@phosphor-icons/react';
 import { useTranslations } from 'next-intl';
 import type { ChoiceOption } from '@/components/ui/choice-cards';
 import { ChoiceCards } from '@/components/ui/choice-cards';
-import type { AccountType } from '@/utils/Account';
+import type { AccountType } from '@/utils/accounts/Account';
 
 /**
  * The first onboarding question: report a loss, or join as a lawyer or firm.

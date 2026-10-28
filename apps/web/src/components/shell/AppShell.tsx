@@ -5,7 +5,7 @@ import { AppSidebar } from '@/components/shell/AppSidebar';
 import { navByAccount } from '@/components/shell/nav';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import type { AccountType } from '@/utils/Account';
+import type { AccountType } from '@/utils/accounts/Account';
 
 /**
  * The frame of every signed-in page, built on the shadcn Sidebar: a collapsible sidebar whose items depend on the role, and

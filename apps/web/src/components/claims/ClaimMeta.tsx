@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 import { ChainLabel } from '@/components/claims/ChainLabel';
 import { useClaimLabels } from '@/components/claims/claim-labels';
 import { shortReference } from '@/components/claims/claim-row';
-import type { Claim } from '@/libs/Claims';
+import type { Claim } from '@/libs/claims/Claims';
 
 /**
  * The details line of a claim: what kind of loss it is, on which chain, and the wallet or the transaction. Only the start and

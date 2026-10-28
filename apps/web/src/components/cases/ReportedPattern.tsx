@@ -1,6 +1,6 @@
 import type { FraudType } from '@celia/core';
 import { useTranslations } from 'next-intl';
-import type { ReportedPattern as Pattern } from '@/libs/CaseClaims';
+import type { ReportedPattern as Pattern } from '@/libs/cases/CaseClaims';
 
 /**
  * What may have happened, in the claimants' own terms: the kind of loss most of them report. It is their account, counted, and

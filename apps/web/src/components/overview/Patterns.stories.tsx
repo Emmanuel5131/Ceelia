@@ -6,7 +6,7 @@ import { StatCard } from '@/components/overview/StatCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Timeline, TimelineItem } from '@/components/ui/timeline';
 import messages from '@/locales/en.json';
-import type { CaseRow } from '@/utils/Case';
+import type { CaseRow } from '@/utils/cases/Case';
 
 // Fixtures for this design catalogue only. The app never imports them: every screen reads the database.
 const storyCases: CaseRow[] = [

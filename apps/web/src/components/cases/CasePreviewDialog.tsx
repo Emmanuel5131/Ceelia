@@ -19,8 +19,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Link } from '@/libs/I18nNavigation';
-import type { CaseRow } from '@/utils/Case';
-import { jurisdictionName } from '@/utils/JurisdictionName';
+import type { CaseRow } from '@/utils/cases/Case';
+import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 /**
  * The two estimates a preview shows as big numbers: wallets affected and what they lost to the platform.

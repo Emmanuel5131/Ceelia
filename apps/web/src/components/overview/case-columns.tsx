@@ -10,7 +10,7 @@ import { createAppColumnHelper } from '@/components/data-table/table';
 import type { TableFeatures } from '@/components/data-table/table';
 import { StatusBadge } from '@/components/overview/StatusBadge';
 import { Link } from '@/libs/I18nNavigation';
-import type { CaseRow, CaseStatus } from '@/utils/Case';
+import type { CaseRow, CaseStatus } from '@/utils/cases/Case';
 
 type CaseColumnId = 'case' | 'jurisdiction' | 'claimants' | 'status' | 'updated';
 

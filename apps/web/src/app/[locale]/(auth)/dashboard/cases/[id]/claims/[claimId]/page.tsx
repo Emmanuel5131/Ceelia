@@ -7,11 +7,11 @@ import * as z from 'zod';
 import { ClaimFile } from '@/components/cases/ClaimFile';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { canViewCaseClaims, getCaseClaim } from '@/libs/CaseClaims';
-import { getCase } from '@/libs/Cases';
-import { claimantNames } from '@/libs/ClaimantNames';
+import { canViewCaseClaims, getCaseClaim } from '@/libs/cases/CaseClaims';
+import { getCase } from '@/libs/cases/Cases';
+import { claimantNames } from '@/libs/claims/ClaimantNames';
 import { Link } from '@/libs/I18nNavigation';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
 
 type ClaimFilePageProps = {
   params: Promise<{ locale: string; id: string; claimId: string }>;

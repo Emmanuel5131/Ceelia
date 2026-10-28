@@ -51,8 +51,9 @@ export default defineConfig({
     },
     {
       // A local sample-data script: a seeded random generator and sequential inserts, not app code.
-      files: ['scripts/seed.ts'],
+      files: ['scripts/seed/*.ts', 'scripts/drain-dev.ts'],
       rules: {
+        complexity: 'off',
         'no-bitwise': 'off',
         'no-await-in-loop': 'off',
         'no-nested-ternary': 'off',

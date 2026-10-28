@@ -1,9 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
-import { buildClaimEvidence } from '@/libs/ClaimEvidence';
-import { getClaim } from '@/libs/Claims';
-import { renderEvidenceHtml } from '@/utils/EvidenceRecord';
+import { buildClaimEvidence } from '@/libs/claims/ClaimEvidence';
+import { getClaim } from '@/libs/claims/Claims';
+import { renderEvidenceHtml } from '@/utils/claims/EvidenceRecord';
 
 const query = z.object({
   format: z.enum(['html', 'json']).default('html'),

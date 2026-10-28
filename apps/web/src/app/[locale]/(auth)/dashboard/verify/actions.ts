@@ -6,13 +6,13 @@ import { sql } from 'drizzle-orm';
 import { getLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import type { FormState } from '@/hooks/use-form-action';
+import { getIdentityCheck, identityRequired } from '@/libs/accounts/Identity';
 import { db } from '@/libs/DB';
 import { Env } from '@/libs/Env';
-import { getIdentityCheck, identityRequired } from '@/libs/Identity';
 import { logger } from '@/libs/Logger';
 import { identityCheckSchema } from '@/models/Schema';
+import { identityMaxAttempts, identityOutcome } from '@/utils/accounts/IdentityCheck';
 import { getI18nPath } from '@/utils/Helpers';
-import { identityMaxAttempts, identityOutcome } from '@/utils/IdentityCheck';
 
 const imageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const imageBytes = 4 * 1024 * 1024;

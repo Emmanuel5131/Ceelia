@@ -4,7 +4,7 @@ import { getJurisdiction, searchJurisdictions } from '@celia/jurisdictions';
 import * as React from 'react';
 import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Label } from '@/components/ui/label';
-import { jurisdictionName } from '@/utils/JurisdictionName';
+import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 /**
  * A labelled search box for one jurisdiction, for use inside a form. What the person types is only for finding it: the form

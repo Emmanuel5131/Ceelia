@@ -6,7 +6,7 @@ import { ExplorerLink } from '@/components/claims/ExplorerLink';
 import { Markdown } from '@/components/layout/Markdown';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { getCaseClaim } from '@/libs/CaseClaims';
+import type { getCaseClaim } from '@/libs/cases/CaseClaims';
 
 type ClaimFileProps = {
   claim: NonNullable<Awaited<ReturnType<typeof getCaseClaim>>>;

@@ -6,9 +6,9 @@ import { toClaimRow } from '@/components/claims/claim-row';
 import { ClaimDataTable } from '@/components/claims/ClaimDataTable';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { listClaims } from '@/libs/Claims';
+import { listClaims } from '@/libs/claims/Claims';
 import { Link } from '@/libs/I18nNavigation';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
 type ClaimsPageProps = {

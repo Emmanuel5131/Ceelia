@@ -9,7 +9,7 @@ import type { TxCheckResult } from '@/app/[locale]/(auth)/dashboard/claims/trans
 import { shortReference } from '@/components/claims/claim-row';
 import { ExplorerLink } from '@/components/claims/ExplorerLink';
 import { Button } from '@/components/ui/button';
-import type { TxFacts, WalletRole } from '@/utils/Transaction';
+import type { TxFacts, WalletRole } from '@/utils/claims/Transaction';
 
 /**
  * Reads a text field of the form; a missing or non-text entry reads as empty.

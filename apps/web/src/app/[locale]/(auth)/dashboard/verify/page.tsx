@@ -4,8 +4,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { IdentityForm } from '@/components/verify/IdentityForm';
-import { mustVerify } from '@/libs/Identity';
-import { parseAccount } from '@/utils/Account';
+import { mustVerify } from '@/libs/accounts/Identity';
+import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
 type VerifyPageProps = {

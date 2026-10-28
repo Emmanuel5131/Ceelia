@@ -13,9 +13,9 @@ import {
 } from '@/components/ui/empty';
 import { Timeline, TimelineItem } from '@/components/ui/timeline';
 import { Link } from '@/libs/I18nNavigation';
-import type { InboxItem } from '@/libs/Inbox';
-import { markAllRead } from '@/libs/InboxActions';
-import { notificationPath } from '@/utils/NotificationLink';
+import type { InboxItem } from '@/libs/notifications/Inbox';
+import { markAllRead } from '@/libs/notifications/InboxActions';
+import { notificationPath } from '@/utils/notifications/NotificationLink';
 
 /**
  * The full list of a person's notifications as a timeline: a filled marker for unread, an outlined one for read, with each

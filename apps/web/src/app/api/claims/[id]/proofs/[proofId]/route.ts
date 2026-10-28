@@ -2,10 +2,10 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import * as z from 'zod';
-import { getProofFile } from '@/libs/ClaimProofs';
+import { getProofFile } from '@/libs/claims/ClaimProofs';
 import { db } from '@/libs/DB';
 import { claimSchema } from '@/models/Schema';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
 
 const ids = z.object({ id: z.uuid(), proofId: z.uuid() });
 

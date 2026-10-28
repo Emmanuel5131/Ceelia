@@ -4,7 +4,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Timeline, TimelineItem } from '@/components/ui/timeline';
 import { Link } from '@/libs/I18nNavigation';
-import type { ActivityItem, ActivityKind } from '@/utils/OverviewStats';
+import type { ActivityItem, ActivityKind } from '@/utils/cases/OverviewStats';
 
 /**
  * The recent activity log: what happened, to which case and when, each line linking to its case. A sealed item gets a filled

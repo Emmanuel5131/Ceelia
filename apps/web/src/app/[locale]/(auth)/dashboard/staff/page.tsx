@@ -9,14 +9,14 @@ import { CounselQueue } from '@/components/staff/CounselQueue';
 import { MailPanel } from '@/components/staff/MailPanel';
 import { OwnershipQueue } from '@/components/staff/OwnershipQueue';
 import { SyncCounselButton } from '@/components/staff/SyncCounselButton';
-import { listCases } from '@/libs/Cases';
-import { mailStatus } from '@/libs/MailStatus';
 import {
   listClaimsToValidate,
   listOwnershipQueue,
   listPendingCounsel,
   requireStaff,
-} from '@/libs/Staff';
+} from '@/libs/accounts/Staff';
+import { listCases } from '@/libs/cases/Cases';
+import { mailStatus } from '@/libs/notifications/MailStatus';
 
 type StaffPageProps = {
   params: Promise<{ locale: string }>;

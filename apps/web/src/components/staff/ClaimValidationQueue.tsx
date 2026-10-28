@@ -16,7 +16,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import type { ClaimToValidate } from '@/libs/Staff';
+import type { ClaimToValidate } from '@/libs/accounts/Staff';
 
 function ValidateCard(props: { item: ClaimToValidate }) {
   const t = useTranslations('Staff');
@@ -31,10 +31,10 @@ function ValidateCard(props: { item: ClaimToValidate }) {
       <CardHeader>
         <CardTitle className="flex flex-wrap items-center gap-3 font-sans text-base font-medium">
           {item.platformName ?? t('review_unnamed')}
-          {item.confirmed ? (
-            <Badge variant="solid">{list('confirmed')}</Badge>
+          {item.signed ? (
+            <Badge variant="solid">{list('wallet_signed')}</Badge>
           ) : (
-            <Badge variant="dashed">{list('unconfirmed')}</Badge>
+            <Badge variant="dashed">{list('wallet_unsigned')}</Badge>
           )}
         </CardTitle>
       </CardHeader>

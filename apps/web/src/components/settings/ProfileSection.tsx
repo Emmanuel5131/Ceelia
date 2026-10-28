@@ -3,9 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { SettingsList, SettingsRow } from '@/components/layout/SettingsList';
 import { EditProfileDialog } from '@/components/settings/EditProfileDialog';
 import { Badge } from '@/components/ui/badge';
-import type { Account } from '@/utils/Account';
-import { jurisdictionName } from '@/utils/JurisdictionName';
-import type { Profile } from '@/utils/Profile';
+import type { Account } from '@/utils/accounts/Account';
+import type { Profile } from '@/utils/accounts/Profile';
+import { jurisdictionName } from '@/utils/cases/JurisdictionName';
 
 const nameOf = (id: string) => {
   const jurisdiction = getJurisdiction(id);

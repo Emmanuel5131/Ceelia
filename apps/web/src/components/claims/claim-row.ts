@@ -1,6 +1,6 @@
 import type { ChainId, FraudType } from '@celia/core';
-import type { Claim } from '@/libs/Claims';
-import { claimSteps } from '@/utils/ClaimSteps';
+import type { Claim } from '@/libs/claims/Claims';
+import { claimSteps } from '@/utils/claims/ClaimSteps';
 
 /** What the claims table needs from a claim. Nothing else crosses to the browser: no statement, nonce or signature. */
 export type ClaimRow = {
@@ -12,10 +12,10 @@ export type ClaimRow = {
   reference: string;
   amountLost: string | null;
   status: 'draft' | 'submitted';
-  /** Whether the person has proven they own the wallet: by signing, or to the satisfaction of staff. */
+  /** Whether the wallet is proven: the person signed with it, or staff were satisfied by what they sent. */
+  signed: boolean;
+  /** Whether a person at Celia has confirmed the sent claim. A signature alone never makes a claim confirmed. */
   confirmed: boolean;
-  /** Whether Celia staff have checked the sent claim and its evidence. */
-  validated: boolean;
   stepsDone: number;
   stepsTotal: number;
   updatedAt: string;
@@ -47,8 +47,8 @@ export function toClaimRow(claim: Claim): ClaimRow {
     reference: claim.walletAddress ?? claim.txHash ?? '',
     amountLost: claim.amountLost,
     status: claim.status === 'submitted' ? 'submitted' : 'draft',
-    confirmed: claim.ownership === 'signed',
-    validated: claim.validatedAt !== null,
+    signed: claim.ownership === 'signed',
+    confirmed: claim.validatedAt !== null,
     stepsDone: steps.filter((step) => step === 'done').length,
     stepsTotal: steps.length,
     updatedAt: claim.updatedAt.toISOString(),

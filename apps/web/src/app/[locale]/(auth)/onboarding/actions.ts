@@ -3,11 +3,11 @@
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { getLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import { saveCounselProfile } from '@/libs/CounselProfile';
+import { saveCounselProfile } from '@/libs/accounts/CounselProfile';
 import { db } from '@/libs/DB';
-import { notify } from '@/libs/Notify';
-import { saveLocale } from '@/libs/UserSettings';
-import { parseAccount } from '@/utils/Account';
+import { notify } from '@/libs/notifications/Notify';
+import { saveLocale } from '@/libs/notifications/UserSettings';
+import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 import { OnboardingValidation } from '@/validations/OnboardingValidation';
 

@@ -1,8 +1,8 @@
 'use server';
 
 import { Env } from '@/libs/Env';
-import { setEmailPreference } from '@/libs/Preferences';
-import { verifyUnsubscribe } from '@/utils/Unsubscribe';
+import { setEmailPreference } from '@/libs/notifications/Preferences';
+import { verifyUnsubscribe } from '@/utils/notifications/Unsubscribe';
 
 /**
  * Turns a category of email off, from the confirmation page. The token is checked again here: a page is not a permission.

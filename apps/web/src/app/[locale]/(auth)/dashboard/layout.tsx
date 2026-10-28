@@ -8,7 +8,7 @@ import { AppShell } from '@/components/shell/AppShell';
 import { NotificationsBell } from '@/components/shell/NotificationsBell';
 import { ReviewNotice } from '@/components/shell/ReviewNotice';
 import { SignOutAction } from '@/components/shell/SignOutAction';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
 import { getI18nPath } from '@/utils/Helpers';
 
 type DashboardLayoutProps = {

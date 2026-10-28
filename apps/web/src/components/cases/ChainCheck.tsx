@@ -1,6 +1,6 @@
 import { useFormatter, useTranslations } from 'next-intl';
-import { describeAmounts } from '@/utils/Transaction';
-import type { StoredCheck } from '@/utils/Transaction';
+import { describeAmounts } from '@/utils/claims/Transaction';
+import type { StoredCheck } from '@/utils/claims/Transaction';
 
 /**
  * What the chain showed when a claim's transaction was checked, in one line for the lawyer: the amounts, when it happened, and

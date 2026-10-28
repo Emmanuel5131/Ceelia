@@ -6,9 +6,9 @@ import { CaseDataTable } from '@/components/overview/CaseDataTable';
 import { PersonOverview } from '@/components/overview/PersonOverview';
 import { StatCard } from '@/components/overview/StatCard';
 import { Button } from '@/components/ui/button';
+import { loadCounselOverview } from '@/libs/cases/Overview';
 import { Link } from '@/libs/I18nNavigation';
-import { loadCounselOverview } from '@/libs/Overview';
-import type { AccountType } from '@/utils/Account';
+import type { AccountType } from '@/utils/accounts/Account';
 
 /**
  * The overview: what needs the person's attention today. Lawyers, researchers and analysts get headline numbers, the cases that

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { NotificationsList } from '@/components/shell/NotificationsList';
-import { listInbox } from '@/libs/Inbox';
+import { listInbox } from '@/libs/notifications/Inbox';
 
 type NotificationsPageProps = {
   params: Promise<{ locale: string }>;

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select';
 import { usePathname, useRouter } from '@/libs/I18nNavigation';
 import { routing } from '@/libs/I18nRouting';
-import { rememberLocale } from '@/libs/InboxActions';
+import { rememberLocale } from '@/libs/notifications/InboxActions';
 
 // The flag shown beside each language, when there is one. A flag stands for a language here, not a country: English uses the British flag.
 const flags: Record<string, typeof GB | undefined> = { en: GB, fr: FR };

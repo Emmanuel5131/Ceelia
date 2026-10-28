@@ -8,8 +8,8 @@ import { OperatorName } from '@/components/claims/ClaimMeta';
 import { ExplorerLink } from '@/components/claims/ExplorerLink';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Claim } from '@/libs/Claims';
-import type { StoredCheck } from '@/utils/Transaction';
+import type { Claim } from '@/libs/claims/Claims';
+import type { StoredCheck } from '@/utils/claims/Transaction';
 
 function Row(props: { label: string; children: React.ReactNode }) {
   return (
@@ -125,14 +125,11 @@ export function ClaimSummary(props: { claim: Claim; footer?: React.ReactNode }) 
     <Card variant="outline" size="sm">
       <CardHeader className="flex items-center justify-between gap-3">
         <CardTitle className="font-sans text-base font-medium">{t('summary_title')}</CardTitle>
-        <div className="flex flex-wrap items-center gap-2">
-          {claim.validatedAt && <Badge variant="solid">{tl('status_validated')}</Badge>}
-          {claim.ownership === 'signed' ? (
-            <Badge variant="solid">{tl('confirmed')}</Badge>
-          ) : (
-            <Badge variant="dashed">{tl('unconfirmed')}</Badge>
-          )}
-        </div>
+        {claim.validatedAt ? (
+          <Badge variant="solid">{tl('confirmed')}</Badge>
+        ) : (
+          <Badge variant="dashed">{tl('unconfirmed')}</Badge>
+        )}
       </CardHeader>
       <CardContent>
         <dl className="grid gap-3 text-sm">

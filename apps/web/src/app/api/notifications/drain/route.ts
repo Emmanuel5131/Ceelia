@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Env } from '@/libs/Env';
 import { logger } from '@/libs/Logger';
-import { drain } from '@/libs/MailQueue';
+import { drain } from '@/libs/notifications/MailQueue';
 import { matchesSecret } from '@/utils/Secret';
 
 // The scheduler may take up to a minute to send a batch.

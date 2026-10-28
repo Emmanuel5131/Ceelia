@@ -82,6 +82,15 @@ export function getJurisdiction(id: string): Jurisdiction | undefined {
 }
 
 /**
+ * Lists every jurisdiction the finder can show.
+ * @param kind - Limits the list to countries, or to the states and regions inside them.
+ * @returns The jurisdictions, countries first.
+ */
+export function listJurisdictions(kind?: 'country' | 'subdivision'): Jurisdiction[] {
+  return [...index().byId.values()].filter((j) => !kind || (kind === 'subdivision') === Boolean(j.parent));
+}
+
+/**
  * Counts what is covered.
  * @returns The total number of jurisdictions, how many are countries, and how many have a rule (their own or inherited).
  */

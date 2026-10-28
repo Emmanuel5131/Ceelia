@@ -15,20 +15,20 @@ import { getLocale } from 'next-intl/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type * as z from 'zod';
-import { detectAccountKind } from '@/libs/AccountKind';
-import { recordCaseEvent } from '@/libs/CaseEvents';
-import { listProofFiles } from '@/libs/ClaimProofs';
-import { getClaim } from '@/libs/Claims';
+import { mustVerify } from '@/libs/accounts/Identity';
+import { recordCaseEvent } from '@/libs/cases/CaseEvents';
+import { detectAccountKind } from '@/libs/claims/AccountKind';
+import { listProofFiles } from '@/libs/claims/ClaimProofs';
+import { getClaim } from '@/libs/claims/Claims';
+import { checkClaimTransactions } from '@/libs/claims/TxChecks';
 import { db } from '@/libs/DB';
-import { mustVerify } from '@/libs/Identity';
-import { notify } from '@/libs/Notify';
-import { checkClaimTransactions } from '@/libs/TxChecks';
-import { saveLocale } from '@/libs/UserSettings';
+import { notify } from '@/libs/notifications/Notify';
+import { saveLocale } from '@/libs/notifications/UserSettings';
 import { caseSchema, claimProofSchema, claimSchema } from '@/models/Schema';
-import { parseAccount } from '@/utils/Account';
+import { parseAccount } from '@/utils/accounts/Account';
+import { cleanFileName, detectProofType, proofFileLimits } from '@/utils/claims/ProofFile';
+import { parseVideoLink } from '@/utils/claims/VideoLink';
 import { getI18nPath } from '@/utils/Helpers';
-import { cleanFileName, detectProofType, proofFileLimits } from '@/utils/ProofFile';
-import { parseVideoLink } from '@/utils/VideoLink';
 import {
   CreateClaimValidation,
   SignatureValidation,

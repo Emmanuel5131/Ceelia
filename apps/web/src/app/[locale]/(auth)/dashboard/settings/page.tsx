@@ -5,9 +5,9 @@ import { EmailPreferences } from '@/components/settings/EmailPreferences';
 import { ManageAccountButton } from '@/components/settings/ManageAccountButton';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { SettingsContent } from '@/components/settings/SettingsContent';
-import { getEmailPreferences } from '@/libs/Preferences';
-import { parseAccount } from '@/utils/Account';
-import { parseProfile } from '@/utils/Profile';
+import { getEmailPreferences } from '@/libs/notifications/Preferences';
+import { parseAccount } from '@/utils/accounts/Account';
+import { parseProfile } from '@/utils/accounts/Profile';
 
 type SettingsPageProps = {
   params: Promise<{ locale: string }>;

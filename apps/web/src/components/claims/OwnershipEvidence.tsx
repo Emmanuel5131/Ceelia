@@ -6,7 +6,7 @@ import Image from 'next/image';
 import * as React from 'react';
 import type { ClaimState } from '@/app/[locale]/(auth)/dashboard/claims/actions';
 import { Button } from '@/components/ui/button';
-import type { ProofFile } from '@/libs/ClaimProofs';
+import type { ProofFile } from '@/libs/claims/ClaimProofs';
 
 // A row of what was added, with its own Remove button. Removing is done on the server, which checks it is the person's own claim.
 function EvidenceRow(props: {

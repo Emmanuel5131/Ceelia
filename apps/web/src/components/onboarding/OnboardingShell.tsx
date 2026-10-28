@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
+import { Logo } from '@/components/brand/Logo';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
-import { Logo } from '@/components/Logo';
 
 /**
  * The page around onboarding: the logo, language and account menu on top, and one centred column for the questions.

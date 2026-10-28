@@ -5,8 +5,8 @@ import { StatCard } from '@/components/overview/StatCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
+import type { ReportView } from '@/libs/cases/Reports';
 import { Link } from '@/libs/I18nNavigation';
-import type { ReportView } from '@/libs/Reports';
 import type { CheckResult } from '@/validations/ReportValidation';
 
 // Each result has its own shape as well as its label, so the result never rests on colour alone.

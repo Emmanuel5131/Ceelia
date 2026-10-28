@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from '@/libs/I18nNavigation';
-import type { StepState } from '@/utils/ClaimSteps';
+import type { StepState } from '@/utils/claims/ClaimSteps';
 import { cn } from '@/utils/Cn';
 
 /** The parts of the claim page, in the order the person does them. */
