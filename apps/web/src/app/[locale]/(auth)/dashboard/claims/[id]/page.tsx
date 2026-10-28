@@ -24,6 +24,7 @@ import { StatementCard } from '@/components/claims/StatementCard';
 import { SubmitClaimCard } from '@/components/claims/SubmitClaimCard';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
+import { sentAfterSeal } from '@/libs/cases/Cases';
 import { listProofFiles } from '@/libs/claims/ClaimProofs';
 import { countOthersOnOperator, getClaim } from '@/libs/claims/Claims';
 import { Link } from '@/libs/I18nNavigation';
@@ -113,6 +114,9 @@ export default async function ClaimPage(props: ClaimPageProps) {
         <SubmitClaimCard
           sent={!draft}
           ready={Boolean(claim.statement)}
+          others={others}
+          late={await sentAfterSeal(claim)}
+          platform={claim.platformName}
           action={submitClaim.bind(null, claim.id)}
         />
       ),

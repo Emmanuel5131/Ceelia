@@ -11,6 +11,7 @@ const make = (id: string, over: Partial<OverviewCase> = {}): OverviewCase => ({
   name: `Case ${id}`,
   jurisdiction: 'ng',
   claimants: 10,
+  confirmed: 4,
   description: null,
   status: 'collecting',
   hasReport: false,

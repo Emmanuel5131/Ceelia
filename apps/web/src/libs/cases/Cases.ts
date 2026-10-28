@@ -1,11 +1,18 @@
 import { canTakeCase } from '@celia/core';
 import type { TakeCaseInput } from '@celia/core';
-import { and, count, countDistinct, desc, eq, sql } from 'drizzle-orm';
+import { and, count, desc, eq, max, sql } from 'drizzle-orm';
 import { recordCaseEvent } from '@/libs/cases/CaseEvents';
+import type { Claim } from '@/libs/claims/Claims';
 import { db } from '@/libs/DB';
 import { notify } from '@/libs/notifications/Notify';
 import { claimantIds } from '@/libs/notifications/Recipients';
-import { caseReportSchema, caseSchema, caseTeamSchema, claimSchema } from '@/models/Schema';
+import {
+  caseEventSchema,
+  caseReportSchema,
+  caseSchema,
+  caseTeamSchema,
+  claimSchema,
+} from '@/models/Schema';
 import { isAdmittedFor } from '@/utils/cases/Admission';
 import { caseNumber } from '@/utils/cases/Case';
 import type { CaseRow } from '@/utils/cases/Case';
@@ -13,7 +20,23 @@ import type { CaseRow } from '@/utils/cases/Case';
 /** A case with the platform key that ties it to claims. The key never reaches the browser. */
 export type CaseDetail = CaseRow & { platformKey: string };
 
-// One row per case with its number of claimants: people with a submitted claim against the same platform.
+// When each case's evidence file was sealed. A claim sent after that is not part of the file, so it is not counted with the case.
+const sealedEvents = db
+  .select({ caseId: caseEventSchema.caseId, at: max(caseEventSchema.createdAt).as('sealed_at') })
+  .from(caseEventSchema)
+  .where(eq(caseEventSchema.type, 'case_sealed'))
+  .groupBy(caseEventSchema.caseId)
+  .as('sealed_events');
+
+// Filters a count to the claims in the file: sent before the case was sealed, or the case is not sealed.
+const sentInFile = sql`(${sealedEvents.at} is null or ${claimSchema.submittedAt} <= ${sealedEvents.at})`;
+
+const inCase = and(
+  eq(claimSchema.platformKey, caseSchema.platformKey),
+  eq(claimSchema.status, 'submitted'),
+);
+
+// One row per case with its number of claimants (people with a submitted claim against the same platform) and how many of them staff have confirmed.
 const caseSelect = {
   id: caseSchema.id,
   seq: caseSchema.seq,
@@ -23,7 +46,12 @@ const caseSelect = {
   description: caseSchema.description,
   status: caseSchema.status,
   updatedAt: caseSchema.updatedAt,
-  claimants: countDistinct(claimSchema.userId),
+  claimants:
+    sql<number>`count(distinct ${claimSchema.userId}) filter (where ${sentInFile})`.mapWith(Number),
+  confirmed:
+    sql<number>`count(distinct ${claimSchema.userId}) filter (where ${sentInFile} and ${claimSchema.validatedAt} is not null)`.mapWith(
+      Number,
+    ),
   hasReport: sql<boolean>`exists (select 1 from ${caseReportSchema} where ${caseReportSchema.caseId} = ${caseSchema.id})`,
 };
 
@@ -36,6 +64,7 @@ const toRow = (row: {
   status: CaseRow['status'];
   updatedAt: Date;
   claimants: number;
+  confirmed: number;
   hasReport: boolean;
 }): CaseRow => ({
   id: row.id,
@@ -45,6 +74,7 @@ const toRow = (row: {
   description: row.description,
   status: row.status,
   claimants: row.claimants,
+  confirmed: row.confirmed,
   hasReport: row.hasReport,
   updatedAt: row.updatedAt.toISOString(),
 });
@@ -62,11 +92,9 @@ export async function listCases() {
   const rows = await db
     .select(caseSelect)
     .from(caseSchema)
-    .leftJoin(
-      claimSchema,
-      and(eq(claimSchema.platformKey, caseSchema.platformKey), eq(claimSchema.status, 'submitted')),
-    )
-    .groupBy(caseSchema.id)
+    .leftJoin(sealedEvents, eq(sealedEvents.caseId, caseSchema.id))
+    .leftJoin(claimSchema, inCase)
+    .groupBy(caseSchema.id, sealedEvents.at)
     .orderBy(desc(caseSchema.updatedAt));
 
   return rows.map(toRow);
@@ -81,12 +109,10 @@ export async function getCase(id: string) {
   const [row] = await db
     .select(caseSelect)
     .from(caseSchema)
-    .leftJoin(
-      claimSchema,
-      and(eq(claimSchema.platformKey, caseSchema.platformKey), eq(claimSchema.status, 'submitted')),
-    )
+    .leftJoin(sealedEvents, eq(sealedEvents.caseId, caseSchema.id))
+    .leftJoin(claimSchema, inCase)
     .where(eq(caseSchema.id, id))
-    .groupBy(caseSchema.id);
+    .groupBy(caseSchema.id, sealedEvents.at);
 
   return row ? toDetail(row) : undefined;
 }
@@ -221,4 +247,25 @@ export async function takeCase(options: { caseId: string; userId: string }) {
 
     return true;
   });
+}
+
+/**
+ * Whether a claim was sent after the evidence file of its case was sealed, so it is not in that file.
+ * @param claim - The claim.
+ * @returns True when the case was sealed before the claim was sent.
+ */
+export async function sentAfterSeal(claim: Pick<Claim, 'platformKey' | 'submittedAt'>) {
+  if (!claim.platformKey || !claim.submittedAt) {
+    return false;
+  }
+
+  const [row] = await db
+    .select({ sealedAt: max(caseEventSchema.createdAt) })
+    .from(caseEventSchema)
+    .innerJoin(caseSchema, eq(caseSchema.id, caseEventSchema.caseId))
+    .where(
+      and(eq(caseSchema.platformKey, claim.platformKey), eq(caseEventSchema.type, 'case_sealed')),
+    );
+
+  return row?.sealedAt !== null && row?.sealedAt !== undefined && row.sealedAt < claim.submittedAt;
 }

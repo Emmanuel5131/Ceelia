@@ -15,17 +15,24 @@ import { useFormAction } from '@/hooks/use-form-action';
  * @param props - The card props.
  * @param props.sent - Whether the claim has already been sent.
  * @param props.ready - Whether the claim has what it needs to be sent: the person's own account of what happened.
+ * @param props.late - Whether the claim was sent after the case's evidence file was sealed.
+ * @param props.others - How many other people have reported the same operator.
+ * @param props.platform - The operator's name, if the person gave one.
  * @param props.action - The server action that sends it.
  * @returns The card.
  */
 export function SubmitClaimCard(props: {
   sent: boolean;
   ready: boolean;
+  others: number;
+  late: boolean;
+  platform: string | null;
   action: (state: ClaimState, formData: FormData) => Promise<ClaimState>;
 }) {
   const t = useTranslations('ClaimPage');
   const { state, onSubmit, pending } = useFormAction(props.action, { errors: [] });
   const [agreed, setAgreed] = React.useState(false);
+  const [connected, setConnected] = React.useState(false);
 
   return (
     <Card variant="outline">
@@ -33,11 +40,20 @@ export function SubmitClaimCard(props: {
         <CardTitle className="font-sans text-base font-medium">
           {props.sent ? t('sent_title') : t('submit_title')}
         </CardTitle>
-        <CardDescription>{props.sent ? t('sent_text') : t('submit_text')}</CardDescription>
+        <CardDescription>
+          {props.sent ? t(props.late ? 'sent_late_text' : 'sent_text') : t('submit_text')}
+        </CardDescription>
       </CardHeader>
       {!props.sent && (
         <CardContent className="grid gap-4">
           <form className="grid gap-4" onSubmit={onSubmit}>
+            {props.others > 0 && (
+              <p className="text-sm font-medium">
+                {props.platform
+                  ? t('submit_others', { count: props.others, platform: props.platform })
+                  : t('submit_others_unnamed', { count: props.others })}
+              </p>
+            )}
             {state.errors.includes('statement') && (
               <p role="alert" className="text-sm text-seal">
                 {t('error_statement_first')}
@@ -65,9 +81,28 @@ export function SubmitClaimCard(props: {
                 {t('error_consent')}
               </p>
             )}
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="claim-connect"
+                name="connect"
+                className="mt-1"
+                checked={connected}
+                onCheckedChange={(next) => {
+                  setConnected(next === true);
+                }}
+              />
+              <Label htmlFor="claim-connect" className="leading-relaxed font-normal">
+                {t('connect_label')}
+              </Label>
+            </div>
+            {state.errors.includes('connect') && (
+              <p role="alert" className="text-sm text-seal">
+                {t('error_connect')}
+              </p>
+            )}
             <Button
               type="submit"
-              disabled={pending || !props.ready || !agreed}
+              disabled={pending || !props.ready || !agreed || !connected}
               className="justify-self-start"
             >
               {t('submit')}

@@ -738,8 +738,8 @@ export async function saveStatement(
  * cannot sign, and some chains cannot be checked yet); the file then shows it as not confirmed.
  * @param claimId - The claim.
  * @param _state - The previous state (unused).
- * @param formData - The submitted form: `consent` must be on.
- * @returns `done` when sent; otherwise `statement` if the account is missing, or `consent` if the person has not agreed.
+ * @param formData - The submitted form: `consent` and `connect` must be on.
+ * @returns `done` when sent; otherwise `statement` if the account is missing, or `consent` or `connect` if the person has not agreed.
  */
 export async function submitClaim(
   claimId: string,
@@ -761,6 +761,10 @@ export async function submitClaim(
     return failed(['consent']);
   }
 
+  if (formData.get('connect') !== 'on') {
+    return failed(['connect']);
+  }
+
   const locale = await getLocale();
   await saveLocale(userId, locale);
   await db.transaction(async (tx) => {
@@ -769,12 +773,18 @@ export async function submitClaim(
       .set({ status: 'submitted', submittedAt: new Date(), consentedAt: new Date() })
       .where(eq(claimSchema.id, claim.id));
 
-    // When a case already exists for this platform, the claim joins it the moment it is sent.
+    // When a case is still open for this platform, the claim joins it the moment it is sent. Once its evidence file is sealed
+    // the file is fixed, so a later claim is not added to it.
     const [existing] = claim.platformKey
       ? await tx
           .select({ id: caseSchema.id })
           .from(caseSchema)
-          .where(eq(caseSchema.platformKey, claim.platformKey))
+          .where(
+            and(
+              eq(caseSchema.platformKey, claim.platformKey),
+              inArray(caseSchema.status, ['collecting', 'building']),
+            ),
+          )
       : [];
 
     if (existing) {

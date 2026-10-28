@@ -188,10 +188,10 @@ export const log = {
 };
 
 export const jurisdictionsIntro = {
-  title: 'Where is your\ncase filed?',
-  lead: 'Type a country, state or province. We tell you which of four kinds of rule decides whether electronic evidence is accepted there.',
+  title: 'In what jurisdiction will\nyou be using this?',
+  lead: 'Type the country, state or province of the court. We tell you the rule that decides whether electronic evidence is accepted there, and what Celia does to meet it.',
   placeholder: 'Search a country, state or province',
-  kindsTitle: 'The four kinds of rule',
+  kindsTitle: 'How courts accept electronic evidence',
   tryLabel: 'Popular',
   tries: ['United States', 'United Kingdom', 'India', 'Singapore', 'United Arab Emirates'],
   note: 'These are research notes, not legal advice. Rules named by section come from public sources; the rest are national electronic transactions laws based on the UN Model Law on Electronic Commerce (UNCITRAL). We confirm each with counsel before we say it is met.',

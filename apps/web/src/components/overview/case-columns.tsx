@@ -12,7 +12,7 @@ import { StatusBadge } from '@/components/overview/StatusBadge';
 import { Link } from '@/libs/I18nNavigation';
 import type { CaseRow, CaseStatus } from '@/utils/cases/Case';
 
-type CaseColumnId = 'case' | 'jurisdiction' | 'claimants' | 'status' | 'updated';
+type CaseColumnId = 'case' | 'jurisdiction' | 'claimants' | 'confirmed' | 'status' | 'updated';
 
 const statusOrder: Record<CaseStatus, number> = {
   sealed: 0,
@@ -33,6 +33,7 @@ export function useCaseColumnLabels(): Record<CaseColumnId, string> {
     case: t('col_case'),
     jurisdiction: t('col_jurisdiction'),
     claimants: t('col_claimants'),
+    confirmed: t('col_confirmed'),
     status: t('col_status'),
     updated: t('col_updated'),
   };
@@ -109,6 +110,11 @@ function createCaseColumns(linked: boolean) {
     helper.accessor('claimants', {
       id: 'claimants',
       header: ({ column }) => <CaseHeader column={column} id="claimants" align="end" />,
+      cell: ({ getValue }) => <ClaimantsCell value={getValue()} />,
+    }),
+    helper.accessor('confirmed', {
+      id: 'confirmed',
+      header: ({ column }) => <CaseHeader column={column} id="confirmed" align="end" />,
       cell: ({ getValue }) => <ClaimantsCell value={getValue()} />,
     }),
     helper.accessor('status', {

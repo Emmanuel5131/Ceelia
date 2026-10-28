@@ -53,7 +53,6 @@ export const footerNav = {
     { label: 'FAQ', href: '/#faq' },
   ],
   jurisdictions: [
-    { label: 'Nigeria · Evidence Act s.84', href: '/jurisdictions/' },
     { label: 'United States · FRE 902(13)/(14)', href: '/jurisdictions/' },
     { label: 'Next jurisdiction', href: '/#report' },
   ],
